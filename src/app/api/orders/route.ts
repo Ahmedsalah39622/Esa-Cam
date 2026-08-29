@@ -157,14 +157,22 @@ export async function POST(req: NextRequest) {
     }
 
     // Trigger Automation Webhook if configured (ViaSocket / Activepieces / Make / Zapier)
-    const webhookUrl = process.env.ORDER_WEBHOOK_URL;
+    const webhookUrl = process.env.ORDER_WEBHOOK_URL || process.env.VIASOCKET_WEBHOOK_URL;
     if (webhookUrl) {
       try {
-        fetch(webhookUrl, {
+        console.log("🚀 Dispatching ViaSocket Webhook to:", webhookUrl);
+        const webhookRes = await fetch(webhookUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             event: "order.created",
+            to: customerEmail || process.env.ADMIN_EMAIL || "",
+            email: customerEmail || process.env.ADMIN_EMAIL || "",
+            recipient: customerEmail || process.env.ADMIN_EMAIL || "",
+            subject: `ESA CAM Order Confirmation #${orderNumber} (تأكيد طلبك)`,
+            messageBody: receiptHtml,
+            html: receiptHtml,
+            body: receiptHtml,
             orderNumber,
             orderId,
             customerName,
@@ -174,7 +182,7 @@ export async function POST(req: NextRequest) {
             shippingAddress,
             paymentMethod: paymentMethod || "cod",
             totalAmount: Number(totalAmount),
-            currency: "USD",
+            currency: "EGP",
             items,
             orderDate: new Date().toLocaleDateString("en-US", {
               year: "numeric",
@@ -183,9 +191,10 @@ export async function POST(req: NextRequest) {
             }),
             receiptHtml,
           }),
-        }).catch((wErr) => console.error("Webhook trigger error:", wErr));
+        });
+        console.log("✅ ViaSocket Webhook response status:", webhookRes.status);
       } catch (wErr) {
-        console.error("Webhook trigger error:", wErr);
+        console.error("❌ ViaSocket Webhook trigger error:", wErr);
       }
     }
 

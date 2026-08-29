@@ -240,7 +240,7 @@ export async function sendOrderReceiptEmail(props: EmailReceiptProps): Promise<b
   if (resendApiKey) {
     try {
       console.log(`📨 Sending order email #${props.orderNumber} via Resend HTTP API to ${targetTo}...`);
-      const fromEmail = process.env.EMAIL_FROM || "ESA CAM Optics <orders@resend.dev>";
+      const fromEmail = process.env.EMAIL_FROM || "ESA CAM Optics <onboarding@resend.dev>";
       
       const res = await fetch("https://api.resend.com/emails", {
         method: "POST",
