@@ -5,10 +5,17 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const status = {
+    const status: {
+      timestamp: string;
+      database: string;
+      tables: string[];
+      ordersCount?: number;
+      productsCount?: number;
+      env: Record<string, string>;
+    } = {
       timestamp: new Date().toISOString(),
       database: "not_configured",
-      tables: [] as string[],
+      tables: [],
       env: {
         DB_HOST: process.env.DB_HOST ? "✓ set" : "✗ missing",
         DB_USER: process.env.DB_USER ? "✓ set" : "✗ missing",
@@ -26,6 +33,11 @@ export async function GET() {
         );
         status.database = "connected";
         status.tables = tableList;
+
+        const [orderRows] = (await pool.execute("SELECT COUNT(*) as cnt FROM orders")) as [Array<{ cnt: number }>, unknown];
+        const [productRows] = (await pool.execute("SELECT COUNT(*) as cnt FROM products")) as [Array<{ cnt: number }>, unknown];
+        status.ordersCount = orderRows[0]?.cnt || 0;
+        status.productsCount = productRows[0]?.cnt || 0;
       } catch (err) {
         status.database = `error: ${err instanceof Error ? err.message : "unknown"}`;
       }
