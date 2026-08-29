@@ -46,10 +46,10 @@ export const HERO_HIGHLIGHTS = [
     image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1000&q=80",
     tag: "Flagship Choice",
     specs: [
-      { label: "Sensor", value: "12.1MP Full-Frame BSI" },
-      { label: "Dynamic Range", value: "15+ Stops S-Log3" },
-      { label: "Frame Rate", value: "4K 120p / FHD 240p" },
-      { label: "Cooling", value: "Active Fan System" },
+      "12.1MP Full-Frame BSI",
+      "15+ Stops S-Log3",
+      "4K 120p / FHD 240p",
+      "Active Cooling Fan",
     ],
   },
   {
@@ -60,10 +60,10 @@ export const HERO_HIGHLIGHTS = [
     image: "https://images.unsplash.com/photo-1502982720700-bfff97f2ecac?auto=format&fit=crop&w=1000&q=80",
     tag: "8K Monster",
     specs: [
-      { label: "Sensor", value: "45MP Full-Frame Dual Pixel" },
-      { label: "Recording", value: "8K 60p RAW Light" },
-      { label: "Mount", value: "Canon RF Cinema" },
-      { label: "Interface", value: "Timecode & Waveform" },
+      "45MP Full-Frame Dual Pixel",
+      "8K 60p RAW Light",
+      "Canon RF Cinema",
+      "Timecode & Waveform",
     ],
   },
   {
@@ -74,10 +74,10 @@ export const HERO_HIGHLIGHTS = [
     image: "https://images.unsplash.com/photo-1512790182412-b19e6d62bc39?auto=format&fit=crop&w=1000&q=80",
     tag: "Hollywood Standard",
     specs: [
-      { label: "Sensor", value: "35.4MP VistaVision" },
-      { label: "Dynamic Range", value: "17+ Stops RAW" },
-      { label: "High-Speed", value: "8K 120fps / 4K 240fps" },
-      { label: "Media", value: "CFexpress Type B" },
+      "35.4MP VistaVision",
+      "17+ Stops RAW",
+      "8K 120fps / 4K 240fps",
+      "CFexpress Type B",
     ],
   },
 ];
