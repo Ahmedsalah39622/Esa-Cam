@@ -146,8 +146,8 @@ export default function CheckoutPage() {
 
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.firstName || !formData.phone || !formData.address) {
-      toast.error("Please complete the required customer details (Name, Phone, Address).");
+    if (!formData.firstName || !formData.phone || !formData.email || !formData.address) {
+      toast.error("Please complete all required fields (Name, Phone, Email, Address).");
       return;
     }
 
@@ -365,8 +365,9 @@ export default function CheckoutPage() {
                     />
                   </div>
                   <div>
-                    <label className="font-semibold text-muted-foreground block mb-1">Email Address (Optional for Invoice)</label>
+                    <label className="font-semibold text-muted-foreground block mb-1">Email Address (For Official Invoice) *</label>
                     <input
+                      required
                       type="email"
                       placeholder="ahmed@example.com"
                       value={formData.email}

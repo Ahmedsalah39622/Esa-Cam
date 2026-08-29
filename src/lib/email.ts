@@ -236,8 +236,10 @@ export async function sendOrderReceiptEmail(props: EmailReceiptProps): Promise<b
     return false;
   }
 
-  if (!props.customerEmail && !adminEmail) {
-    console.warn("⚠️ No recipient email address provided for order confirmation.");
+  const targetTo = props.customerEmail?.trim() || adminEmail?.trim();
+
+  if (!targetTo) {
+    console.warn("⚠️ No recipient email address provided for order confirmation. Skipping dispatch.");
     return false;
   }
 
@@ -262,19 +264,20 @@ export async function sendOrderReceiptEmail(props: EmailReceiptProps): Promise<b
     });
 
     const html = generateEpicReceiptHtml(props);
-    const recipients = [props.customerEmail, adminEmail].filter(Boolean) as string[];
 
-    console.log(`📨 Attempting to send order receipt #${props.orderNumber} via ${host}:${port} to:`, recipients.join(", "));
+    console.log(`📨 Attempting to send order receipt #${props.orderNumber} via ${host}:${port} to:`, targetTo);
 
     await transporter.sendMail({
       from: fromAddress,
-      to: props.customerEmail || adminEmail,
-      ...(adminEmail && props.customerEmail && adminEmail !== props.customerEmail ? { bcc: adminEmail } : {}),
+      to: targetTo,
+      ...(adminEmail && props.customerEmail?.trim() && adminEmail.trim() !== props.customerEmail.trim()
+        ? { bcc: adminEmail.trim() }
+        : {}),
       subject: `ESA CAM Order Confirmation #${props.orderNumber} (تأكيد طلبك)`,
       html,
     });
 
-    console.log(`✅ Order confirmation email #${props.orderNumber} sent successfully!`);
+    console.log(`✅ Order confirmation email #${props.orderNumber} sent successfully to ${targetTo}!`);
     return true;
   } catch (error) {
     console.error("❌ Direct SMTP email error:", error);
