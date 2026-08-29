@@ -224,60 +224,98 @@ export function generateEpicReceiptHtml(props: EmailReceiptProps): string {
 }
 
 export async function sendOrderReceiptEmail(props: EmailReceiptProps): Promise<boolean> {
-  const host = process.env.SMTP_HOST || process.env.EMAIL_HOST || "smtp.hostinger.com";
-  const user = process.env.SMTP_USER || process.env.EMAIL_USER;
-  const pass = process.env.SMTP_PASS || process.env.EMAIL_PASS || process.env.EMAIL_PASSWORD || process.env.SMTP_PASSWORD;
-  const port = Number(process.env.SMTP_PORT || process.env.EMAIL_PORT) || 465;
-  const fromAddress = process.env.EMAIL_FROM || process.env.SMTP_FROM || `"ESA CAM Optics" <${user}>`;
-  const adminEmail = process.env.ADMIN_EMAIL;
-
-  if (!user || !pass) {
-    console.warn("⚠️ SMTP credentials not configured (SMTP_USER/EMAIL_USER and SMTP_PASS/EMAIL_PASS). Skipping email dispatch.");
-    return false;
-  }
-
-  const targetTo = props.customerEmail?.trim() || adminEmail?.trim();
+  const targetTo = props.customerEmail?.trim() || process.env.ADMIN_EMAIL?.trim();
+  const adminEmail = process.env.ADMIN_EMAIL?.trim();
 
   if (!targetTo) {
     console.warn("⚠️ No recipient email address provided for order confirmation. Skipping dispatch.");
     return false;
   }
 
+  const html = generateEpicReceiptHtml(props);
+  const subject = `ESA CAM Order Confirmation #${props.orderNumber} (تأكيد طلبك)`;
+
+  // Option 1: Resend HTTP API (Recommended for Vercel - Uses Port 443 HTTPS, Never blocked by cloud firewalls)
+  const resendApiKey = process.env.RESEND_API_KEY;
+  if (resendApiKey) {
+    try {
+      console.log(`📨 Sending order email #${props.orderNumber} via Resend HTTP API to ${targetTo}...`);
+      const fromEmail = process.env.EMAIL_FROM || "ESA CAM Optics <orders@resend.dev>";
+      
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${resendApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: fromEmail,
+          to: [targetTo],
+          bcc: adminEmail && adminEmail !== targetTo ? [adminEmail] : undefined,
+          subject,
+          html,
+        }),
+      });
+
+      const resData = await res.json();
+      if (res.ok) {
+        console.log(`✅ Order email #${props.orderNumber} sent via Resend API:`, resData);
+        return true;
+      } else {
+        console.error("❌ Resend API error response:", resData);
+      }
+    } catch (resendErr) {
+      console.error("❌ Failed to send via Resend API:", resendErr);
+    }
+  }
+
+  // Option 2: Direct SMTP via Nodemailer (Hostinger / Gmail)
+  const host = process.env.SMTP_HOST || process.env.EMAIL_HOST || "smtp.hostinger.com";
+  const user = process.env.SMTP_USER || process.env.EMAIL_USER;
+  const pass = process.env.SMTP_PASS || process.env.EMAIL_PASS || process.env.EMAIL_PASSWORD || process.env.SMTP_PASSWORD;
+  const port = Number(process.env.SMTP_PORT || process.env.EMAIL_PORT) || (host.includes("hostinger") ? 465 : 587);
+  const fromAddress = process.env.EMAIL_FROM || process.env.SMTP_FROM || `"ESA CAM Optics" <${user}>`;
+
+  if (!user || !pass) {
+    console.warn("⚠️ SMTP credentials not configured (SMTP_USER / SMTP_PASS or RESEND_API_KEY).");
+    return false;
+  }
+
   try {
     const isGmail = host.toLowerCase().includes("gmail");
-    
+    const isSecurePort = port === 465;
+
     const transporter = nodemailer.createTransport({
       host,
       port,
-      secure: port === 465,
+      secure: isSecurePort,
       auth: {
         user,
         pass,
       },
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-      socketTimeout: 15000,
+      connectionTimeout: 8000,
+      greetingTimeout: 8000,
+      socketTimeout: 12000,
       tls: {
         rejectUnauthorized: false,
+        minVersion: "TLSv1.2",
       },
       ...(isGmail ? { service: "gmail" } : {}),
     });
 
-    const html = generateEpicReceiptHtml(props);
-
-    console.log(`📨 Attempting to send order receipt #${props.orderNumber} via ${host}:${port} to:`, targetTo);
+    console.log(`📨 Attempting to send order receipt #${props.orderNumber} via SMTP ${host}:${port} (secure: ${isSecurePort}) to:`, targetTo);
 
     await transporter.sendMail({
       from: fromAddress,
       to: targetTo,
-      ...(adminEmail && props.customerEmail?.trim() && adminEmail.trim() !== props.customerEmail.trim()
-        ? { bcc: adminEmail.trim() }
+      ...(adminEmail && props.customerEmail?.trim() && adminEmail !== props.customerEmail.trim()
+        ? { bcc: adminEmail }
         : {}),
-      subject: `ESA CAM Order Confirmation #${props.orderNumber} (تأكيد طلبك)`,
+      subject,
       html,
     });
 
-    console.log(`✅ Order confirmation email #${props.orderNumber} sent successfully to ${targetTo}!`);
+    console.log(`✅ Order confirmation email #${props.orderNumber} sent successfully via SMTP!`);
     return true;
   } catch (error) {
     console.error("❌ Direct SMTP email error:", error);
