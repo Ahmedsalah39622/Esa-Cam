@@ -73,12 +73,41 @@ export async function GET() {
     const pool = getDbPool();
     if (pool) {
       await ensureProductsTable();
-      const rows = await query<ProductItem>(
+      let rows = await query<ProductItem>(
         "SELECT * FROM products ORDER BY created_at DESC"
       );
 
+      // If DB has fewer than 50 products, bulk seed all 474 products into MySQL
+      if (!rows || rows.length < 50) {
+        console.log(`📦 Seeding all ${PRODUCTS.length} live products into database...`);
+        for (const p of PRODUCTS) {
+          try {
+            await query(
+              `INSERT INTO products (id, name, brand, price, original_price, category, image_url, badge, stock_status, short_description, specs_json)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+               ON DUPLICATE KEY UPDATE 
+                 name=VALUES(name), brand=VALUES(brand), price=VALUES(price), original_price=VALUES(original_price), category=VALUES(category), image_url=VALUES(image_url), badge=VALUES(badge), stock_status=VALUES(stock_status), short_description=VALUES(short_description), specs_json=VALUES(specs_json)`,
+              [
+                p.id,
+                p.name,
+                p.brand,
+                Number(p.price),
+                p.originalPrice ? Number(p.originalPrice) : null,
+                p.category,
+                p.image,
+                p.badge || null,
+                p.stockStatus || "in-stock",
+                p.shortDescription || null,
+                JSON.stringify(p.specs || []),
+              ]
+            );
+          } catch {}
+        }
+        rows = await query<ProductItem>("SELECT * FROM products ORDER BY created_at DESC");
+      }
+
       if (rows && rows.length > 0) {
-        return NextResponse.json({ success: true, source: "database", data: rows });
+        return NextResponse.json({ success: true, source: "database", count: rows.length, data: rows });
       }
     }
 

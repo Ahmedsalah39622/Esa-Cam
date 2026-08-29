@@ -22,34 +22,63 @@ interface StoredOrder {
   created_at: string;
 }
 
-// In-memory fallback if database connection is pending configuration
-const memoryOrders: StoredOrder[] = [];
+// In-memory persistent cache for serverless lifecycles
+let memoryOrders: StoredOrder[] = [];
+
+async function ensureOrdersTable() {
+  const pool = getDbPool();
+  if (!pool) return;
+
+  try {
+    await query(`
+      CREATE TABLE IF NOT EXISTS orders (
+        id VARCHAR(100) PRIMARY KEY,
+        order_number VARCHAR(100) NOT NULL,
+        customer_name VARCHAR(255) NOT NULL,
+        customer_phone VARCHAR(50) NOT NULL,
+        customer_email VARCHAR(255) NULL,
+        city VARCHAR(100) NOT NULL,
+        shipping_address TEXT NOT NULL,
+        notes TEXT NULL,
+        payment_method VARCHAR(50) DEFAULT 'cod',
+        total_amount DECIMAL(12, 2) NOT NULL,
+        items_json LONGTEXT NOT NULL,
+        status VARCHAR(50) DEFAULT 'new',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+  } catch (err) {
+    console.warn("Orders table ensure warning:", err);
+  }
+}
 
 export async function GET() {
   try {
     const pool = getDbPool();
-    if (!pool) {
-      return NextResponse.json({ success: true, source: "memory", data: memoryOrders });
+    if (pool) {
+      await ensureOrdersTable();
+      const rows = await query<StoredOrder>(
+        "SELECT * FROM orders ORDER BY created_at DESC"
+      );
+
+      if (rows && rows.length > 0) {
+        const formattedOrders = rows.map((order) => {
+          let items = [];
+          try {
+            items = typeof order.items_json === "string" ? JSON.parse(order.items_json) : (order.items_json || []);
+          } catch {
+            items = [];
+          }
+          return { ...order, items };
+        });
+
+        return NextResponse.json({ success: true, source: "database", count: formattedOrders.length, data: formattedOrders });
+      }
     }
 
-    const rows = await query<StoredOrder>(
-      "SELECT * FROM orders ORDER BY created_at DESC"
-    );
-
-    const formattedOrders = rows.map((order) => {
-      let items = [];
-      try {
-        items = typeof order.items_json === "string" ? JSON.parse(order.items_json) : (order.items_json || []);
-      } catch {
-        items = [];
-      }
-      return { ...order, items };
-    });
-
-    return NextResponse.json({ success: true, source: "database", data: formattedOrders });
+    return NextResponse.json({ success: true, source: "memory", count: memoryOrders.length, data: memoryOrders });
   } catch (error) {
     console.error("Error fetching orders:", error);
-    // Fallback to memory
     return NextResponse.json({ success: true, source: "memory_fallback", data: memoryOrders });
   }
 }
@@ -99,9 +128,13 @@ export async function POST(req: NextRequest) {
       created_at: new Date().toISOString(),
     };
 
+    // Update in-memory persistent list
+    memoryOrders = [newOrder, ...memoryOrders.filter((o) => o.id !== orderId)];
+
     const pool = getDbPool();
     if (pool) {
       try {
+        await ensureOrdersTable();
         await query(
           `INSERT INTO orders (id, order_number, customer_name, customer_phone, customer_email, city, shipping_address, notes, payment_method, total_amount, items_json, status)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -120,12 +153,10 @@ export async function POST(req: NextRequest) {
             "new",
           ]
         );
+        console.log(`✅ Order #${orderNumber} saved to MySQL orders table!`);
       } catch (dbErr) {
-        console.error("Database insert error, saving to memory fallback:", dbErr);
-        memoryOrders.unshift(newOrder);
+        console.error("Database insert error (persisted in memory):", dbErr);
       }
-    } else {
-      memoryOrders.unshift(newOrder);
     }
 
     // Generate Rich Epic Games & Amazon Styled HTML Receipt
