@@ -1105,6 +1105,8 @@ export default function DashboardPage() {
     };
 
     await addProduct(created);
+    setInventory((prev) => [created, ...prev.filter((p) => p.id !== created.id)]);
+    toast.success(`🎉 "${created.name}" added to inventory & storefront!`);
     setIsAddProductOpen(false);
     setNewProduct({
       name: "",
