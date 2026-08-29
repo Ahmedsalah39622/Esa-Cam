@@ -141,16 +141,20 @@ export async function POST(req: NextRequest) {
     });
 
     // Send Direct SMTP Email if configured (Hostinger / Gmail SMTP)
-    sendOrderReceiptEmail({
-      orderNumber,
-      customerName,
-      customerEmail: customerEmail || "",
-      shippingAddress,
-      city,
-      paymentMethod: paymentMethod || "cod",
-      totalAmount: Number(totalAmount),
-      items: items || [],
-    }).catch((eErr) => console.error("Direct email send error:", eErr));
+    try {
+      await sendOrderReceiptEmail({
+        orderNumber,
+        customerName,
+        customerEmail: customerEmail || "",
+        shippingAddress,
+        city,
+        paymentMethod: paymentMethod || "cod",
+        totalAmount: Number(totalAmount),
+        items: items || [],
+      });
+    } catch (eErr) {
+      console.error("Direct email send error:", eErr);
+    }
 
     // Trigger Automation Webhook if configured (ViaSocket / Activepieces / Make / Zapier)
     const webhookUrl = process.env.ORDER_WEBHOOK_URL;

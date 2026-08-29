@@ -224,16 +224,26 @@ export function generateEpicReceiptHtml(props: EmailReceiptProps): string {
 }
 
 export async function sendOrderReceiptEmail(props: EmailReceiptProps): Promise<boolean> {
-  const host = process.env.SMTP_HOST || "smtp.hostinger.com";
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-  const port = Number(process.env.SMTP_PORT) || 465;
+  const host = process.env.SMTP_HOST || process.env.EMAIL_HOST || "smtp.hostinger.com";
+  const user = process.env.SMTP_USER || process.env.EMAIL_USER;
+  const pass = process.env.SMTP_PASS || process.env.EMAIL_PASS || process.env.EMAIL_PASSWORD || process.env.SMTP_PASSWORD;
+  const port = Number(process.env.SMTP_PORT || process.env.EMAIL_PORT) || 465;
+  const fromAddress = process.env.EMAIL_FROM || process.env.SMTP_FROM || `"ESA CAM Optics" <${user}>`;
+  const adminEmail = process.env.ADMIN_EMAIL;
 
-  if (!user || !pass || !props.customerEmail) {
+  if (!user || !pass) {
+    console.warn("⚠️ SMTP credentials not configured (SMTP_USER/EMAIL_USER and SMTP_PASS/EMAIL_PASS). Skipping email dispatch.");
+    return false;
+  }
+
+  if (!props.customerEmail && !adminEmail) {
+    console.warn("⚠️ No recipient email address provided for order confirmation.");
     return false;
   }
 
   try {
+    const isGmail = host.toLowerCase().includes("gmail");
+    
     const transporter = nodemailer.createTransport({
       host,
       port,
@@ -242,20 +252,32 @@ export async function sendOrderReceiptEmail(props: EmailReceiptProps): Promise<b
         user,
         pass,
       },
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000,
+      tls: {
+        rejectUnauthorized: false,
+      },
+      ...(isGmail ? { service: "gmail" } : {}),
     });
 
     const html = generateEpicReceiptHtml(props);
+    const recipients = [props.customerEmail, adminEmail].filter(Boolean) as string[];
+
+    console.log(`📨 Attempting to send order receipt #${props.orderNumber} via ${host}:${port} to:`, recipients.join(", "));
 
     await transporter.sendMail({
-      from: `"ESA CAM Optics" <${user}>`,
-      to: props.customerEmail,
-      subject: `Your ESA CAM Receipt - ${props.orderNumber}`,
+      from: fromAddress,
+      to: props.customerEmail || adminEmail,
+      ...(adminEmail && props.customerEmail && adminEmail !== props.customerEmail ? { bcc: adminEmail } : {}),
+      subject: `ESA CAM Order Confirmation #${props.orderNumber} (تأكيد طلبك)`,
       html,
     });
 
+    console.log(`✅ Order confirmation email #${props.orderNumber} sent successfully!`);
     return true;
   } catch (error) {
-    console.error("Direct SMTP email error:", error);
+    console.error("❌ Direct SMTP email error:", error);
     return false;
   }
 }
