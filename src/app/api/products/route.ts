@@ -77,8 +77,8 @@ export async function GET() {
         "SELECT * FROM products ORDER BY created_at DESC"
       );
 
-      // If DB has fewer than 50 products, bulk seed all 474 products into MySQL
-      if (!rows || rows.length < 50) {
+      // If DB has fewer products than current catalog, seed all products into MySQL
+      if (!rows || rows.length < PRODUCTS.length) {
         console.log(`📦 Seeding all ${PRODUCTS.length} live products into database...`);
         for (const p of PRODUCTS) {
           try {
