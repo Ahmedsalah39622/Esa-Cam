@@ -408,12 +408,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }
 
   const fetchProducts = async () => {
-
     try {
       const res = await fetch("/api/products");
       const data = await res.json();
       if (data.success && Array.isArray(data.data) && data.data.length > 0) {
-        const mapped: Product[] = (data.data as DbProductRow[]).map((row) => ({
+        const serverMapped: Product[] = (data.data as DbProductRow[]).map((row) => ({
           id: row.id,
           name: row.name,
           brand: row.brand,
@@ -432,13 +431,33 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           features: ["Official 2-Year Warranty", "Factory Sealed & Calibrated"],
           inTheBox: [row.name, "Accessories", "User Documentation"],
         }));
-        setProducts(mapped);
 
+        setProducts((current) => {
+          let localCustom: Product[] = [];
+          try {
+            const saved = localStorage.getItem("esa_cam_products");
+            if (saved) localCustom = JSON.parse(saved);
+          } catch {}
 
+          if (localCustom.length === 0) {
+            localCustom = current;
+          }
 
-        try {
-          localStorage.setItem("esa_cam_products", JSON.stringify(mapped));
-        } catch {}
+          const serverMap = new Map(serverMapped.map((p) => [p.id, p]));
+          const merged = [...serverMapped];
+
+          for (const lp of localCustom) {
+            if (!serverMap.has(lp.id)) {
+              merged.unshift(lp);
+            }
+          }
+
+          try {
+            localStorage.setItem("esa_cam_products", JSON.stringify(merged));
+          } catch {}
+
+          return merged;
+        });
       }
     } catch (err) {
       console.warn("Could not fetch products from API:", err);
@@ -757,16 +776,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addProduct = async (product: Product) => {
-    const updated = [product, ...products.filter((p) => p.id !== product.id)];
-    setProducts(updated);
-    try {
-      localStorage.setItem("esa_cam_products", JSON.stringify(updated));
-    } catch {
-      // ignore
-    }
+    setProducts((prev) => {
+      const updated = [product, ...prev.filter((p) => p.id !== product.id)];
+      try {
+        localStorage.setItem("esa_cam_products", JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
 
     try {
-      await fetch("/api/products", {
+      const res = await fetch("/api/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -783,23 +802,33 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           specsJson: product.specs,
         }),
       });
-      toast.success(`Product "${product.name}" published live to storefront!`);
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`Product "${product.name}" published live to storefront!`);
+      }
     } catch {
       toast.info(`Product "${product.name}" saved locally.`);
     }
   };
 
   const updateProduct = async (id: string, updatedFields: Partial<Product>) => {
-    const updated = products.map((p) => (p.id === id ? { ...p, ...updatedFields } : p));
-    setProducts(updated);
-    try {
-      localStorage.setItem("esa_cam_products", JSON.stringify(updated));
-    } catch {
-      // ignore
-    }
+    let targetProduct: Product | undefined;
+    setProducts((prev) => {
+      const updated = prev.map((p) => {
+        if (p.id === id) {
+          targetProduct = { ...p, ...updatedFields };
+          return targetProduct;
+        }
+        return p;
+      });
+      try {
+        localStorage.setItem("esa_cam_products", JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
 
-    const target = updated.find((p) => p.id === id);
-    if (target) {
+    if (targetProduct) {
+      const target: Product = targetProduct;
       try {
         const res = await fetch("/api/products", {
           method: "POST",
@@ -829,14 +858,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   };
 
   const deleteProduct = async (id: string) => {
-    const target = products.find((p) => p.id === id);
-    const updated = products.filter((p) => p.id !== id);
-    setProducts(updated);
-    try {
-      localStorage.setItem("esa_cam_products", JSON.stringify(updated));
-    } catch {
-      // ignore
-    }
+    let deletedName = id;
+    setProducts((prev) => {
+      const target = prev.find((p) => p.id === id);
+      if (target) deletedName = target.name;
+      const updated = prev.filter((p) => p.id !== id);
+      try {
+        localStorage.setItem("esa_cam_products", JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
 
     try {
       const res = await fetch(`/api/products?id=${encodeURIComponent(id)}`, {
@@ -844,13 +875,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       });
       const data = await res.json();
       if (data.success) {
-        toast.success(`🗑️ "${target?.name || id}" deleted permanently from database!`);
+        toast.success(`🗑️ "${deletedName}" deleted permanently!`);
       } else {
         toast.info("Product removed from storefront.");
       }
-    } catch (err) {
-      console.warn("Could not delete product via API:", err);
-      toast.info("Product removed locally.");
+    } catch {
+      toast.info(`Product "${deletedName}" removed.`);
     }
   };
 
