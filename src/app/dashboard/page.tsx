@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useStore } from "@/context/store-context";
+import { useStore, CURRENCIES } from "@/context/store-context";
 import { useAuth } from "@/context/auth-context";
 import { PRODUCTS, Product, ProductCategory } from "@/data/products";
 import {
@@ -152,6 +152,7 @@ export default function DashboardPage() {
     updateProduct,
     deleteProduct,
     formatPrice,
+    currency,
     brands,
     addBrand,
     deleteBrand,
@@ -308,8 +309,8 @@ export default function DashboardPage() {
     name: "",
     brand: "Sony",
     category: "cameras" as ProductCategory,
-    price: 1999,
-    originalPrice: 2199,
+    price: 25000,
+    originalPrice: 27000,
     stockCount: 5,
     shortDescription: "",
     badge: "New Arrival",
@@ -406,13 +407,23 @@ export default function DashboardPage() {
   };
 
   const openEditProduct = (item: Product) => {
+    const rate = CURRENCIES[currency]?.rate || 50.5;
+    // Calculate display price in currently active currency (e.g. EGP)
+    // If previously saved in raw un-converted EGP (e.g. >= 10000), use as-is; otherwise multiply by exchange rate
+    const displayPrice = item.price >= 10000 ? Math.round(item.price) : Math.round(item.price * rate);
+    const displayOriginalPrice = item.originalPrice
+      ? item.originalPrice >= 10000
+        ? Math.round(item.originalPrice)
+        : Math.round(item.originalPrice * rate)
+      : 0;
+
     setEditProduct({
       id: item.id,
       name: item.name,
       brand: item.brand,
       category: item.category,
-      price: item.price,
-      originalPrice: item.originalPrice || 0,
+      price: displayPrice,
+      originalPrice: displayOriginalPrice,
       stockCount: (item as Product & { stockCount?: number }).stockCount ?? 5,
       shortDescription: item.shortDescription || "",
       badge: item.badge || "",
@@ -427,6 +438,10 @@ export default function DashboardPage() {
     e.preventDefault();
     if (!editProduct) return;
 
+    const rate = CURRENCIES[currency]?.rate || 50.5;
+    const basePrice = Number((Number(editProduct.price) / rate).toFixed(2));
+    const baseOriginalPrice = editProduct.originalPrice ? Number((Number(editProduct.originalPrice) / rate).toFixed(2)) : undefined;
+
     const productImage =
       editProduct.image?.trim() ||
       "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1000&q=80";
@@ -435,8 +450,8 @@ export default function DashboardPage() {
       name: editProduct.name,
       brand: editProduct.brand,
       category: editProduct.category,
-      price: Number(editProduct.price),
-      originalPrice: editProduct.originalPrice ? Number(editProduct.originalPrice) : undefined,
+      price: basePrice,
+      originalPrice: baseOriginalPrice,
       image: productImage,
       badge: editProduct.badge || undefined,
       stockStatus: editProduct.stockCount > 0 ? "in-stock" : "pre-order",
@@ -453,8 +468,8 @@ export default function DashboardPage() {
               name: editProduct.name,
               brand: editProduct.brand,
               category: editProduct.category,
-              price: Number(editProduct.price),
-              originalPrice: editProduct.originalPrice ? Number(editProduct.originalPrice) : undefined,
+              price: basePrice,
+              originalPrice: baseOriginalPrice,
               image: productImage,
               badge: editProduct.badge || undefined,
               stockCount: editProduct.stockCount,
@@ -1079,6 +1094,10 @@ export default function DashboardPage() {
       return;
     }
 
+    const rate = CURRENCIES[currency]?.rate || 50.5;
+    const basePrice = Number((Number(newProduct.price) / rate).toFixed(2));
+    const baseOriginalPrice = newProduct.originalPrice ? Number((Number(newProduct.originalPrice) / rate).toFixed(2)) : undefined;
+
     const productImage =
       newProduct.image?.trim() ||
       "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1000&q=80";
@@ -1088,8 +1107,8 @@ export default function DashboardPage() {
       name: newProduct.name,
       brand: newProduct.brand,
       category: newProduct.category,
-      price: Number(newProduct.price),
-      originalPrice: newProduct.originalPrice ? Number(newProduct.originalPrice) : undefined,
+      price: basePrice,
+      originalPrice: baseOriginalPrice,
       rating: 5.0,
       reviewsCount: 0,
       image: productImage,
@@ -1112,8 +1131,8 @@ export default function DashboardPage() {
       name: "",
       brand: "Sony",
       category: "cameras" as ProductCategory,
-      price: 1999,
-      originalPrice: 2199,
+      price: 25000,
+      originalPrice: 27000,
       stockCount: 5,
       shortDescription: "",
       badge: "New Arrival",
@@ -4430,40 +4449,42 @@ export default function DashboardPage() {
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
                     <tr className="border-b border-border text-muted-foreground font-mono text-[11px] uppercase">
-                      <th className="pb-3 font-bold">Gear Item</th>
-                      <th className="pb-3 font-bold">Department</th>
-                      <th className="pb-3 font-bold">Price</th>
-                      <th className="pb-3 font-bold">Mount / Spec</th>
-                      <th className="pb-3 font-bold">In-Stock Count</th>
-                      <th className="pb-3 font-bold">Status</th>
+                      <th className="pb-3 pr-4 font-bold">Gear Item</th>
+                      <th className="pb-3 pr-4 font-bold">Department</th>
+                      <th className="pb-3 pr-4 font-bold">Price</th>
+                      <th className="pb-3 pr-4 font-bold">Mount / Spec</th>
+                      <th className="pb-3 pr-4 font-bold">In-Stock Count</th>
+                      <th className="pb-3 pr-4 font-bold">Status</th>
                       <th className="pb-3 font-bold text-right">Quick Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/60">
                     {inventory.map((item) => (
                       <tr key={item.id} className="hover:bg-secondary/30 transition-colors">
-                        <td className="py-3.5 flex items-center gap-3">
-                          <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-secondary shrink-0 border border-border">
-                            <Image src={item.image} alt={item.name} fill className="object-cover" />
-                          </div>
-                          <div>
-                            <p className="font-bold text-foreground line-clamp-1">{item.name}</p>
-                            <p className="text-[10px] text-muted-foreground font-mono">{item.brand}</p>
+                        <td className="py-3.5 pr-4">
+                          <div className="flex items-center gap-3">
+                            <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-secondary shrink-0 border border-border">
+                              <Image src={item.image} alt={item.name} fill className="object-cover" />
+                            </div>
+                            <div>
+                              <p className="font-bold text-foreground line-clamp-1">{item.name}</p>
+                              <p className="text-[10px] text-muted-foreground font-mono">{item.brand}</p>
+                            </div>
                           </div>
                         </td>
-                        <td className="py-3.5 font-mono uppercase text-muted-foreground">
+                        <td className="py-3.5 pr-4 font-mono uppercase text-muted-foreground whitespace-nowrap">
                           {item.category}
                         </td>
-                        <td className="py-3.5 font-mono font-bold text-foreground">
+                        <td className="py-3.5 pr-4 font-mono font-bold text-foreground whitespace-nowrap">
                           {formatPrice(item.price)}
                         </td>
-                        <td className="py-3.5 font-mono text-muted-foreground">
+                        <td className="py-3.5 pr-4 font-mono text-muted-foreground whitespace-nowrap">
                           {item.mount || item.resolution || "Universal"}
                         </td>
-                        <td className="py-3.5 font-mono font-bold text-foreground">
+                        <td className="py-3.5 pr-4 font-mono font-bold text-foreground whitespace-nowrap">
                           {item.stockCount ?? 5} units
                         </td>
-                        <td className="py-3.5">
+                        <td className="py-3.5 pr-4 whitespace-nowrap">
                           <span
                             className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md ${
                               (item.stockCount ?? 5) > 3
@@ -4476,7 +4497,7 @@ export default function DashboardPage() {
                             {(item.stockCount ?? 5) > 3 ? "Healthy Stock" : (item.stockCount ?? 5) > 0 ? "Low Stock" : "Out of Stock"}
                           </span>
                         </td>
-                        <td className="py-3.5 text-right">
+                        <td className="py-3.5 text-right whitespace-nowrap">
                           <div className="flex items-center justify-end gap-1.5">
                             <Button
                               onClick={() => openEditProduct(item)}
@@ -5265,16 +5286,23 @@ export default function DashboardPage() {
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="font-semibold text-muted-foreground block mb-1">Price (USD) *</label>
+                  <label className="font-semibold text-muted-foreground block mb-1">
+                    Price ({CURRENCIES[currency]?.symbol.trim() || "E£"} {currency}) *
+                  </label>
                   <input
                     type="number"
                     value={newProduct.price}
                     onChange={(e) => setNewProduct({ ...newProduct, price: Number(e.target.value) })}
                     className="w-full px-3 py-2.5 rounded-xl border border-border bg-secondary/30 font-mono text-foreground"
                   />
+                  <p className="text-[10px] text-muted-foreground font-mono mt-1">
+                    Live: <span className="font-bold text-foreground">{formatPrice(Number(newProduct.price) / (CURRENCIES[currency]?.rate || 50.5))}</span>
+                  </p>
                 </div>
                 <div>
-                  <label className="font-semibold text-muted-foreground block mb-1">Original Price</label>
+                  <label className="font-semibold text-muted-foreground block mb-1">
+                    Original Price ({CURRENCIES[currency]?.symbol.trim() || "E£"})
+                  </label>
                   <input
                     type="number"
                     value={newProduct.originalPrice}
@@ -5485,16 +5513,23 @@ export default function DashboardPage() {
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="font-semibold text-muted-foreground block mb-1">Price (USD) *</label>
+                  <label className="font-semibold text-muted-foreground block mb-1">
+                    Price ({CURRENCIES[currency]?.symbol.trim() || "E£"} {currency}) *
+                  </label>
                   <input
                     type="number"
                     value={editProduct.price}
                     onChange={(e) => setEditProduct({ ...editProduct, price: Number(e.target.value) })}
                     className="w-full px-3 py-2.5 rounded-xl border border-border bg-secondary/30 font-mono text-foreground"
                   />
+                  <p className="text-[10px] text-muted-foreground font-mono mt-1">
+                    Live: <span className="font-bold text-foreground">{formatPrice(Number(editProduct.price) / (CURRENCIES[currency]?.rate || 50.5))}</span>
+                  </p>
                 </div>
                 <div>
-                  <label className="font-semibold text-muted-foreground block mb-1">Original Price</label>
+                  <label className="font-semibold text-muted-foreground block mb-1">
+                    Original Price ({CURRENCIES[currency]?.symbol.trim() || "E£"})
+                  </label>
                   <input
                     type="number"
                     value={editProduct.originalPrice}
