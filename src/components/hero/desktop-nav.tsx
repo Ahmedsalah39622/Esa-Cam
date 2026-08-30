@@ -27,6 +27,7 @@ export function DesktopNav() {
     formatPrice,
     setQuickViewProduct,
     setSelectedCategory,
+    products,
   } = useStore();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -36,21 +37,21 @@ export function DesktopNav() {
 
   useEffect(() => {
     if (searchQuery.trim().length > 1) {
-      const q = searchQuery.toLowerCase();
-      const results = PRODUCTS.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          p.brand.toLowerCase().includes(q) ||
-          p.category.toLowerCase().includes(q) ||
-          p.shortDescription.toLowerCase().includes(q)
-      ).slice(0, 5);
+      const terms = searchQuery.toLowerCase().trim().split(/\s+/).filter(Boolean);
+      const pool = products && products.length > 0 ? products : PRODUCTS;
+      const results = pool
+        .filter((p) => {
+          const searchable = `${p.name} ${p.brand} ${p.category} ${p.shortDescription || ""} ${p.mount || ""}`.toLowerCase();
+          return terms.every((t) => searchable.includes(t));
+        })
+        .slice(0, 6);
       setSearchResults(results);
       setIsSearchOpen(true);
     } else {
       setSearchResults([]);
       setIsSearchOpen(false);
     }
-  }, [searchQuery]);
+  }, [searchQuery, products]);
 
   // Click outside search
   useEffect(() => {

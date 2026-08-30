@@ -122,12 +122,10 @@ export default function StorePage() {
         }
         // Search
         if (searchQuery.trim()) {
-          const q = searchQuery.toLowerCase();
-          const matchName = product.name.toLowerCase().includes(q);
-          const matchBrand = product.brand.toLowerCase().includes(q);
-          const matchCat = product.category.toLowerCase().includes(q);
-          const matchDesc = product.shortDescription?.toLowerCase().includes(q);
-          if (!matchName && !matchBrand && !matchCat && !matchDesc) return false;
+          const terms = searchQuery.toLowerCase().trim().split(/\s+/).filter(Boolean);
+          const searchable = `${product.name} ${product.brand} ${product.category} ${product.shortDescription || ""} ${product.mount || ""}`.toLowerCase();
+          const matches = terms.every((t) => searchable.includes(t));
+          if (!matches) return false;
         }
         return true;
       })

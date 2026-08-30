@@ -468,7 +468,24 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     try {
       const savedProds = localStorage.getItem("esa_cam_products");
-      if (savedProds) setProducts(JSON.parse(savedProds));
+      if (savedProds) {
+        const parsed = JSON.parse(savedProds);
+        if (Array.isArray(parsed) && parsed.length >= PRODUCTS.length) {
+          setProducts(parsed);
+        } else if (Array.isArray(parsed)) {
+          const catalogMap = new Map(PRODUCTS.map((p) => [p.id, p]));
+          const merged = [...PRODUCTS];
+          for (const p of parsed) {
+            if (!catalogMap.has(p.id)) {
+              merged.unshift(p);
+            }
+          }
+          setProducts(merged);
+          localStorage.setItem("esa_cam_products", JSON.stringify(merged));
+        }
+      } else {
+        setProducts(PRODUCTS);
+      }
       const savedCart = localStorage.getItem("esa_cam_cart");
       if (savedCart) setCart(JSON.parse(savedCart));
       const savedWishlist = localStorage.getItem("esa_cam_wishlist");
