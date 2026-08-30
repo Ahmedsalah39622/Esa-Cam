@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useStore, CURRENCIES } from "@/context/store-context";
 import { useAuth } from "@/context/auth-context";
 import { PRODUCTS, Product, ProductCategory } from "@/data/products";
+import { SearchableProductSelect } from "@/components/dashboard/searchable-product-select";
 import {
   Camera,
   ShoppingBag,
@@ -2078,29 +2079,22 @@ export default function DashboardPage() {
                           </span>
                         </div>
 
-                        <select
-                          value={heroSlidesDraft[activeHeroSlideIdx].productId || "sony-fx3"}
-                          onChange={(e) => {
-                            const selectedId = e.target.value;
-                            const found = PRODUCTS.find((p) => p.id === selectedId);
-                            if (found) {
-                              const updated = [...heroSlidesDraft];
-                              updated[activeHeroSlideIdx] = {
-                                ...updated[activeHeroSlideIdx],
-                                productId: found.id,
-                              };
-                              setHeroSlidesDraft(updated);
-                              toast.success(`Linked "${found.name}" to Slide ${activeHeroSlideIdx + 1}!`);
-                            }
+                        <SearchableProductSelect
+                          products={products && products.length > 0 ? products : PRODUCTS}
+                          selectedProductId={heroSlidesDraft[activeHeroSlideIdx].productId || "sony-fx3"}
+                          onSelectProduct={(found) => {
+                            const updated = [...heroSlidesDraft];
+                            updated[activeHeroSlideIdx] = {
+                              ...updated[activeHeroSlideIdx],
+                              productId: found.id,
+                            };
+                            setHeroSlidesDraft(updated);
+                            toast.success(`Linked "${found.name}" to Slide ${activeHeroSlideIdx + 1}!`);
                           }}
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-foreground font-sans font-bold text-xs cursor-pointer focus:outline-hidden"
-                        >
-                          {PRODUCTS.map((prod) => (
-                            <option key={prod.id} value={prod.id}>
-                              [{prod.brand.toUpperCase()}] {prod.name} — ${prod.price.toLocaleString()} ({prod.category})
-                            </option>
-                          ))}
-                        </select>
+                          label=""
+                          placeholder="ابحث بالاسم أو الماركة (e.g. Sony FX3, Canon R5, Sigma 24mm)..."
+                          formatPrice={formatPrice}
+                        />
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2376,32 +2370,22 @@ export default function DashboardPage() {
 
                                   {/* Quick Switch Dropdown directly here */}
                                   <div className="pt-1.5 border-t border-[#27272A]">
-                                    <label className="text-[10px] font-mono text-[#A1A1AA] block mb-1">
-                                      تغيير المنتج المعروض (Change Product):
-                                    </label>
-                                    <select
-                                      value={heroSlidesDraft[activeHeroSlideIdx].productId || "sony-fx3"}
-                                      onChange={(e) => {
-                                        const selectedId = e.target.value;
-                                        const found = PRODUCTS.find((p) => p.id === selectedId);
-                                        if (found) {
-                                          const updated = [...heroSlidesDraft];
-                                          updated[activeHeroSlideIdx] = {
-                                            ...updated[activeHeroSlideIdx],
-                                            productId: found.id,
-                                          };
-                                          setHeroSlidesDraft(updated);
-                                          toast.success(`Changed Hero Product to "${found.name}"!`);
-                                        }
+                                    <SearchableProductSelect
+                                      products={products && products.length > 0 ? products : PRODUCTS}
+                                      selectedProductId={heroSlidesDraft[activeHeroSlideIdx].productId || "sony-fx3"}
+                                      onSelectProduct={(found) => {
+                                        const updated = [...heroSlidesDraft];
+                                        updated[activeHeroSlideIdx] = {
+                                          ...updated[activeHeroSlideIdx],
+                                          productId: found.id,
+                                        };
+                                        setHeroSlidesDraft(updated);
+                                        toast.success(`Changed Hero Product to "${found.name}"!`);
                                       }}
-                                      className="w-full px-2.5 py-1.5 rounded-lg border border-[#3F3F46] bg-[#18181B] text-white font-sans text-xs cursor-pointer focus:border-[#FFE600] focus:outline-hidden"
-                                    >
-                                      {PRODUCTS.map((prod) => (
-                                        <option key={prod.id} value={prod.id}>
-                                          [{prod.brand.toUpperCase()}] {prod.name} — ${prod.price.toLocaleString()}
-                                        </option>
-                                      ))}
-                                    </select>
+                                      label="تغيير المنتج المعروض (Change Product):"
+                                      placeholder="ابحث بالاسم أو الماركة (e.g. Sony FX3, Canon R5, Sigma 24mm)..."
+                                      formatPrice={formatPrice}
+                                    />
                                   </div>
                                 </div>
                               );
@@ -2568,32 +2552,22 @@ export default function DashboardPage() {
 
                       {/* Product Selector Dropdown */}
                       <div className="space-y-1.5">
-                        <label className="font-semibold text-foreground block text-xs">
-                          اختر المنتج المعروض من الكتالوج (Select Catalog Product) *
-                        </label>
-                        <select
-                          value={stageDraft.featuredProductId || "sony-fx3"}
-                          onChange={(e) => {
-                            const selectedId = e.target.value;
-                            const found = PRODUCTS.find((p) => p.id === selectedId);
-                            if (found) {
-                              setStageDraft({
-                                ...stageDraft,
-                                featuredProductId: found.id,
-                                gearName: found.name,
-                                gearPrice: found.price,
-                              });
-                              toast.success(`Selected "${found.name}" as featured setup!`);
-                            }
+                        <SearchableProductSelect
+                          products={products && products.length > 0 ? products : PRODUCTS}
+                          selectedProductId={stageDraft.featuredProductId || "sony-fx3"}
+                          onSelectProduct={(found) => {
+                            setStageDraft({
+                              ...stageDraft,
+                              featuredProductId: found.id,
+                              gearName: found.name,
+                              gearPrice: found.price,
+                            });
+                            toast.success(`Selected "${found.name}" as featured setup!`);
                           }}
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-foreground font-sans font-bold text-xs cursor-pointer focus:outline-hidden"
-                        >
-                          {PRODUCTS.map((prod) => (
-                            <option key={prod.id} value={prod.id}>
-                              [{prod.brand.toUpperCase()}] {prod.name} — ${prod.price.toLocaleString()} ({prod.category})
-                            </option>
-                          ))}
-                        </select>
+                          label="اختر المنتج المعروض من الكتالوج (Select Catalog Product) *"
+                          placeholder="ابحث بالاسم أو الماركة (e.g. Sony FX3, Canon R5, Nanlite)..."
+                          formatPrice={formatPrice}
+                        />
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -2873,33 +2847,23 @@ export default function DashboardPage() {
 
                       {/* Product Selector Dropdown for Lens Spotlight */}
                       <div className="space-y-1.5">
-                        <label className="font-semibold text-foreground block text-xs">
-                          اختر العدسة / المنتج من الكتالوج (Select Spotlight Product)
-                        </label>
-                        <select
-                          value={collageDraft.lensName}
-                          onChange={(e) => {
-                            const found = PRODUCTS.find((p) => p.name === e.target.value);
-                            if (found) {
-                              setCollageDraft({
-                                ...collageDraft,
-                                lensName: found.name,
-                                lensPrice: found.price,
-                                lensRating: `${found.rating || 5.0}`,
-                                lensReviews: `${found.reviewsCount || 180} Reviews`,
-                              });
-                              toast.success(`Selected "${found.name}" as spotlight lens!`);
-                            }
+                        <SearchableProductSelect
+                          products={products && products.length > 0 ? products : PRODUCTS}
+                          selectedProductName={collageDraft.lensName}
+                          onSelectProduct={(found) => {
+                            setCollageDraft({
+                              ...collageDraft,
+                              lensName: found.name,
+                              lensPrice: found.price,
+                              lensRating: `${found.rating || 5.0}`,
+                              lensReviews: `${found.reviewsCount || 180} Reviews`,
+                            });
+                            toast.success(`Selected "${found.name}" as spotlight lens!`);
                           }}
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-foreground font-sans font-bold text-xs cursor-pointer focus:outline-hidden"
-                        >
-                          <option value="">— اختر من منتجات الكتالوج —</option>
-                          {PRODUCTS.map((prod) => (
-                            <option key={prod.id} value={prod.name}>
-                              [{prod.brand.toUpperCase()}] {prod.name} — ${prod.price.toLocaleString()} ({prod.category})
-                            </option>
-                          ))}
-                        </select>
+                          label="اختر العدسة / المنتج من الكتالوج (Select Spotlight Product)"
+                          placeholder="ابحث بالاسم أو الماركة (e.g. Sigma 24-70mm, Sony GM, Canon RF)..."
+                          formatPrice={formatPrice}
+                        />
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
