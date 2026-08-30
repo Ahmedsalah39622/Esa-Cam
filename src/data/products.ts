@@ -4,11 +4,17 @@ export type ProductCategory =
   | "all"
   | "cameras"
   | "lenses"
-  | "lighting"
-  | "audio"
-  | "gimbals"
-  | "drones"
   | "accessories"
+  | "audio"
+  | "dental"
+  | "deals"
+  | "bags"
+  | "gimbals"
+  | "flashes"
+  | "lighting"
+  | "memory-cards"
+  | "tripods"
+  | "drones"
   | "pre-owned";
 
 export interface Product {

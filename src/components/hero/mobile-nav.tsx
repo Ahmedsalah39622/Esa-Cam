@@ -15,19 +15,19 @@ export function MobileNav() {
 
   const categories = [
     { label: "Home", href: "/" },
-    { label: "Cameras", href: "/store", cat: "cameras" },
-    { label: "Lenses", href: "/store", cat: "lenses" },
-    { label: "Accessories", href: "/store", cat: "accessories" },
-    { label: "Audio & Video", href: "/store", cat: "audio" },
-    { label: "Dental Equipments", href: "/store", cat: "cameras" },
-    { label: "Deals", href: "/#deals" },
-    { label: "Bags & Straps", href: "/store", cat: "accessories" },
-    { label: "Stabilizer & Gimbal", href: "/store", cat: "gimbals" },
-    { label: "Flashes", href: "/store", cat: "lighting" },
-    { label: "Lighting Equipment", href: "/store", cat: "lighting" },
-    { label: "Memory Cards", href: "/store", cat: "accessories" },
-    { label: "Tripods & Supports", href: "/store", cat: "gimbals" },
-    { label: "Used", href: "/store", cat: "pre-owned" },
+    { label: "Cameras", href: "/store?cat=cameras", cat: "cameras" },
+    { label: "Lenses", href: "/store?cat=lenses", cat: "lenses" },
+    { label: "Accessories", href: "/store?cat=accessories", cat: "accessories" },
+    { label: "Audio & Video", href: "/store?cat=audio", cat: "audio" },
+    { label: "Dental Equipments", href: "/store?cat=dental", cat: "dental" },
+    { label: "Deals", href: "/store?cat=deals", cat: "deals" },
+    { label: "Bags & Straps", href: "/store?cat=bags", cat: "bags" },
+    { label: "Stabilizer & Gimbal", href: "/store?cat=gimbals", cat: "gimbals" },
+    { label: "Flashes", href: "/store?cat=flashes", cat: "flashes" },
+    { label: "Lighting Equipment", href: "/store?cat=lighting", cat: "lighting" },
+    { label: "Memory Cards", href: "/store?cat=memory-cards", cat: "memory-cards" },
+    { label: "Tripods & Supports", href: "/store?cat=tripods", cat: "tripods" },
+    { label: "Used", href: "/store?cat=pre-owned", cat: "pre-owned" },
   ];
 
   return (

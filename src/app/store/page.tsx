@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Nav } from "@/components/hero/nav";
 import { Footer } from "@/components/footer/footer";
 import { ProductCategory } from "@/data/products";
@@ -27,7 +28,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 
-export default function StorePage() {
+function StoreContent() {
   const {
     products,
     formatPrice,
@@ -37,39 +38,65 @@ export default function StorePage() {
     isInWishlist,
   } = useStore();
 
-  const [selectedCategory, setSelectedCategory] = useState<ProductCategory | "all">("all");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const urlCat = searchParams.get("cat") as ProductCategory | "deals" | null;
+
+  const [selectedCategory, setSelectedCategory] = useState<ProductCategory | "all" | "deals">("all");
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
   const [selectedMounts, setSelectedMounts] = useState<string[]>([]);
   const [inStockOnly, setInStockOnly] = useState(false);
   const [onSaleOnly, setOnSaleOnly] = useState(false);
-  const [maxPrice, setMaxPrice] = useState<number>(10000);
+  const [maxPrice, setMaxPrice] = useState<number>(100000);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"featured" | "price-asc" | "price-desc" | "rating" | "reviews">("featured");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  const categories = [
+  useEffect(() => {
+    if (urlCat) {
+      setSelectedCategory(urlCat);
+    } else {
+      setSelectedCategory("all");
+    }
+  }, [urlCat]);
+
+  const handleSelectCategory = (catId: ProductCategory | "all" | "deals") => {
+    setSelectedCategory(catId);
+    if (catId === "all") {
+      router.push("/store", { scroll: false });
+    } else {
+      router.push(`/store?cat=${catId}`, { scroll: false });
+    }
+  };
+
+  const categories: { id: ProductCategory | "all" | "deals"; label: string; count: number }[] = [
     { id: "all", label: "All Equipment", count: products.length },
-    { id: "cameras", label: "Cinema & Mirrorless", count: products.filter((p) => p.category === "cameras").length },
-    { id: "lenses", label: "Cinema & Prime Lenses", count: products.filter((p) => p.category === "lenses").length },
-    { id: "lighting", label: "Studio & Location Lighting", count: products.filter((p) => p.category === "lighting").length },
-    { id: "audio", label: "Broadcast & Field Audio", count: products.filter((p) => p.category === "audio").length },
-    { id: "gimbals", label: "Gimbals & Rigs", count: products.filter((p) => p.category === "gimbals").length },
-    { id: "drones", label: "Cinema Drones", count: products.filter((p) => p.category === "drones").length },
-    { id: "accessories", label: "Power, Media & Rigs", count: products.filter((p) => p.category === "accessories").length },
-    { id: "pre-owned", label: "Certified Pre-Owned", count: products.filter((p) => p.category === "pre-owned").length },
+    { id: "cameras", label: "Cameras", count: products.filter((p) => p.category === "cameras").length },
+    { id: "lenses", label: "Lenses", count: products.filter((p) => p.category === "lenses").length },
+    { id: "accessories", label: "Accessories", count: products.filter((p) => p.category === "accessories").length },
+    { id: "audio", label: "Audio & Video", count: products.filter((p) => p.category === "audio").length },
+    { id: "dental", label: "Dental Equipments", count: products.filter((p) => p.category === "dental").length },
+    { id: "deals", label: "Deals", count: products.filter((p) => Boolean(p.originalPrice && p.originalPrice > p.price) || Boolean(p.badge?.includes("SAVE"))).length },
+    { id: "bags", label: "Bags & Straps", count: products.filter((p) => p.category === "bags").length },
+    { id: "gimbals", label: "Stabilizer & Gimbal", count: products.filter((p) => p.category === "gimbals").length },
+    { id: "flashes", label: "Flashes", count: products.filter((p) => p.category === "flashes").length },
+    { id: "lighting", label: "Lighting Equipment", count: products.filter((p) => p.category === "lighting").length },
+    { id: "memory-cards", label: "Memory Cards", count: products.filter((p) => p.category === "memory-cards").length },
+    { id: "tripods", label: "Tripods & Supports", count: products.filter((p) => p.category === "tripods").length },
+    { id: "pre-owned", label: "Used", count: products.filter((p) => p.category === "pre-owned").length },
   ];
 
   const allBrands = useMemo(() => {
-    return Array.from(new Set(products.map((p) => p.brand)));
+    return Array.from(new Set(products.map((p) => p.brand))).filter(Boolean).sort();
   }, [products]);
 
-  const allMounts = ["Sony E", "Canon RF", "L-Mount", "Fujifilm X"];
+  const allMounts = ["Sony E", "Canon RF", "L-Mount", "Fujifilm X", "Universal"];
 
   const toggleBrand = (brand: string) => {
     setSelectedBrands((prev) =>
@@ -84,49 +111,61 @@ export default function StorePage() {
   };
 
   const resetAllFilters = () => {
-    setSelectedCategory("all");
+    handleSelectCategory("all");
     setSelectedBrands([]);
     setSelectedMounts([]);
     setInStockOnly(false);
     setOnSaleOnly(false);
-    setMaxPrice(10000);
+    setMaxPrice(100000);
     setSearchQuery("");
   };
 
   const filteredProducts = useMemo(() => {
     return products
       .filter((product) => {
-        // Category
-        if (selectedCategory !== "all" && product.category !== selectedCategory) {
-          return false;
+        // Category / Deals
+        if (selectedCategory === "deals") {
+          const isSaleItem = Boolean(product.originalPrice && product.originalPrice > product.price) || Boolean(product.badge?.includes("SAVE"));
+          if (!isSaleItem) return false;
+        } else if (selectedCategory !== "all") {
+          if (product.category !== selectedCategory) {
+            return false;
+          }
         }
+
         // Brand
         if (selectedBrands.length > 0 && !selectedBrands.includes(product.brand)) {
           return false;
         }
+
         // Mount
         if (selectedMounts.length > 0) {
           if (!product.mount || !selectedMounts.includes(product.mount)) return false;
         }
+
         // In Stock
         if (inStockOnly && product.stockStatus !== "in-stock") {
           return false;
         }
+
         // On Sale
         if (onSaleOnly && !product.originalPrice) {
           return false;
         }
+
         // Max Price
         if (product.price > maxPrice) {
           return false;
         }
-        // Search
+
+        // Search - Multi-word token matching
         if (searchQuery.trim()) {
           const terms = searchQuery.toLowerCase().trim().split(/\s+/).filter(Boolean);
           const searchable = `${product.name} ${product.brand} ${product.category} ${product.shortDescription || ""} ${product.mount || ""}`.toLowerCase();
           const matches = terms.every((t) => searchable.includes(t));
           if (!matches) return false;
         }
+
         return true;
       })
       .sort((a, b) => {
@@ -150,14 +189,12 @@ export default function StorePage() {
     sortBy,
   ]);
 
-
   const activeFilterCount =
     (selectedCategory !== "all" ? 1 : 0) +
     selectedBrands.length +
     selectedMounts.length +
     (inStockOnly ? 1 : 0) +
     (onSaleOnly ? 1 : 0) +
-    (maxPrice < 6000 ? 1 : 0) +
     (searchQuery.trim() ? 1 : 0);
 
   return (
@@ -173,6 +210,14 @@ export default function StorePage() {
                 <Link href="/" className="text-xs text-muted-foreground hover:text-foreground">Home</Link>
                 <span className="text-xs text-muted-foreground">/</span>
                 <span className="text-xs font-semibold text-foreground font-mono">Store Catalog</span>
+                {selectedCategory !== "all" && (
+                  <>
+                    <span className="text-xs text-muted-foreground">/</span>
+                    <span className="text-xs font-bold text-primary capitalize font-mono">
+                      {categories.find((c) => c.id === selectedCategory)?.label || selectedCategory}
+                    </span>
+                  </>
+                )}
               </div>
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-foreground">
                 ESA CAM Store & Gear Inventory
@@ -224,11 +269,11 @@ export default function StorePage() {
                 <h4 className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Department
                 </h4>
-                <div className="space-y-1">
+                <div className="space-y-1 max-h-[480px] overflow-y-auto pr-1 no-scrollbar">
                   {categories.map((cat) => (
                     <button
                       key={cat.id}
-                      onClick={() => setSelectedCategory(cat.id as ProductCategory | "all")}
+                      onClick={() => handleSelectCategory(cat.id)}
                       className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
                         selectedCategory === cat.id
                           ? "bg-foreground text-background font-bold shadow-xs"
@@ -275,7 +320,7 @@ export default function StorePage() {
               {/* Lens Mount Filter */}
               <div className="border-t border-border pt-4 space-y-2.5">
                 <h4 className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Lens Mount
+                  Mount / Standard
                 </h4>
                 <div className="space-y-1.5">
                   {allMounts.map((mount) => (
@@ -289,32 +334,9 @@ export default function StorePage() {
                         onChange={() => toggleMount(mount)}
                         className="rounded border-border text-primary focus:ring-primary h-3.5 w-3.5"
                       />
-                      <span>{mount} Mount</span>
+                      <span>{mount}</span>
                     </label>
                   ))}
-                </div>
-              </div>
-
-              {/* Price Filter Slider */}
-              <div className="border-t border-border pt-4 space-y-3">
-                <div className="flex items-center justify-between text-xs">
-                  <h4 className="font-mono font-bold uppercase tracking-wider text-muted-foreground">
-                    Max Budget
-                  </h4>
-                  <span className="font-mono font-bold text-foreground">{formatPrice(maxPrice)}</span>
-                </div>
-                <input
-                  type="range"
-                  min="200"
-                  max="6000"
-                  step="100"
-                  value={maxPrice}
-                  onChange={(e) => setMaxPrice(Number(e.target.value))}
-                  className="w-full accent-primary cursor-pointer"
-                />
-                <div className="flex justify-between text-[10px] text-muted-foreground font-mono">
-                  <span>{formatPrice(200)}</span>
-                  <span>{formatPrice(6000)}</span>
                 </div>
               </div>
 
@@ -349,61 +371,48 @@ export default function StorePage() {
               <div className="flex flex-wrap items-center justify-between gap-4">
                 {/* Search in Catalog */}
                 <div className="relative flex-1 min-w-[240px]">
-                  <Search className="absolute left-3.5 top-2.5 w-4 h-4 text-muted-foreground" />
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <input
                     type="text"
-                    placeholder="Search in store (e.g. Sony FX3, 24-70mm, Aputure 600d, DJI RS 4)..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-9 py-2 text-xs rounded-2xl border border-border bg-secondary/30 focus:outline-hidden focus:ring-1 focus:ring-primary text-foreground"
+                    placeholder="Search by title, brand, mount, or spec..."
+                    className="w-full pl-10 pr-9 py-2.5 rounded-xl border border-border bg-secondary/30 text-xs text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-1 focus:ring-primary font-sans"
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery("")}
-                      className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
 
-                {/* Mobile Filter Button */}
-                <Button
-                  onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
-                  variant="outline"
-                  size="sm"
-                  className="lg:hidden rounded-xl text-xs font-semibold flex items-center gap-1.5"
-                >
-                  <Filter className="w-3.5 h-3.5" />
-                  <span>Filters {activeFilterCount > 0 && `(${activeFilterCount})`}</span>
-                </Button>
+                {/* Sort & Layout Controls */}
+                <div className="flex items-center gap-3">
+                  {/* Sort Dropdown */}
+                  <div className="flex items-center gap-2">
+                    <ArrowUpDown className="w-3.5 h-3.5 text-muted-foreground" />
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                      className="bg-secondary/40 border border-border rounded-xl px-3 py-2 text-xs font-medium text-foreground focus:outline-hidden cursor-pointer"
+                    >
+                      <option value="featured">Featured / Bestsellers</option>
+                      <option value="price-asc">Price: Low to High</option>
+                      <option value="price-desc">Price: High to Low</option>
+                      <option value="rating">Highest Rated</option>
+                      <option value="reviews">Most Reviewed</option>
+                    </select>
+                  </div>
 
-                {/* Sort dropdown */}
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-xs text-muted-foreground flex items-center gap-1 hidden sm:flex">
-                    <ArrowUpDown className="w-3.5 h-3.5" /> Sort:
-                  </span>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as "featured" | "price-asc" | "price-desc" | "rating" | "reviews")}
-                    className="bg-secondary/40 border border-border px-3 py-1.5 rounded-xl text-xs font-semibold text-foreground cursor-pointer focus:outline-hidden"
-                    aria-label="Sort products"
-                  >
-                    <option value="featured" className="bg-card">Featured / Bestsellers</option>
-                    <option value="price-asc" className="bg-card">Price: Low to High</option>
-                    <option value="price-desc" className="bg-card">Price: High to Low</option>
-                    <option value="rating" className="bg-card">Top Customer Rated</option>
-                    <option value="reviews" className="bg-card">Most Reviewed</option>
-                  </select>
-
-                  {/* View Mode toggle */}
-                  <div className="flex items-center border border-border rounded-xl bg-secondary/30 p-0.5 ml-1 hidden sm:flex">
+                  {/* View Mode Buttons */}
+                  <div className="hidden sm:flex items-center bg-secondary/50 border border-border rounded-xl p-1">
                     <button
                       onClick={() => setViewMode("grid")}
                       className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                        viewMode === "grid"
-                          ? "bg-background text-foreground shadow-xs"
-                          : "text-muted-foreground hover:text-foreground"
+                        viewMode === "grid" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground"
                       }`}
                       title="Grid View"
                     >
@@ -412,26 +421,39 @@ export default function StorePage() {
                     <button
                       onClick={() => setViewMode("list")}
                       className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                        viewMode === "list"
-                          ? "bg-background text-foreground shadow-xs"
-                          : "text-muted-foreground hover:text-foreground"
+                        viewMode === "list" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground"
                       }`}
                       title="List View"
                     >
                       <LayoutList className="w-4 h-4" />
                     </button>
                   </div>
+
+                  {/* Mobile Filter Button */}
+                  <Button
+                    onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
+                    variant="outline"
+                    className="lg:hidden rounded-xl text-xs font-semibold gap-2"
+                  >
+                    <Filter className="w-3.5 h-3.5" />
+                    <span>Filters</span>
+                    {activeFilterCount > 0 && (
+                      <span className="bg-primary text-primary-foreground text-[10px] px-1.5 py-0.2 rounded-full font-mono">
+                        {activeFilterCount}
+                      </span>
+                    )}
+                  </Button>
                 </div>
               </div>
 
-              {/* Active Filter Chips */}
+              {/* Active Filter Tags */}
               {activeFilterCount > 0 && (
-                <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/60">
+                <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border/50">
                   <span className="text-[11px] font-mono text-muted-foreground">Active:</span>
                   {selectedCategory !== "all" && (
-                    <Badge variant="secondary" className="text-[11px] gap-1">
-                      Dept: {selectedCategory}
-                      <X className="w-3 h-3 cursor-pointer" onClick={() => setSelectedCategory("all")} />
+                    <Badge variant="secondary" className="text-[11px] gap-1 capitalize">
+                      {categories.find((c) => c.id === selectedCategory)?.label || selectedCategory}
+                      <X className="w-3 h-3 cursor-pointer" onClick={() => handleSelectCategory("all")} />
                     </Badge>
                   )}
                   {selectedBrands.map((b) => (
@@ -442,7 +464,7 @@ export default function StorePage() {
                   ))}
                   {selectedMounts.map((m) => (
                     <Badge key={m} variant="secondary" className="text-[11px] gap-1">
-                      {m} Mount
+                      {m}
                       <X className="w-3 h-3 cursor-pointer" onClick={() => toggleMount(m)} />
                     </Badge>
                   ))}
@@ -466,7 +488,7 @@ export default function StorePage() {
                   )}
                   <button
                     onClick={resetAllFilters}
-                    className="text-[11px] text-primary font-bold hover:underline ml-auto"
+                    className="text-[11px] text-primary font-bold hover:underline ml-auto cursor-pointer"
                   >
                     Clear All
                   </button>
@@ -479,7 +501,7 @@ export default function StorePage() {
               <div className="lg:hidden bg-card border border-border rounded-3xl p-5 shadow-lg space-y-4 animate-in slide-in-from-top-2">
                 <div className="flex items-center justify-between border-b border-border pb-3">
                   <h3 className="font-bold text-sm">Filter Options</h3>
-                  <button onClick={() => setIsMobileFilterOpen(false)}>
+                  <button onClick={() => setIsMobileFilterOpen(false)} className="cursor-pointer">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
@@ -487,23 +509,26 @@ export default function StorePage() {
                 {/* Categories */}
                 <div className="space-y-1.5">
                   <p className="text-[11px] font-mono font-bold uppercase text-muted-foreground">Department</p>
-                  <div className="grid grid-cols-2 gap-1.5">
+                  <div className="grid grid-cols-2 gap-1.5 max-h-60 overflow-y-auto pr-1">
                     {categories.map((cat) => (
                       <button
                         key={cat.id}
-                        onClick={() => setSelectedCategory(cat.id as ProductCategory | "all")}
-                        className={`text-left px-2.5 py-1.5 rounded-lg text-xs font-medium ${
+                        onClick={() => {
+                          handleSelectCategory(cat.id);
+                          setIsMobileFilterOpen(false);
+                        }}
+                        className={`text-left px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
                           selectedCategory === cat.id ? "bg-foreground text-background font-bold" : "bg-secondary/40 text-muted-foreground"
                         }`}
                       >
-                        {cat.label}
+                        {cat.label} ({cat.count})
                       </button>
                     ))}
                   </div>
                 </div>
 
                 {/* Apply / Close */}
-                <Button onClick={() => setIsMobileFilterOpen(false)} className="w-full text-xs font-bold rounded-xl mt-2">
+                <Button onClick={() => setIsMobileFilterOpen(false)} className="w-full text-xs font-bold rounded-xl mt-2 cursor-pointer">
                   Apply Filters ({filteredProducts.length} Results)
                 </Button>
               </div>
@@ -521,7 +546,7 @@ export default function StorePage() {
                     Try broadening your brand selection, budget slider, or clearing the search query.
                   </p>
                 </div>
-                <Button onClick={resetAllFilters} variant="outline" className="rounded-xl text-xs font-semibold">
+                <Button onClick={resetAllFilters} variant="outline" className="rounded-xl text-xs font-semibold cursor-pointer">
                   Reset All Store Filters
                 </Button>
               </div>
@@ -549,8 +574,6 @@ export default function StorePage() {
                           unoptimized
                           className="object-cover group-hover:scale-105 transition-transform"
                         />
-
-
                         {product.badge && (
                           <div className="absolute top-2 left-2">
                             <Badge variant="default" className="text-[10px] font-bold">
@@ -579,22 +602,25 @@ export default function StorePage() {
                           {product.name}
                         </h3>
 
-                        <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                        <p className="text-xs text-muted-foreground line-clamp-2">
                           {product.shortDescription}
                         </p>
 
-                        <div className="flex flex-wrap gap-2 pt-1">
-                          {product.specs.slice(0, 3).map((s, idx) => (
-                            <span key={idx} className="bg-secondary/60 text-muted-foreground px-2 py-0.5 rounded-md text-[10px] font-mono">
-                              <strong>{s.label}:</strong> {s.value}
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {product.specs?.slice(0, 3).map((spec, i) => (
+                            <span
+                              key={i}
+                              className="text-[10px] font-mono bg-secondary/60 text-muted-foreground px-2 py-0.5 rounded-md border border-border"
+                            >
+                              {spec.label}: <strong className="text-foreground">{spec.value}</strong>
                             </span>
                           ))}
                         </div>
                       </div>
 
-                      <div className="w-full sm:w-48 flex flex-col justify-between sm:items-end border-t sm:border-t-0 sm:border-l border-border pt-4 sm:pt-0 sm:pl-5 space-y-3 shrink-0">
+                      <div className="sm:w-48 flex sm:flex-col items-center sm:items-end justify-between gap-3 shrink-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-border w-full">
                         <div className="text-left sm:text-right">
-                          <span className="font-mono text-xl font-black text-foreground block">
+                          <span className="font-mono text-lg font-black text-foreground block">
                             {formatPrice(product.price)}
                           </span>
                           {product.originalPrice && (
@@ -625,7 +651,7 @@ export default function StorePage() {
                           </Button>
                           <button
                             onClick={() => toggleWishlist(product.id)}
-                            className={`h-9 w-9 rounded-xl border border-border flex items-center justify-center transition-colors ${
+                            className={`h-9 w-9 rounded-xl border border-border flex items-center justify-center transition-colors cursor-pointer ${
                               isWished ? "bg-rose-500/10 text-rose-500" : "hover:bg-secondary text-muted-foreground"
                             }`}
                           >
@@ -644,5 +670,13 @@ export default function StorePage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function StorePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background flex items-center justify-center text-sm font-mono">Loading ESA CAM Store...</div>}>
+      <StoreContent />
+    </Suspense>
   );
 }

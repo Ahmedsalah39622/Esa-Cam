@@ -264,6 +264,13 @@ export default function DashboardPage() {
   const [isLoadingOrders, setIsLoadingOrders] = useState(true);
   const [tradeIns, setTradeIns] = useState<TradeIn[]>(INITIAL_TRADE_INS);
   const [inventory, setInventory] = useState<Product[]>(products);
+  const [inventorySearch, setInventorySearch] = useState("");
+  const [inventoryDepartmentFilter, setInventoryDepartmentFilter] = useState("all");
+  const [inventoryBrandFilter, setInventoryBrandFilter] = useState("all");
+  const [inventoryStockFilter, setInventoryStockFilter] = useState("all");
+  const [inventoryPage, setInventoryPage] = useState(1);
+  const INVENTORY_PAGE_SIZE = 50;
+
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   useEffect(() => {
@@ -271,6 +278,42 @@ export default function DashboardPage() {
       setInventory(products);
     }
   }, [products]);
+
+  const inventoryBrands = useMemo(() => {
+    return Array.from(new Set(inventory.map((p) => p.brand))).filter(Boolean).sort();
+  }, [inventory]);
+
+  const filteredInventory = useMemo(() => {
+    return inventory.filter((item) => {
+      // Search by product name / brand / mount / spec
+      if (inventorySearch.trim()) {
+        const terms = inventorySearch.toLowerCase().trim().split(/\s+/).filter(Boolean);
+        const searchable = `${item.name} ${item.brand} ${item.category} ${item.shortDescription || ""} ${item.mount || ""}`.toLowerCase();
+        const match = terms.every((t) => searchable.includes(t));
+        if (!match) return false;
+      }
+      // Filter by Department
+      if (inventoryDepartmentFilter !== "all" && item.category !== inventoryDepartmentFilter) {
+        return false;
+      }
+      // Filter by Brand
+      if (inventoryBrandFilter !== "all" && item.brand !== inventoryBrandFilter) {
+        return false;
+      }
+      // Filter by Stock Status
+      if (inventoryStockFilter === "in-stock" && (item.stockCount ?? 5) <= 0) return false;
+      if (inventoryStockFilter === "low-stock" && ((item.stockCount ?? 5) <= 0 || (item.stockCount ?? 5) > 3)) return false;
+      if (inventoryStockFilter === "out-of-stock" && (item.stockCount ?? 5) > 0) return false;
+
+      return true;
+    });
+  }, [inventory, inventorySearch, inventoryDepartmentFilter, inventoryBrandFilter, inventoryStockFilter]);
+
+  const totalInventoryPages = Math.ceil(filteredInventory.length / INVENTORY_PAGE_SIZE) || 1;
+  const paginatedInventory = useMemo(() => {
+    const start = (inventoryPage - 1) * INVENTORY_PAGE_SIZE;
+    return filteredInventory.slice(start, start + INVENTORY_PAGE_SIZE);
+  }, [filteredInventory, inventoryPage]);
 
   const [selectedBarcodeProduct, setSelectedBarcodeProduct] = useState<Product | null>(null);
   const [selectedQuoteStudio, setSelectedQuoteStudio] = useState<StudioClient | null>(null);
@@ -4445,6 +4488,120 @@ export default function DashboardPage() {
                 </div>
               </div>
 
+              {/* Inventory Search & Filters Bar */}
+              <div className="bg-secondary/20 border border-border p-4 rounded-2xl space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {/* Search by Product Name / Model */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                    <input
+                      type="text"
+                      value={inventorySearch}
+                      onChange={(e) => {
+                        setInventorySearch(e.target.value);
+                        setInventoryPage(1);
+                      }}
+                      placeholder="Filter by product name, brand, model..."
+                      className="w-full pl-9 pr-8 py-2.5 rounded-xl border border-border bg-card text-xs text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                    />
+                    {inventorySearch && (
+                      <button
+                        onClick={() => {
+                          setInventorySearch("");
+                          setInventoryPage(1);
+                        }}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Filter by Department */}
+                  <div>
+                    <select
+                      value={inventoryDepartmentFilter}
+                      onChange={(e) => {
+                        setInventoryDepartmentFilter(e.target.value);
+                        setInventoryPage(1);
+                      }}
+                      className="w-full px-3 py-2.5 rounded-xl border border-border bg-card text-xs text-foreground focus:outline-hidden cursor-pointer"
+                    >
+                      <option value="all">All Departments ({inventory.length})</option>
+                      <option value="cameras">Cameras</option>
+                      <option value="lenses">Lenses</option>
+                      <option value="accessories">Accessories</option>
+                      <option value="audio">Audio & Video</option>
+                      <option value="dental">Dental Equipments</option>
+                      <option value="bags">Bags & Straps</option>
+                      <option value="gimbals">Stabilizer & Gimbal</option>
+                      <option value="flashes">Flashes</option>
+                      <option value="lighting">Lighting Equipment</option>
+                      <option value="memory-cards">Memory Cards</option>
+                      <option value="tripods">Tripods & Supports</option>
+                      <option value="pre-owned">Used</option>
+                    </select>
+                  </div>
+
+                  {/* Filter by Brand */}
+                  <div>
+                    <select
+                      value={inventoryBrandFilter}
+                      onChange={(e) => {
+                        setInventoryBrandFilter(e.target.value);
+                        setInventoryPage(1);
+                      }}
+                      className="w-full px-3 py-2.5 rounded-xl border border-border bg-card text-xs text-foreground focus:outline-hidden cursor-pointer"
+                    >
+                      <option value="all">All Brands ({inventoryBrands.length})</option>
+                      {inventoryBrands.map((brand) => (
+                        <option key={brand} value={brand}>
+                          {brand}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Filter by Stock Status */}
+                  <div>
+                    <select
+                      value={inventoryStockFilter}
+                      onChange={(e) => {
+                        setInventoryStockFilter(e.target.value);
+                        setInventoryPage(1);
+                      }}
+                      className="w-full px-3 py-2.5 rounded-xl border border-border bg-card text-xs text-foreground focus:outline-hidden cursor-pointer"
+                    >
+                      <option value="all">All Stock Statuses</option>
+                      <option value="in-stock">In Stock (&gt; 0)</option>
+                      <option value="low-stock">Low Stock (1 - 3)</option>
+                      <option value="out-of-stock">Out of Stock (0)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Filter Summary & Reset */}
+                {(inventorySearch || inventoryDepartmentFilter !== "all" || inventoryBrandFilter !== "all" || inventoryStockFilter !== "all") && (
+                  <div className="flex items-center justify-between pt-2 border-t border-border/40 text-xs">
+                    <span className="font-mono text-muted-foreground text-[11px]">
+                      Showing <strong className="text-foreground font-bold">{filteredInventory.length}</strong> of {inventory.length} SKUs
+                    </span>
+                    <button
+                      onClick={() => {
+                        setInventorySearch("");
+                        setInventoryDepartmentFilter("all");
+                        setInventoryBrandFilter("all");
+                        setInventoryStockFilter("all");
+                        setInventoryPage(1);
+                      }}
+                      className="text-primary font-semibold hover:underline flex items-center gap-1 cursor-pointer text-xs"
+                    >
+                      <RotateCcw className="w-3 h-3" /> Reset Filters
+                    </button>
+                  </div>
+                )}
+              </div>
+
               <div className="overflow-x-auto no-scrollbar">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
@@ -4459,96 +4616,157 @@ export default function DashboardPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/60">
-                    {inventory.map((item) => (
-                      <tr key={item.id} className="hover:bg-secondary/30 transition-colors">
-                        <td className="py-3.5 pr-4">
-                          <div className="flex items-center gap-3">
-                            <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-secondary shrink-0 border border-border">
-                              <Image src={item.image} alt={item.name} fill className="object-cover" />
-                            </div>
-                            <div>
-                              <p className="font-bold text-foreground line-clamp-1">{item.name}</p>
-                              <p className="text-[10px] text-muted-foreground font-mono">{item.brand}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-3.5 pr-4 font-mono uppercase text-muted-foreground whitespace-nowrap">
-                          {item.category}
-                        </td>
-                        <td className="py-3.5 pr-4 font-mono font-bold text-foreground whitespace-nowrap">
-                          {formatPrice(item.price)}
-                        </td>
-                        <td className="py-3.5 pr-4 font-mono text-muted-foreground whitespace-nowrap">
-                          {item.mount || item.resolution || "Universal"}
-                        </td>
-                        <td className="py-3.5 pr-4 font-mono font-bold text-foreground whitespace-nowrap">
-                          {item.stockCount ?? 5} units
-                        </td>
-                        <td className="py-3.5 pr-4 whitespace-nowrap">
-                          <span
-                            className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md ${
-                              (item.stockCount ?? 5) > 3
-                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                                : (item.stockCount ?? 5) > 0
-                                ? "bg-amber-400/10 text-amber-600 dark:text-amber-400"
-                                : "bg-rose-500/10 text-rose-500"
-                            }`}
-                          >
-                            {(item.stockCount ?? 5) > 3 ? "Healthy Stock" : (item.stockCount ?? 5) > 0 ? "Low Stock" : "Out of Stock"}
-                          </span>
-                        </td>
-                        <td className="py-3.5 text-right whitespace-nowrap">
-                          <div className="flex items-center justify-end gap-1.5">
-                            <Button
-                              onClick={() => openEditProduct(item)}
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 w-7 p-0 rounded-lg text-blue-500 hover:text-blue-600 hover:bg-blue-500/10 cursor-pointer"
-                              title="Edit Product"
-                            >
-                              <Pencil className="w-3.5 h-3.5" />
-                            </Button>
-                            <Button
-                              onClick={() => handleDeleteProduct(item)}
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 w-7 p-0 rounded-lg text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 cursor-pointer"
-                              title="Delete Product"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
-                            <Button
-                              onClick={() => setSelectedBarcodeProduct(item)}
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 w-7 p-0 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
-                              title="Generate Barcode / QR Label"
-                            >
-                              <QrCode className="w-3.5 h-3.5" />
-                            </Button>
-                            <Button
-                              onClick={() => handleStockUpdate(item.id, -1)}
-                              variant="outline"
-                              size="sm"
-                              className="h-7 w-7 p-0 rounded-lg text-xs cursor-pointer"
-                            >
-                              -
-                            </Button>
-                            <Button
-                              onClick={() => handleStockUpdate(item.id, 1)}
-                              variant="outline"
-                              size="sm"
-                              className="h-7 w-7 p-0 rounded-lg text-xs cursor-pointer"
-                            >
-                              +
-                            </Button>
-                          </div>
+                    {paginatedInventory.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="py-12 text-center text-muted-foreground">
+                          <Package className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                          <p className="font-semibold text-sm text-foreground">No gear items found</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">Try adjusting your search terms or filters</p>
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      paginatedInventory.map((item) => (
+                        <tr key={item.id} className="hover:bg-secondary/30 transition-colors">
+                          <td className="py-3.5 pr-4">
+                            <div className="flex items-center gap-3">
+                              <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-secondary shrink-0 border border-border">
+                                <Image src={item.image} alt={item.name} fill className="object-cover" />
+                              </div>
+                              <div>
+                                <p className="font-bold text-foreground line-clamp-1">{item.name}</p>
+                                <p className="text-[10px] text-muted-foreground font-mono">{item.brand}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-3.5 pr-4 font-mono uppercase text-muted-foreground whitespace-nowrap">
+                            {item.category}
+                          </td>
+                          <td className="py-3.5 pr-4 font-mono font-bold text-foreground whitespace-nowrap">
+                            {formatPrice(item.price)}
+                          </td>
+                          <td className="py-3.5 pr-4 font-mono text-muted-foreground whitespace-nowrap">
+                            {item.mount || item.resolution || "Universal"}
+                          </td>
+                          <td className="py-3.5 pr-4 font-mono font-bold text-foreground whitespace-nowrap">
+                            {item.stockCount ?? 5} units
+                          </td>
+                          <td className="py-3.5 pr-4 whitespace-nowrap">
+                            <span
+                              className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md ${
+                                (item.stockCount ?? 5) > 3
+                                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                  : (item.stockCount ?? 5) > 0
+                                  ? "bg-amber-400/10 text-amber-600 dark:text-amber-400"
+                                  : "bg-rose-500/10 text-rose-500"
+                              }`}
+                            >
+                              {(item.stockCount ?? 5) > 3 ? "Healthy Stock" : (item.stockCount ?? 5) > 0 ? "Low Stock" : "Out of Stock"}
+                            </span>
+                          </td>
+                          <td className="py-3.5 text-right whitespace-nowrap">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <Button
+                                onClick={() => openEditProduct(item)}
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 rounded-lg text-blue-500 hover:text-blue-600 hover:bg-blue-500/10 cursor-pointer"
+                                title="Edit Product"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </Button>
+                              <Button
+                                onClick={() => handleDeleteProduct(item)}
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 rounded-lg text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 cursor-pointer"
+                                title="Delete Product"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </Button>
+                              <Button
+                                onClick={() => setSelectedBarcodeProduct(item)}
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
+                                title="Generate Barcode / QR Label"
+                              >
+                                <QrCode className="w-3.5 h-3.5" />
+                              </Button>
+                              <Button
+                                onClick={() => handleStockUpdate(item.id, -1)}
+                                variant="outline"
+                                size="sm"
+                                className="h-7 w-7 p-0 rounded-lg text-xs cursor-pointer"
+                              >
+                                -
+                              </Button>
+                              <Button
+                                onClick={() => handleStockUpdate(item.id, 1)}
+                                variant="outline"
+                                size="sm"
+                                className="h-7 w-7 p-0 rounded-lg text-xs cursor-pointer"
+                              >
+                                +
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
+
+              {/* Pagination Controls */}
+              {totalInventoryPages > 1 && (
+                <div className="flex items-center justify-between pt-4 border-t border-border">
+                  <span className="text-xs text-muted-foreground font-mono">
+                    Page {inventoryPage} of {totalInventoryPages} ({filteredInventory.length} items)
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={() => setInventoryPage((prev) => Math.max(prev - 1, 1))}
+                      disabled={inventoryPage === 1}
+                      variant="outline"
+                      size="sm"
+                      className="rounded-xl text-xs cursor-pointer"
+                    >
+                      Previous
+                    </Button>
+                    <div className="flex items-center gap-1 font-mono text-xs">
+                      {Array.from({ length: Math.min(totalInventoryPages, 5) }, (_, i) => {
+                        let pageNum = i + 1;
+                        if (inventoryPage > 3 && totalInventoryPages > 5) {
+                          pageNum = inventoryPage - 2 + i;
+                          if (pageNum > totalInventoryPages) pageNum = totalInventoryPages - 4 + i;
+                        }
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => setInventoryPage(pageNum)}
+                            className={`w-7 h-7 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                              inventoryPage === pageNum
+                                ? "bg-primary text-primary-foreground"
+                                : "hover:bg-secondary text-muted-foreground"
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <Button
+                      onClick={() => setInventoryPage((prev) => Math.min(prev + 1, totalInventoryPages))}
+                      disabled={inventoryPage >= totalInventoryPages}
+                      variant="outline"
+                      size="sm"
+                      className="rounded-xl text-xs cursor-pointer"
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -5274,12 +5492,16 @@ export default function DashboardPage() {
                   >
                     <option value="cameras">Cameras</option>
                     <option value="lenses">Lenses</option>
-                    <option value="lighting">Lighting</option>
-                    <option value="audio">Audio</option>
-                    <option value="gimbals">Gimbals</option>
-                    <option value="drones">Drones</option>
                     <option value="accessories">Accessories</option>
-                    <option value="pre-owned">Pre-Owned</option>
+                    <option value="audio">Audio & Video</option>
+                    <option value="dental">Dental Equipments</option>
+                    <option value="bags">Bags & Straps</option>
+                    <option value="gimbals">Stabilizer & Gimbal</option>
+                    <option value="flashes">Flashes</option>
+                    <option value="lighting">Lighting Equipment</option>
+                    <option value="memory-cards">Memory Cards</option>
+                    <option value="tripods">Tripods & Supports</option>
+                    <option value="pre-owned">Used</option>
                   </select>
                 </div>
               </div>
@@ -5501,12 +5723,16 @@ export default function DashboardPage() {
                   >
                     <option value="cameras">Cameras</option>
                     <option value="lenses">Lenses</option>
-                    <option value="lighting">Lighting</option>
-                    <option value="audio">Audio</option>
-                    <option value="gimbals">Gimbals</option>
-                    <option value="drones">Drones</option>
                     <option value="accessories">Accessories</option>
-                    <option value="pre-owned">Pre-Owned</option>
+                    <option value="audio">Audio & Video</option>
+                    <option value="dental">Dental Equipments</option>
+                    <option value="bags">Bags & Straps</option>
+                    <option value="gimbals">Stabilizer & Gimbal</option>
+                    <option value="flashes">Flashes</option>
+                    <option value="lighting">Lighting Equipment</option>
+                    <option value="memory-cards">Memory Cards</option>
+                    <option value="tripods">Tripods & Supports</option>
+                    <option value="pre-owned">Used</option>
                   </select>
                 </div>
               </div>
