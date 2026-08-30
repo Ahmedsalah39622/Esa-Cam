@@ -47,12 +47,12 @@ export function HeroShowcase() {
           alt={slide.headline}
           fill
           priority
-          className="object-cover object-center brightness-[0.38] contrast-110 transition-opacity duration-700"
+          className="object-cover object-center brightness-[0.82] contrast-105 transition-opacity duration-700"
         />
 
-        {/* Cinematic Vignette Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/70 to-black/30 pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/60 pointer-events-none" />
+        {/* Cinematic Soft Gradient: Clear bright visual with legible left text */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/45 to-black/10 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 pointer-events-none" />
 
         {/* Top Nikon Accent Bar */}
         <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#FFE600] via-[#FFE600] to-transparent z-20" />
@@ -130,53 +130,55 @@ export function HeroShowcase() {
 
           {/* Right 4 Columns: Interactive Product Spotlight Card */}
           <div className="lg:col-span-4 self-center">
-            <div className="bg-black/80 backdrop-blur-xl border border-[#27272A] p-6 rounded-sm shadow-2xl space-y-5 relative group/card">
-              {/* Card Corner Accent */}
-              <div className="absolute top-0 right-0 w-8 h-8 overflow-hidden">
-                <div className="absolute transform rotate-45 bg-[#FFE600] text-xs w-12 h-12 -top-6 -right-6" />
-              </div>
-
-              <div className="flex items-center justify-between border-b border-[#27272A] pb-3">
-                <div className="flex items-center gap-2 text-xs font-mono text-[#A1A1AA]">
-                  <Camera className="w-4 h-4 text-[#FFE600]" />
+            <div className="bg-black/65 backdrop-blur-2xl border border-white/20 rounded-3xl p-5 sm:p-6 shadow-2xl space-y-4 relative group/card hover:border-[#FFE600]/60 transition-all duration-300">
+              {/* Header Badges */}
+              <div className="flex items-center justify-between pb-1">
+                <div className="flex items-center gap-1.5 bg-[#FFE600]/15 text-[#FFE600] border border-[#FFE600]/30 px-3 py-1 rounded-full text-[10.5px] font-mono font-bold tracking-wider uppercase">
+                  <Camera className="w-3.5 h-3.5 text-[#FFE600]" />
                   <span>FEATURED SETUP</span>
                 </div>
-                <span className="text-xs font-mono font-bold text-emerald-400">
-                  ● IN STOCK
-                </span>
+                <div className="flex items-center gap-1.5 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>IN STOCK</span>
+                </div>
               </div>
 
-              {/* Product Thumbnail */}
-              <div className="relative w-full aspect-video bg-[#18181B] rounded-sm overflow-hidden border border-[#27272A] flex items-center justify-center p-3">
+              {/* Product Thumbnail with Crisp White Studio Container */}
+              <div className="relative w-full aspect-[4/3] bg-white rounded-2xl overflow-hidden shadow-inner flex items-center justify-center p-3 transition-transform duration-500 group-hover/card:scale-[1.02]">
                 <Image
-                  src={currentProduct.image}
+                  src={currentProduct.image || "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=800&q=80"}
                   alt={currentProduct.name}
                   fill
-                  className="object-contain p-2 group-hover/card:scale-105 transition-transform duration-500"
+                  unoptimized
+                  className="object-contain p-2"
                 />
               </div>
 
               {/* Product Info & Pricing */}
               <div className="space-y-1">
-                <h3 className="text-sm font-black uppercase tracking-wide text-white leading-snug line-clamp-2">
+                <div className="flex items-center gap-2 text-[11px] font-mono">
+                  <span className="bg-[#FFE600] text-black font-black px-1.5 py-0.5 rounded text-[10px] uppercase">
+                    {currentProduct.brand}
+                  </span>
+                  <span className="text-[#A1A1AA]">•</span>
+                  <span className="uppercase text-[10px] text-[#A1A1AA] font-semibold">{currentProduct.category}</span>
+                </div>
+                <h3 className="text-sm sm:text-base font-black uppercase tracking-wide text-white leading-snug line-clamp-2">
                   {currentProduct.name}
                 </h3>
-                <p className="text-[11px] text-[#A1A1AA] font-mono">
-                  {currentProduct.brand} • {currentProduct.category.toUpperCase()}
-                </p>
               </div>
 
-              <div className="flex items-center justify-between pt-2 border-t border-[#27272A]">
+              <div className="flex items-center justify-between pt-3 border-t border-white/10">
                 <div>
                   <span className="text-[10px] font-mono text-[#A1A1AA] block">Official Price</span>
-                  <span className="text-lg font-black font-mono text-[#FFE600]">
+                  <span className="text-xl font-black font-mono text-[#FFE600]">
                     {formatPrice(currentProduct.price)}
                   </span>
                 </div>
 
                 <button
                   onClick={() => setQuickViewProduct(currentProduct)}
-                  className="px-4 py-2 bg-white hover:bg-[#FFE600] hover:text-black text-black font-black text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl bg-white hover:bg-[#FFE600] text-black font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all hover:scale-105 shadow-md cursor-pointer"
                 >
                   <Eye className="w-3.5 h-3.5" />
                   <span>Quick View</span>

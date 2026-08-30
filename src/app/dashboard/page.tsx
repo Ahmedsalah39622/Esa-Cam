@@ -2358,7 +2358,7 @@ export default function DashboardPage() {
                                   </div>
 
                                   <div className="flex items-center gap-3">
-                                    <div className="w-14 h-14 rounded-xl bg-[#18181B] border border-[#27272A] flex items-center justify-center p-1.5 shrink-0">
+                                    <div className="w-14 h-14 rounded-xl bg-white border border-[#27272A] flex items-center justify-center p-1.5 shrink-0 shadow-inner">
                                       <img src={heroProd.image} alt={heroProd.name} className="max-h-full max-w-full object-contain" />
                                     </div>
                                     <div className="flex-1 min-w-0">
