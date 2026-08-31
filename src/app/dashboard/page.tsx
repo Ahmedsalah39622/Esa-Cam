@@ -99,6 +99,15 @@ import {
   DEFAULT_HOMEPAGE_CONTENT,
 } from "@/data/homepage-content";
 
+// Import Shipping Types & Defaults
+import {
+  CityShippingRate,
+  ShippingSettings,
+  DEFAULT_SHIPPING_SETTINGS,
+} from "@/data/shipping-defaults";
+
+
+
 
 
 
@@ -164,7 +173,11 @@ export default function DashboardPage() {
 
     resetHomepageSection,
     resetAllHomepageContent,
+    shippingSettings,
+    updateShippingSettings,
+    resetShippingSettings,
   } = useStore();
+
 
 
 
@@ -258,6 +271,124 @@ export default function DashboardPage() {
       setFooterDraft(homepageContent.footer || DEFAULT_HOMEPAGE_CONTENT.footer);
     }
   }, [homepageContent]);
+
+  // Shipping Fees & Logistics Management State
+  const [shippingDraft, setShippingDraft] = useState<ShippingSettings>(shippingSettings);
+  const [isSavingShipping, setIsSavingShipping] = useState(false);
+  const [isNewCityModalOpen, setIsNewCityModalOpen] = useState(false);
+  const [newCityForm, setNewCityForm] = useState({
+    cityNameEn: "",
+    cityNameAr: "",
+    rateUSD: 20,
+    estimatedDelivery: "2-3 Business Days",
+  });
+
+  useEffect(() => {
+    if (shippingSettings) {
+      setShippingDraft(shippingSettings);
+    }
+  }, [shippingSettings]);
+
+  const handleSaveShippingSettings = async () => {
+    setIsSavingShipping(true);
+    try {
+      await updateShippingSettings(shippingDraft);
+      toast.success("🚚 Shipping policies and rates saved successfully!");
+    } catch {
+      toast.error("Failed to save shipping settings");
+    } finally {
+      setIsSavingShipping(false);
+    }
+  };
+
+  const handleApplyShippingPreset = (preset: "standard" | "free" | "flat") => {
+    if (preset === "free") {
+      setShippingDraft((prev) => ({
+        ...prev,
+        enableFreeShipping: true,
+        freeShippingThresholdUSD: 0,
+        flatRateUSD: 0,
+        cityRates: prev.cityRates.map((c) => ({ ...c, rateUSD: 0 })),
+      }));
+      toast.success("Preset: 100% Free Nationwide Shipping applied (Click Save to confirm)");
+    } else if (preset === "standard") {
+      setShippingDraft(DEFAULT_SHIPPING_SETTINGS);
+      toast.success("Preset: Egypt Standard Regional Rates applied (Click Save to confirm)");
+    } else if (preset === "flat") {
+      setShippingDraft((prev) => ({
+        ...prev,
+        calculationMode: "flat",
+        flatRateUSD: 25,
+        enableFreeShipping: true,
+        freeShippingThresholdUSD: 500,
+      }));
+      toast.success("Preset: Unified Flat Rate ($25) applied (Click Save to confirm)");
+    }
+  };
+
+  const handleToggleCityActive = (cityId: string) => {
+    setShippingDraft((prev) => ({
+      ...prev,
+      cityRates: prev.cityRates.map((c) =>
+        c.id === cityId ? { ...c, isActive: !c.isActive } : c
+      ),
+    }));
+  };
+
+  const handleUpdateCityRate = (cityId: string, rate: number) => {
+    setShippingDraft((prev) => ({
+      ...prev,
+      cityRates: prev.cityRates.map((c) =>
+        c.id === cityId ? { ...c, rateUSD: Math.max(0, rate) } : c
+      ),
+    }));
+  };
+
+  const handleUpdateCityDelivery = (cityId: string, delivery: string) => {
+    setShippingDraft((prev) => ({
+      ...prev,
+      cityRates: prev.cityRates.map((c) =>
+        c.id === cityId ? { ...c, estimatedDelivery: delivery } : c
+      ),
+    }));
+  };
+
+  const handleDeleteCity = (cityId: string) => {
+    setShippingDraft((prev) => ({
+      ...prev,
+      cityRates: prev.cityRates.filter((c) => c.id !== cityId),
+    }));
+    toast.info("Governorate removed from draft.");
+  };
+
+  const handleAddNewCity = () => {
+    if (!newCityForm.cityNameEn.trim()) {
+      toast.error("Please enter a City / Governorate name in English");
+      return;
+    }
+    const cleanId = newCityForm.cityNameEn.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const newEntry: CityShippingRate = {
+      id: cleanId || `city_${Date.now()}`,
+      cityNameEn: newCityForm.cityNameEn.trim(),
+      cityNameAr: newCityForm.cityNameAr.trim() || newCityForm.cityNameEn.trim(),
+      rateUSD: Number(newCityForm.rateUSD) || 0,
+      estimatedDelivery: newCityForm.estimatedDelivery.trim() || "2-3 Business Days",
+      isActive: true,
+    };
+    setShippingDraft((prev) => ({
+      ...prev,
+      cityRates: [...prev.cityRates, newEntry],
+    }));
+    setNewCityForm({
+      cityNameEn: "",
+      cityNameAr: "",
+      rateUSD: 20,
+      estimatedDelivery: "2-3 Business Days",
+    });
+    setIsNewCityModalOpen(false);
+    toast.success(`Governorate "${newEntry.cityNameEn}" added! Click Save to apply.`);
+  };
+
 
 
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -1394,7 +1525,8 @@ export default function DashboardPage() {
       items: [
         { id: "analytics", label: "Analytics & Finance", icon: <BarChart3 className="w-4 h-4" /> },
         { id: "studios", label: "VIP Studios CRM", icon: <Users className="w-4 h-4" />, count: studios.length },
-        { id: "logistics", label: "Logistics & Dispatch", icon: <Truck className="w-4 h-4" /> },
+        { id: "logistics", label: "Logistics & Shipping Fees", icon: <Truck className="w-4 h-4" />, badge: "Rates & Rules" },
+
       ],
     },
     {
@@ -1491,12 +1623,20 @@ export default function DashboardPage() {
         <div className="p-5 border-b border-border space-y-3">
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2.5 group">
-              <div className="w-9 h-9 rounded-full bg-foreground text-background flex items-center justify-center font-bold ring-1 ring-amber-400/40">
-                <Camera className="w-4 h-4" />
+              <div className="relative w-9 h-9 flex items-center justify-center">
+                <Image
+                  src="/logo.png"
+                  alt="ESA CAM Logo"
+                  fill
+                  unoptimized
+                  className="object-contain"
+                />
               </div>
               <div>
                 <div className="flex items-center gap-1.5 leading-none">
-                  <span className="font-extrabold text-base tracking-tight">ESACAM</span>
+                  <span className="font-extrabold text-base tracking-tight">
+                    ESA<span className="text-[#FFE600]">CAM</span>
+                  </span>
                   <span className="text-[9px] font-mono font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-400/10 text-amber-600 dark:text-amber-400 border border-amber-400/25">
                     HQ
                   </span>
@@ -1608,7 +1748,8 @@ export default function DashboardPage() {
             </button>
             <div>
               <h2 className="font-extrabold text-base sm:text-lg text-foreground capitalize">
-                {activeTab.replace("tradeins", "Trade-In Desk").replace("studios", "VIP Studios CRM").replace("coupons", "Promotions").replace("brands", "Brand Bar Manager").replace("inventory", "Inventory & Warehouse").replace("orders", "Orders Fulfillment").replace("overview", "Executive Overview").replace("analytics", "Analytics & Finance").replace("logistics", "Logistics & Dispatch").replace("service", "Tech Service Desk")}
+                {activeTab.replace("tradeins", "Trade-In Desk").replace("studios", "VIP Studios CRM").replace("coupons", "Promotions").replace("brands", "Brand Bar Manager").replace("inventory", "Inventory & Warehouse").replace("orders", "Orders Fulfillment").replace("overview", "Executive Overview").replace("analytics", "Analytics & Finance").replace("logistics", "Logistics & Shipping Fees").replace("service", "Tech Service Desk")}
+
               </h2>
             </div>
           </div>
@@ -4067,59 +4208,671 @@ export default function DashboardPage() {
           )}
 
 
-          {/* TAB 4: LOGISTICS & DISPATCH HUB */}
+          {/* TAB 4: LOGISTICS & SHIPPING FEES CONTROL CENTER */}
           {activeTab === "logistics" && (
-            <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-xs space-y-6 animate-in fade-in duration-300">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <h3 className="text-lg font-bold text-foreground">Regional Courier Dispatch & Waybills</h3>
-                  <p className="text-xs text-muted-foreground font-mono">Track fragile-cine courier transit with Bosta, Aramex & ESA Direct</p>
+            <div className="space-y-8 animate-in fade-in duration-300">
+              {/* Shipping Control Header Bar */}
+              <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-500">
+                        <Truck className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-foreground">
+                          Shipping Fees &amp; Regional Logistics Hub
+                        </h3>
+                        <p className="text-xs text-muted-foreground font-mono">
+                          لوحة التحكم في مصاريف الشحن والتوصيل، حد الشحن المجاني، والتعريفة حسب المحافظات
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    <Button
+                      onClick={() => handleApplyShippingPreset("standard")}
+                      variant="outline"
+                      size="sm"
+                      className="rounded-xl text-xs font-semibold cursor-pointer border-border"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+                      <span>Egypt Tiered Preset</span>
+                    </Button>
+                    <Button
+                      onClick={() => handleApplyShippingPreset("free")}
+                      variant="outline"
+                      size="sm"
+                      className="rounded-xl text-xs font-semibold cursor-pointer border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5 hover:bg-emerald-500/10"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                      <span>100% Free Shipping Promo</span>
+                    </Button>
+                    <Button
+                      onClick={handleSaveShippingSettings}
+                      disabled={isSavingShipping}
+                      className="rounded-xl text-xs font-bold px-5 bg-primary text-primary-foreground hover:bg-primary/90 shadow-md cursor-pointer flex items-center gap-2"
+                    >
+                      <Check className="w-4 h-4" />
+                      <span>{isSavingShipping ? "Saving..." : "Save Shipping Rules"}</span>
+                    </Button>
+                  </div>
                 </div>
-                <Badge variant="secondary" className="font-mono text-xs">
-                  {orders.filter(o => o.status !== "Cancelled").length} Active Consignments
-                </Badge>
+
+                {/* Key Status Indicators */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                  <div className="p-4 rounded-2xl bg-secondary/30 border border-border/70 space-y-1">
+                    <span className="text-[10px] font-mono uppercase text-muted-foreground block">Free Shipping</span>
+                    <p className="font-mono font-bold text-sm text-foreground flex items-center gap-1.5">
+                      {shippingDraft.enableFreeShipping ? (
+                        <>
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                          <span className="text-emerald-600 dark:text-emerald-400">
+                            Over ${shippingDraft.freeShippingThresholdUSD} ({formatPrice(shippingDraft.freeShippingThresholdUSD)})
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="w-2 h-2 rounded-full bg-rose-500" />
+                          <span className="text-rose-500">Disabled</span>
+                        </>
+                      )}
+                    </p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-secondary/30 border border-border/70 space-y-1">
+                    <span className="text-[10px] font-mono uppercase text-muted-foreground block">Calculation Mode</span>
+                    <p className="font-mono font-bold text-sm text-foreground">
+                      {shippingDraft.calculationMode === "city" ? "📍 City / Zone Rates" : "🌐 Fixed Flat Rate"}
+                    </p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-secondary/30 border border-border/70 space-y-1">
+                    <span className="text-[10px] font-mono uppercase text-muted-foreground block">Standard Flat Rate</span>
+                    <p className="font-mono font-bold text-sm text-foreground">
+                      ${shippingDraft.flatRateUSD} ({formatPrice(shippingDraft.flatRateUSD)})
+                    </p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-secondary/30 border border-border/70 space-y-1">
+                    <span className="text-[10px] font-mono uppercase text-muted-foreground block">Active Governorates</span>
+                    <p className="font-mono font-bold text-sm text-foreground">
+                      {shippingDraft.cityRates.filter((c) => c.isActive).length} / {shippingDraft.cityRates.length} Live
+                    </p>
+                  </div>
+                </div>
               </div>
 
-              <div className="divide-y divide-border/60">
-                {orders.map((order) => (
-                  <div key={order.id} className="py-4 first:pt-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 font-mono">
-                        <span className="font-bold text-foreground">{order.id}</span>
-                        <span className="text-muted-foreground">• AWB: <strong>{order.trackingNumber}</strong></span>
-                      </div>
-                      <p className="font-bold text-foreground">{order.customerName} — {order.city}</p>
-                      <p className="text-muted-foreground font-mono text-[11px]">
-                        Courier: <strong>{order.courier || "Bosta Priority Express"}</strong>
-                      </p>
-                    </div>
+              {/* CARD 1: GLOBAL SHIPPING POLICIES & THRESHOLDS */}
+              <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
+                <div className="flex items-center justify-between border-b border-border pb-4">
+                  <div className="space-y-0.5">
+                    <h4 className="text-base font-bold text-foreground flex items-center gap-2">
+                      <SlidersHorizontal className="w-4 h-4 text-primary" />
+                      <span>Global Shipping Policies &amp; Thresholds</span>
+                    </h4>
+                    <p className="text-xs text-muted-foreground font-mono">
+                      تحديد الحد الأدنى للشحن المجاني، نوع الحساب، والرسوم الإضافية
+                    </p>
+                  </div>
+                </div>
 
-                    <div className="flex items-center gap-3">
-                      <span
-                        className={`text-[10px] font-mono font-bold px-2.5 py-1 rounded-full border ${
-                          order.status === "Delivered"
-                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
-                            : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30"
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-xs">
+                  {/* Free Shipping Toggle & Threshold */}
+                  <div className="p-4 rounded-2xl border border-border bg-secondary/20 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="font-bold text-foreground flex items-center gap-2">
+                        <span>Free Shipping Threshold</span>
+                      </label>
+                      <input
+                        type="checkbox"
+                        checked={shippingDraft.enableFreeShipping}
+                        onChange={(e) =>
+                          setShippingDraft((prev) => ({
+                            ...prev,
+                            enableFreeShipping: e.target.checked,
+                          }))
+                        }
+                        className="rounded border-border text-primary focus:ring-primary w-4 h-4 cursor-pointer"
+                      />
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">
+                      تفعيل الشحن المجاني التلقائي للعميل إذا تجاوزت سلة المشتريات المبلغ المحدد
+                    </p>
+                    {shippingDraft.enableFreeShipping && (
+                      <div className="space-y-1 pt-1">
+                        <label className="font-semibold text-muted-foreground block text-[11px]">
+                          Minimum Order Amount ($ USD):
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            min="0"
+                            step="10"
+                            value={shippingDraft.freeShippingThresholdUSD}
+                            onChange={(e) =>
+                              setShippingDraft((prev) => ({
+                                ...prev,
+                                freeShippingThresholdUSD: Math.max(0, Number(e.target.value) || 0),
+                              }))
+                            }
+                            className="w-full px-3 py-2 rounded-xl border border-border bg-card font-mono text-foreground font-bold focus:outline-hidden focus:ring-1 focus:ring-primary"
+                          />
+                          <span className="font-mono text-xs font-bold text-muted-foreground whitespace-nowrap">
+                            ≈ {formatPrice(shippingDraft.freeShippingThresholdUSD)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Calculation Mode */}
+                  <div className="p-4 rounded-2xl border border-border bg-secondary/20 space-y-3">
+                    <label className="font-bold text-foreground block">
+                      Shipping Calculation Mode (نظام حساب الشحن)
+                    </label>
+                    <div className="space-y-2">
+                      <label
+                        onClick={() =>
+                          setShippingDraft((prev) => ({ ...prev, calculationMode: "city" }))
+                        }
+                        className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
+                          shippingDraft.calculationMode === "city"
+                            ? "border-primary bg-primary/10 font-bold text-foreground"
+                            : "border-border bg-card/60 text-muted-foreground hover:bg-secondary/40"
                         }`}
                       >
-                        {order.status}
-                      </span>
+                        <span className="flex items-center gap-2">
+                          <span>📍</span>
+                          <span>Per Governorate / City (حسب المحافظة)</span>
+                        </span>
+                        <input
+                          type="radio"
+                          name="calcMode"
+                          checked={shippingDraft.calculationMode === "city"}
+                          onChange={() =>
+                            setShippingDraft((prev) => ({ ...prev, calculationMode: "city" }))
+                          }
+                        />
+                      </label>
 
+                      <label
+                        onClick={() =>
+                          setShippingDraft((prev) => ({ ...prev, calculationMode: "flat" }))
+                        }
+                        className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
+                          shippingDraft.calculationMode === "flat"
+                            ? "border-primary bg-primary/10 font-bold text-foreground"
+                            : "border-border bg-card/60 text-muted-foreground hover:bg-secondary/40"
+                        }`}
+                      >
+                        <span className="flex items-center gap-2">
+                          <span>🌐</span>
+                          <span>Unified Flat Rate (سعر موحد لكل مصر)</span>
+                        </span>
+                        <input
+                          type="radio"
+                          name="calcMode"
+                          checked={shippingDraft.calculationMode === "flat"}
+                          onChange={() =>
+                            setShippingDraft((prev) => ({ ...prev, calculationMode: "flat" }))
+                          }
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Standard Flat Rate */}
+                  <div className="p-4 rounded-2xl border border-border bg-secondary/20 space-y-3">
+                    <label className="font-bold text-foreground block">
+                      Standard Base Flat Rate (السعر الأساسي الموحد)
+                    </label>
+                    <p className="text-[11px] text-muted-foreground">
+                      السعر الافتراضي المستخدم في الوضع الموحد أو كقيمة بديلة للمدن غير المحددة
+                    </p>
+                    <div className="space-y-1 pt-1">
+                      <label className="font-semibold text-muted-foreground block text-[11px]">
+                        Base Rate ($ USD):
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={shippingDraft.flatRateUSD}
+                          onChange={(e) =>
+                            setShippingDraft((prev) => ({
+                              ...prev,
+                              flatRateUSD: Math.max(0, Number(e.target.value) || 0),
+                            }))
+                          }
+                          className="w-full px-3 py-2 rounded-xl border border-border bg-card font-mono text-foreground font-bold focus:outline-hidden focus:ring-1 focus:ring-primary"
+                        />
+                        <span className="font-mono text-xs font-bold text-muted-foreground whitespace-nowrap">
+                          ≈ {formatPrice(shippingDraft.flatRateUSD)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Priority Express Rush Courier */}
+                  <div className="p-4 rounded-2xl border border-border bg-secondary/20 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="font-bold text-foreground flex items-center gap-2">
+                        <span>⚡ Priority Rush Courier</span>
+                      </label>
+                      <input
+                        type="checkbox"
+                        checked={shippingDraft.enableExpressShipping}
+                        onChange={(e) =>
+                          setShippingDraft((prev) => ({
+                            ...prev,
+                            enableExpressShipping: e.target.checked,
+                          }))
+                        }
+                        className="rounded border-border text-primary focus:ring-primary w-4 h-4 cursor-pointer"
+                      />
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">
+                      إتاحة خيار الشحن السريع المستعجل للعميل أثناء الدفع مع احتساب رسوم إضافية
+                    </p>
+                    {shippingDraft.enableExpressShipping && (
+                      <div className="space-y-1 pt-1">
+                        <label className="font-semibold text-muted-foreground block text-[11px]">
+                          Express Surcharge ($ USD):
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={shippingDraft.expressSurchargeUSD}
+                            onChange={(e) =>
+                              setShippingDraft((prev) => ({
+                                ...prev,
+                                expressSurchargeUSD: Math.max(0, Number(e.target.value) || 0),
+                              }))
+                            }
+                            className="w-full px-3 py-2 rounded-xl border border-border bg-card font-mono text-foreground font-bold focus:outline-hidden focus:ring-1 focus:ring-primary"
+                          />
+                          <span className="font-mono text-xs font-bold text-muted-foreground whitespace-nowrap">
+                            ≈ {formatPrice(shippingDraft.expressSurchargeUSD)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Cash on Delivery (COD) Fee */}
+                  <div className="p-4 rounded-2xl border border-border bg-secondary/20 space-y-3">
+                    <label className="font-bold text-foreground block">
+                      COD Handling Fee (رسوم الدفع عند الاستلام)
+                    </label>
+                    <p className="text-[11px] text-muted-foreground">
+                      رسوم تحصيل إضافية تطبق فقط عند اختيار العميل للدفع عند الاستلام (0 إذا مجاني)
+                    </p>
+                    <div className="space-y-1 pt-1">
+                      <label className="font-semibold text-muted-foreground block text-[11px]">
+                        COD Surcharge ($ USD):
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={shippingDraft.codHandlingFeeUSD}
+                          onChange={(e) =>
+                            setShippingDraft((prev) => ({
+                              ...prev,
+                              codHandlingFeeUSD: Math.max(0, Number(e.target.value) || 0),
+                            }))
+                          }
+                          className="w-full px-3 py-2 rounded-xl border border-border bg-card font-mono text-foreground font-bold focus:outline-hidden focus:ring-1 focus:ring-primary"
+                        />
+                        <span className="font-mono text-xs font-bold text-muted-foreground whitespace-nowrap">
+                          ≈ {formatPrice(shippingDraft.codHandlingFeeUSD)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Free Shipping Banner Text */}
+                  <div className="p-4 rounded-2xl border border-border bg-secondary/20 space-y-3">
+                    <label className="font-bold text-foreground block">
+                      Marketing Announcement Text (نص شريط الشحن)
+                    </label>
+                    <p className="text-[11px] text-muted-foreground">
+                      الرسالة التسويقية الظاهرة في واجهة السلة والشراء
+                    </p>
+                    <input
+                      type="text"
+                      value={shippingDraft.freeShippingBannerText}
+                      onChange={(e) =>
+                        setShippingDraft((prev) => ({
+                          ...prev,
+                          freeShippingBannerText: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-card text-foreground font-medium focus:outline-hidden focus:ring-1 focus:ring-primary"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* CARD 2: REGIONAL CITY & GOVERNORATE RATES MATRIX */}
+              <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
+                  <div className="space-y-0.5">
+                    <h4 className="text-base font-bold text-foreground flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-amber-500" />
+                      <span>Egypt Governorates &amp; Regional Rates Matrix (جدول أسعار المحافظات)</span>
+                    </h4>
+                    <p className="text-xs text-muted-foreground font-mono">
+                      تخصيص تكلفة الشحن ومدة التوصيل لكل محافظة ومنطقة في جمهورية مصر العربية
+                    </p>
+                  </div>
+
+                  <Button
+                    onClick={() => setIsNewCityModalOpen(true)}
+                    variant="outline"
+                    size="sm"
+                    className="rounded-xl text-xs font-semibold cursor-pointer border-border self-start sm:self-auto gap-1.5"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Add Custom Zone (إضافة منطقة)</span>
+                  </Button>
+                </div>
+
+                {/* Rates Table / Grid */}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-border/80 text-muted-foreground font-mono text-[11px] uppercase">
+                        <th className="pb-3 font-semibold">Governorate / Region (المحافظة)</th>
+                        <th className="pb-3 font-semibold">Delivery Time (مدة التوصيل)</th>
+                        <th className="pb-3 font-semibold">Shipping Cost ($ USD)</th>
+                        <th className="pb-3 font-semibold">Local Price ({currency})</th>
+                        <th className="pb-3 font-semibold text-center">Status</th>
+                        <th className="pb-3 font-semibold text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/60">
+                      {shippingDraft.cityRates.map((city) => (
+                        <tr
+                          key={city.id}
+                          className={`hover:bg-secondary/20 transition-colors ${
+                            !city.isActive ? "opacity-50" : ""
+                          }`}
+                        >
+                          <td className="py-3.5 pr-4">
+                            <div className="font-bold text-foreground text-xs flex items-center gap-1.5">
+                              <span>{city.cityNameEn}</span>
+                              <span className="text-muted-foreground font-normal">({city.cityNameAr})</span>
+                            </div>
+                            <span className="text-[10px] font-mono text-muted-foreground">ID: {city.id}</span>
+                          </td>
+
+                          <td className="py-3.5 pr-4">
+                            <input
+                              type="text"
+                              value={city.estimatedDelivery}
+                              onChange={(e) => handleUpdateCityDelivery(city.id, e.target.value)}
+                              className="px-2.5 py-1.5 rounded-lg border border-border bg-secondary/30 font-medium text-xs text-foreground w-40 focus:outline-hidden focus:ring-1 focus:ring-primary"
+                            />
+                          </td>
+
+                          <td className="py-3.5 pr-4">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-mono text-muted-foreground">$</span>
+                              <input
+                                type="number"
+                                min="0"
+                                step="1"
+                                value={city.rateUSD}
+                                onChange={(e) => handleUpdateCityRate(city.id, Number(e.target.value) || 0)}
+                                className="w-20 px-2.5 py-1.5 rounded-lg border border-border bg-secondary/30 font-mono font-bold text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                              />
+                            </div>
+                          </td>
+
+                          <td className="py-3.5 pr-4 font-mono font-bold text-foreground">
+                            {formatPrice(city.rateUSD)}
+                          </td>
+
+                          <td className="py-3.5 px-4 text-center">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleCityActive(city.id)}
+                              className={`text-[10px] font-mono font-bold px-3 py-1 rounded-full border cursor-pointer transition-all ${
+                                city.isActive
+                                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20"
+                                  : "bg-secondary text-muted-foreground border-border hover:bg-secondary/80"
+                              }`}
+                            >
+                              {city.isActive ? "Active (مفعل)" : "Paused (معطل)"}
+                            </button>
+                          </td>
+
+                          <td className="py-3.5 pl-4 text-right">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteCity(city.id)}
+                              className="p-1.5 text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
+                              title="Delete zone"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Bottom Action Footer */}
+                <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-border">
+                  <Button
+                    onClick={() => resetShippingSettings()}
+                    variant="ghost"
+                    size="sm"
+                    className="rounded-xl text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+                    <span>Reset All to Factory Defaults</span>
+                  </Button>
+
+                  <Button
+                    onClick={handleSaveShippingSettings}
+                    disabled={isSavingShipping}
+                    className="rounded-xl text-xs font-bold px-6 bg-primary text-primary-foreground hover:bg-primary/90 shadow-md cursor-pointer flex items-center gap-2"
+                  >
+                    <Check className="w-4 h-4" />
+                    <span>{isSavingShipping ? "Saving..." : "Save Shipping Policies"}</span>
+                  </Button>
+                </div>
+              </div>
+
+              {/* MODAL: ADD CUSTOM SHIPPING ZONE */}
+              {isNewCityModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+                  <div className="bg-card text-card-foreground border border-border rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-5 animate-in zoom-in-95">
+                    <div className="flex items-center justify-between border-b border-border pb-3">
+                      <div className="flex items-center gap-2 font-bold text-base text-foreground">
+                        <MapPin className="w-4 h-4 text-amber-500" />
+                        <span>Add New Governorate / Zone (إضافة منطقة جديدة)</span>
+                      </div>
+                      <button
+                        onClick={() => setIsNewCityModalOpen(false)}
+                        className="p-1 text-muted-foreground hover:text-foreground rounded-full hover:bg-secondary"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="space-y-3.5 text-xs">
+                      <div>
+                        <label className="font-semibold text-muted-foreground block mb-1">
+                          Governorate Name (English) *
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Faiyum & Beni Suef"
+                          value={newCityForm.cityNameEn}
+                          onChange={(e) =>
+                            setNewCityForm({ ...newCityForm, cityNameEn: e.target.value })
+                          }
+                          className="w-full px-3 py-2 rounded-xl border border-border bg-secondary/30 focus:outline-hidden focus:ring-1 focus:ring-primary text-foreground"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="font-semibold text-muted-foreground block mb-1">
+                          Governorate Name (Arabic)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. الفيوم وبني سويف"
+                          value={newCityForm.cityNameAr}
+                          onChange={(e) =>
+                            setNewCityForm({ ...newCityForm, cityNameAr: e.target.value })
+                          }
+                          className="w-full px-3 py-2 rounded-xl border border-border bg-secondary/30 focus:outline-hidden focus:ring-1 focus:ring-primary text-foreground"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="font-semibold text-muted-foreground block mb-1">
+                            Shipping Rate ($ USD)
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            value={newCityForm.rateUSD}
+                            onChange={(e) =>
+                              setNewCityForm({
+                                ...newCityForm,
+                                rateUSD: Math.max(0, Number(e.target.value) || 0),
+                              })
+                            }
+                            className="w-full px-3 py-2 rounded-xl border border-border bg-secondary/30 font-mono font-bold text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="font-semibold text-muted-foreground block mb-1">
+                            Estimated Delivery
+                          </label>
+                          <input
+                            type="text"
+                            value={newCityForm.estimatedDelivery}
+                            onChange={(e) =>
+                              setNewCityForm({
+                                ...newCityForm,
+                                estimatedDelivery: e.target.value,
+                              })
+                            }
+                            className="w-full px-3 py-2 rounded-xl border border-border bg-secondary/30 text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
                       <Button
-                        onClick={() => toast.success(`Waybill for ${order.trackingNumber} sent to dispatch driver`)}
+                        type="button"
                         variant="outline"
                         size="sm"
-                        className="rounded-xl text-xs font-semibold h-8 gap-1.5 cursor-pointer"
+                        onClick={() => setIsNewCityModalOpen(false)}
+                        className="rounded-xl text-xs"
                       >
-                        <Truck className="w-3.5 h-3.5" />
-                        <span>Dispatch Driver</span>
+                        Cancel
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={handleAddNewCity}
+                        className="rounded-xl text-xs font-bold bg-primary text-primary-foreground hover:bg-primary/90"
+                      >
+                        Add to Shipping Matrix
                       </Button>
                     </div>
                   </div>
-                ))}
+                </div>
+              )}
+
+              {/* CARD 3: REGIONAL COURIER DISPATCH & WAYBILLS */}
+              <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-foreground">Regional Courier Dispatch &amp; Waybills</h3>
+                    <p className="text-xs text-muted-foreground font-mono">
+                      Track fragile-cine courier transit with Bosta, Aramex &amp; ESA Direct
+                    </p>
+                  </div>
+                  <Badge variant="secondary" className="font-mono text-xs">
+                    {orders.filter((o) => o.status !== "Cancelled").length} Active Consignments
+                  </Badge>
+                </div>
+
+                <div className="divide-y divide-border/60">
+                  {orders.length === 0 ? (
+                    <div className="py-8 text-center text-xs text-muted-foreground font-mono">
+                      No active courier consignments currently in transit.
+                    </div>
+                  ) : (
+                    orders.map((order) => (
+                      <div
+                        key={order.id}
+                        className="py-4 first:pt-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs"
+                      >
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2 font-mono">
+                            <span className="font-bold text-foreground">{order.id}</span>
+                            <span className="text-muted-foreground">
+                              • AWB: <strong>{order.trackingNumber}</strong>
+                            </span>
+                          </div>
+                          <p className="font-bold text-foreground">
+                            {order.customerName} — {order.city}
+                          </p>
+                          <p className="text-muted-foreground font-mono text-[11px]">
+                            Courier: <strong>{order.courier || "Bosta Priority Express"}</strong>
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                          <span
+                            className={`text-[10px] font-mono font-bold px-2.5 py-1 rounded-full border ${
+                              order.status === "Delivered"
+                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                                : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30"
+                            }`}
+                          >
+                            {order.status}
+                          </span>
+
+                          <Button
+                            onClick={() =>
+                              toast.success(`Waybill for ${order.trackingNumber} sent to dispatch driver`)
+                            }
+                            variant="outline"
+                            size="sm"
+                            className="rounded-xl text-xs font-semibold h-8 gap-1.5 cursor-pointer"
+                          >
+                            <Truck className="w-3.5 h-3.5" />
+                            <span>Dispatch Driver</span>
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             </div>
           )}
+
 
           {/* TAB 5: BRAND BAR MANAGER */}
           {activeTab === "brands" && (

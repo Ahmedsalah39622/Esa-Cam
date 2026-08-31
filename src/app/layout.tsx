@@ -11,6 +11,10 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "ESA CAM — Pro Cameras, Optics & Filmmaking Equipment",
   description: "Official authorized distributor for cinema cameras, master prime lenses, studio lighting, and broadcast audio in Egypt and the Middle East.",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({

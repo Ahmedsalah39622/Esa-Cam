@@ -27,23 +27,27 @@ export default function CartPage() {
     formatPrice,
     cartTotalUSD,
     cartItemCount,
+    shippingSettings,
+    calculateShippingFee,
   } = useStore();
 
   const [promoCode, setPromoCode] = useState("");
   const [promoApplied, setPromoApplied] = useState(false);
 
-  const freeShippingThreshold = 500;
-  const progressPercent = Math.min(
-    100,
-    (cartTotalUSD / freeShippingThreshold) * 100
-  );
-  const remainingForFreeShipping = Math.max(
-    0,
-    freeShippingThreshold - cartTotalUSD
-  );
+  const hasFreeShipping = shippingSettings.enableFreeShipping;
+  const freeThreshold = shippingSettings.freeShippingThresholdUSD;
+  const progressPercent = hasFreeShipping
+    ? Math.min(100, (cartTotalUSD / freeThreshold) * 100)
+    : 0;
+  const remainingForFreeShipping = hasFreeShipping
+    ? Math.max(0, freeThreshold - cartTotalUSD)
+    : 0;
+  const isFreeUnlocked = hasFreeShipping && cartTotalUSD >= freeThreshold;
 
+  const estimatedShippingCost = calculateShippingFee(cartTotalUSD);
   const discountAmount = promoApplied ? cartTotalUSD * 0.1 : 0;
-  const finalTotalUSD = Math.max(0, cartTotalUSD - discountAmount);
+  const finalTotalUSD = Math.max(0, cartTotalUSD - discountAmount + estimatedShippingCost);
+
 
   const handleApplyPromo = (e: React.FormEvent) => {
     e.preventDefault();
@@ -195,31 +199,33 @@ export default function CartPage() {
               </h2>
 
               {/* Free Shipping Progress Indicator */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="flex items-center gap-1.5 font-bold text-[#0A0A0A]">
-                    <Truck className="w-3.5 h-3.5 text-[#FACC15]" />
-                    {cartTotalUSD >= freeShippingThreshold ? (
-                      <span className="text-emerald-600 font-bold">
-                        ✓ FREE VIP Express Shipping Unlocked!
-                      </span>
-                    ) : (
-                      <span>
-                        Add <strong>{formatPrice(remainingForFreeShipping)}</strong> for Free Express
-                      </span>
-                    )}
-                  </span>
-                  <span className="text-[#737373] text-[10px]">
-                    {Math.round(progressPercent)}%
-                  </span>
+              {hasFreeShipping && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs font-mono">
+                    <span className="flex items-center gap-1.5 font-bold text-[#0A0A0A]">
+                      <Truck className="w-3.5 h-3.5 text-[#FACC15]" />
+                      {isFreeUnlocked ? (
+                        <span className="text-emerald-600 font-bold">
+                          ✓ FREE VIP Express Shipping Unlocked!
+                        </span>
+                      ) : (
+                        <span>
+                          Add <strong>{formatPrice(remainingForFreeShipping)}</strong> for Free Express
+                        </span>
+                      )}
+                    </span>
+                    <span className="text-[#737373] text-[10px]">
+                      {Math.round(progressPercent)}%
+                    </span>
+                  </div>
+                  <div className="w-full h-1 bg-[#E5E5E5] overflow-hidden">
+                    <div
+                      className="h-full bg-[#0A0A0A] transition-all duration-500"
+                      style={{ width: `${progressPercent}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="w-full h-1 bg-[#E5E5E5] overflow-hidden">
-                  <div
-                    className="h-full bg-[#0A0A0A] transition-all duration-500"
-                    style={{ width: `${progressPercent}%` }}
-                  />
-                </div>
-              </div>
+              )}
 
               {/* Promo Coupon Form */}
               <form onSubmit={handleApplyPromo} className="flex gap-2 pt-1">
@@ -264,10 +270,10 @@ export default function CartPage() {
                 <div className="flex justify-between text-[#737373]">
                   <span>Shipping</span>
                   <span>
-                    {cartTotalUSD >= freeShippingThreshold ? (
+                    {isFreeUnlocked || estimatedShippingCost === 0 ? (
                       <span className="text-emerald-600 font-bold">FREE Express</span>
                     ) : (
-                      <span className="font-bold text-[#0A0A0A]">{formatPrice(25)}</span>
+                      <span className="font-bold text-[#0A0A0A]">{formatPrice(estimatedShippingCost)}</span>
                     )}
                   </span>
                 </div>
@@ -279,6 +285,7 @@ export default function CartPage() {
                   </span>
                 </div>
               </div>
+
 
               {/* Trust Badge */}
               <div className="flex items-center justify-center gap-2 text-[11px] text-[#737373] bg-white border border-[#E5E5E5] py-3 px-4">

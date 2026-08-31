@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { useStore } from "@/context/store-context";
 import {
-  Camera,
   ShoppingBag,
   ShieldCheck,
   Truck,
@@ -42,14 +41,19 @@ interface PlacedOrderInfo {
 
 export default function CheckoutPage() {
   const {
+
+
     cart,
     cartTotalUSD,
     cartItemCount,
     formatPrice,
     clearCart,
+    shippingSettings,
+    calculateShippingFee,
   } = useStore();
 
   const [paymentMethod, setPaymentMethod] = useState<"card" | "cod" | "installments" | "wire">("cod");
+  const [isExpressDelivery, setIsExpressDelivery] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [placedOrderData, setPlacedOrderData] = useState<PlacedOrderInfo | null>(null);
@@ -74,10 +78,15 @@ export default function CheckoutPage() {
   } | null>(null);
   const [isCheckingPromo, setIsCheckingPromo] = useState(false);
 
-  const freeShippingThreshold = 500;
-  const shippingCostUSD = cartTotalUSD >= freeShippingThreshold || cartTotalUSD === 0 ? 0 : 25;
+  const shippingCostUSD = calculateShippingFee(
+    cartTotalUSD,
+    formData.city,
+    isExpressDelivery,
+    paymentMethod
+  );
   const discountAmountUSD = appliedCoupon ? (cartTotalUSD * appliedCoupon.discount_percent) / 100 : 0;
   const finalTotalUSD = Math.max(0, cartTotalUSD - discountAmountUSD + shippingCostUSD);
+
 
   const handleApplyPromoCode = async () => {
     if (!promoInput.trim()) {
@@ -290,12 +299,12 @@ export default function CheckoutPage() {
             <span>Back to Cart</span>
           </Link>
 
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-foreground text-background flex items-center justify-center font-bold">
-              <Camera className="w-4 h-4" />
+          <Link href="/" className="flex items-center group">
+            <div className="bg-[#FFE600] text-black px-2.5 py-1 font-black text-base tracking-tighter uppercase font-sans mr-2 shadow-xs group-hover:scale-105 transition-transform">
+              ESA
             </div>
-            <span className="font-black text-base tracking-tight">
-              ESA<span className="text-primary font-black">CAM</span>
+            <span className="font-black text-base tracking-widest text-foreground uppercase font-sans">
+              CAM
             </span>
           </Link>
 
@@ -397,14 +406,26 @@ export default function CheckoutPage() {
                       onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                       className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-secondary/30 focus:outline-hidden focus:ring-1 focus:ring-primary text-foreground"
                     >
-                      <option value="Cairo">Greater Cairo (Same-Day / 24h)</option>
-                      <option value="Giza">Giza &amp; 6th of October</option>
-                      <option value="Alexandria">Alexandria</option>
-                      <option value="Mansoura">Mansoura &amp; Delta</option>
-                      <option value="Tanta">Tanta &amp; Gharbia</option>
-                      <option value="Hurghada">Hurghada &amp; Red Sea</option>
-                      <option value="Sharm">Sharm El-Sheikh &amp; Sinai</option>
-                      <option value="UpperEgypt">Assiut &amp; Upper Egypt</option>
+                      {shippingSettings.cityRates && shippingSettings.cityRates.length > 0 ? (
+                        shippingSettings.cityRates
+                          .filter((c) => c.isActive)
+                          .map((c) => (
+                            <option key={c.id} value={c.cityNameEn}>
+                              {c.cityNameEn} ({c.cityNameAr}) • {c.estimatedDelivery}
+                            </option>
+                          ))
+                      ) : (
+                        <>
+                          <option value="Cairo">Greater Cairo (Same-Day / 24h)</option>
+                          <option value="Giza">Giza &amp; 6th of October</option>
+                          <option value="Alexandria">Alexandria</option>
+                          <option value="Mansoura">Mansoura &amp; Delta</option>
+                          <option value="Tanta">Tanta &amp; Gharbia</option>
+                          <option value="Hurghada">Hurghada &amp; Red Sea</option>
+                          <option value="Sharm">Sharm El-Sheikh &amp; Sinai</option>
+                          <option value="UpperEgypt">Assiut &amp; Upper Egypt</option>
+                        </>
+                      )}
                     </select>
                   </div>
                   <div>
@@ -418,7 +439,40 @@ export default function CheckoutPage() {
                     />
                   </div>
                 </div>
+
+                {/* Express Priority Delivery Option */}
+                {shippingSettings.enableExpressShipping && (
+                  <div
+                    onClick={() => setIsExpressDelivery(!isExpressDelivery)}
+                    className={`p-3.5 rounded-2xl border flex items-center justify-between cursor-pointer transition-all ${
+                      isExpressDelivery
+                        ? "border-primary bg-primary/5 ring-1 ring-primary"
+                        : "border-border bg-secondary/20 hover:bg-secondary/40"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={isExpressDelivery}
+                        onChange={(e) => setIsExpressDelivery(e.target.checked)}
+                        className="rounded border-border text-primary focus:ring-primary"
+                      />
+                      <div>
+                        <p className="font-bold text-xs text-foreground flex items-center gap-1.5">
+                          ⚡ Priority Rush Express Courier (تسليم مستعجل)
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">
+                          Direct dedicated cine-courier dispatch within 12-24 hours
+                        </p>
+                      </div>
+                    </div>
+                    <span className="font-mono text-xs font-bold text-primary">
+                      +{formatPrice(shippingSettings.expressSurchargeUSD)}
+                    </span>
+                  </div>
+                )}
               </div>
+
 
               {/* Step 2: Payment Method */}
               <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 space-y-4 shadow-xs">

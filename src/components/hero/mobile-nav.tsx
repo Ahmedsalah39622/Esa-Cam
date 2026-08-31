@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useStore } from "@/context/store-context";
+
 import { useAuth } from "@/context/auth-context";
 import { ShoppingBag, Menu, X, Search, PhoneCall, Heart, User, ShieldCheck, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";

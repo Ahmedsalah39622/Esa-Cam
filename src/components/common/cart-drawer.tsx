@@ -18,6 +18,8 @@ export function CartDrawer() {
     formatPrice,
     cartTotalUSD,
     cartItemCount,
+    shippingSettings,
+    calculateShippingFee,
   } = useStore();
 
   const [promoCode, setPromoCode] = useState("");
@@ -25,13 +27,21 @@ export function CartDrawer() {
 
   if (!isCartOpen) return null;
 
-  // Free shipping threshold: $500
-  const freeShippingThreshold = 500;
-  const progressPercent = Math.min(100, (cartTotalUSD / freeShippingThreshold) * 100);
-  const remainingForFreeShipping = Math.max(0, freeShippingThreshold - cartTotalUSD);
+  // Dynamic Free shipping threshold from settings
+  const hasFreeShipping = shippingSettings.enableFreeShipping;
+  const freeThreshold = shippingSettings.freeShippingThresholdUSD;
+  const progressPercent = hasFreeShipping
+    ? Math.min(100, (cartTotalUSD / freeThreshold) * 100)
+    : 0;
+  const remainingForFreeShipping = hasFreeShipping
+    ? Math.max(0, freeThreshold - cartTotalUSD)
+    : 0;
+  const isFreeUnlocked = hasFreeShipping && cartTotalUSD >= freeThreshold;
 
+  const estimatedShippingCost = calculateShippingFee(cartTotalUSD);
   const discountAmount = promoApplied ? cartTotalUSD * 0.1 : 0;
-  const finalTotalUSD = Math.max(0, cartTotalUSD - discountAmount);
+  const finalTotalUSD = Math.max(0, cartTotalUSD - discountAmount + estimatedShippingCost);
+
 
   const handleApplyPromo = (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,29 +87,32 @@ export function CartDrawer() {
           </div>
 
           {/* Free Shipping Progress Bar */}
-          <div className="px-6 py-3 bg-secondary/40 border-b border-border/60">
-            <div className="flex items-center justify-between text-xs mb-1.5">
-              <span className="flex items-center gap-1.5 font-medium">
-                <Truck className="w-3.5 h-3.5 text-primary" />
-                {cartTotalUSD >= freeShippingThreshold ? (
-                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                    ✓ You unlocked FREE VIP Express Shipping!
-                  </span>
-                ) : (
-                  <span>
-                    Add <strong className="text-foreground">{formatPrice(remainingForFreeShipping)}</strong> for Free Express Delivery
-                  </span>
-                )}
-              </span>
-              <span className="text-muted-foreground text-[11px] font-mono">{Math.round(progressPercent)}%</span>
+          {hasFreeShipping && (
+            <div className="px-6 py-3 bg-secondary/40 border-b border-border/60">
+              <div className="flex items-center justify-between text-xs mb-1.5">
+                <span className="flex items-center gap-1.5 font-medium">
+                  <Truck className="w-3.5 h-3.5 text-primary" />
+                  {isFreeUnlocked ? (
+                    <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                      ✓ You unlocked FREE VIP Express Shipping!
+                    </span>
+                  ) : (
+                    <span>
+                      Add <strong className="text-foreground">{formatPrice(remainingForFreeShipping)}</strong> for Free Express Delivery
+                    </span>
+                  )}
+                </span>
+                <span className="text-muted-foreground text-[11px] font-mono">{Math.round(progressPercent)}%</span>
+              </div>
+              <div className="w-full h-1.5 bg-border rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary transition-all duration-500 rounded-full"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
             </div>
-            <div className="w-full h-1.5 bg-border rounded-full overflow-hidden">
-              <div
-                className="h-full bg-primary transition-all duration-500 rounded-full"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-          </div>
+          )}
+
 
           {/* Cart Items List */}
           <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 divide-y divide-border/60">
@@ -235,13 +248,14 @@ export function CartDrawer() {
                 <div className="flex justify-between text-muted-foreground">
                   <span>Shipping</span>
                   <span>
-                    {cartTotalUSD >= freeShippingThreshold ? (
+                    {isFreeUnlocked || estimatedShippingCost === 0 ? (
                       <span className="text-emerald-600 dark:text-emerald-400 font-semibold">FREE Express</span>
                     ) : (
-                      <span className="font-mono">{formatPrice(25)}</span>
+                      <span className="font-mono">{formatPrice(estimatedShippingCost)}</span>
                     )}
                   </span>
                 </div>
+
                 <div className="border-t border-border pt-2 flex justify-between items-baseline font-bold text-base text-foreground">
                   <span>Total Amount</span>
                   <span className="font-mono text-lg">{formatPrice(finalTotalUSD)}</span>

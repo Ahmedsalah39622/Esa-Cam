@@ -6,7 +6,13 @@ import {
   DEFAULT_HOMEPAGE_CONTENT,
   HomepageContentState,
 } from "@/data/homepage-content";
+import {
+  DEFAULT_SHIPPING_SETTINGS,
+  ShippingSettings,
+} from "@/data/shipping-defaults";
+
 import { toast } from "sonner";
+
 
 
 export type Currency = "USD" | "EGP" | "SAR" | "AED" | "EUR";
@@ -358,6 +364,16 @@ interface StoreContextType {
   ) => Promise<void>;
   resetHomepageSection: (section: keyof HomepageContentState) => Promise<void>;
   resetAllHomepageContent: () => Promise<void>;
+  // Shipping Settings Management
+  shippingSettings: ShippingSettings;
+  updateShippingSettings: (newSettings: Partial<ShippingSettings>) => Promise<void>;
+  calculateShippingFee: (
+    totalUSD: number,
+    cityKey?: string,
+    isExpress?: boolean,
+    paymentMethod?: string
+  ) => number;
+  resetShippingSettings: () => Promise<void>;
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
@@ -375,6 +391,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [homepageContent, setHomepageContent] = useState<HomepageContentState>(
     DEFAULT_HOMEPAGE_CONTENT
   );
+  const [shippingSettings, setShippingSettings] = useState<ShippingSettings>(
+    DEFAULT_SHIPPING_SETTINGS
+  );
+
 
   const [rigItems, setRigItemsState] = useState<{
     camera: Product | null;
@@ -498,12 +518,32 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       if (savedContent) {
         setHomepageContent((prev) => ({ ...prev, ...JSON.parse(savedContent) }));
       }
+      const savedShipping = localStorage.getItem("esa_cam_shipping_settings");
+      if (savedShipping) {
+        setShippingSettings((prev) => ({ ...prev, ...JSON.parse(savedShipping) }));
+      }
     } catch {
       // ignore
     }
 
     fetchProducts();
 
+    // Fetch latest shipping settings from database API in background
+    fetch("/api/shipping-settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data) {
+          setShippingSettings(data.data);
+          try {
+            localStorage.setItem("esa_cam_shipping_settings", JSON.stringify(data.data));
+          } catch {
+            // ignore
+          }
+        }
+      })
+      .catch((err) => {
+        console.warn("Could not load shipping settings from API:", err);
+      });
 
     // Fetch latest content from database API in background
     fetch("/api/content")
@@ -522,6 +562,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         console.warn("Could not load homepage content from API:", err);
       });
   }, []);
+
 
   useEffect(() => {
     try {
@@ -911,6 +952,84 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     toast.success("Products catalog restored to factory defaults");
   };
 
+  const calculateShippingFee = (
+    totalUSD: number,
+    cityKey?: string,
+    isExpress = false,
+    paymentMethod = "cod"
+  ) => {
+    if (totalUSD <= 0) return 0;
+
+    // Check free shipping threshold
+    if (shippingSettings.enableFreeShipping && totalUSD >= shippingSettings.freeShippingThresholdUSD) {
+      const expressCost = (isExpress && shippingSettings.enableExpressShipping) ? shippingSettings.expressSurchargeUSD : 0;
+      const codCost = (paymentMethod === "cod" && shippingSettings.codHandlingFeeUSD > 0) ? shippingSettings.codHandlingFeeUSD : 0;
+      return expressCost + codCost;
+    }
+
+    let baseCost = shippingSettings.flatRateUSD;
+    if (shippingSettings.calculationMode === "city" && cityKey) {
+      const cleanKey = cityKey.toLowerCase().trim();
+      const matchedCity = shippingSettings.cityRates.find(
+        (c) =>
+          c.id.toLowerCase() === cleanKey ||
+          c.cityNameEn.toLowerCase().includes(cleanKey) ||
+          cleanKey.includes(c.id.toLowerCase()) ||
+          cleanKey.includes(c.cityNameEn.toLowerCase())
+      );
+      if (matchedCity && matchedCity.isActive) {
+        baseCost = matchedCity.rateUSD;
+      }
+    }
+
+    const expressCost = (isExpress && shippingSettings.enableExpressShipping) ? shippingSettings.expressSurchargeUSD : 0;
+    const codCost = (paymentMethod === "cod" && shippingSettings.codHandlingFeeUSD > 0) ? shippingSettings.codHandlingFeeUSD : 0;
+
+    return baseCost + expressCost + codCost;
+  };
+
+  const updateShippingSettings = async (newSettings: Partial<ShippingSettings>) => {
+    const merged: ShippingSettings = {
+      ...shippingSettings,
+      ...newSettings,
+    };
+    setShippingSettings(merged);
+    try {
+      localStorage.setItem("esa_cam_shipping_settings", JSON.stringify(merged));
+    } catch {
+      // ignore
+    }
+
+    try {
+      const res = await fetch("/api/shipping-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(merged),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Shipping policies & fees saved to database!");
+      }
+    } catch {
+      toast.info("Shipping settings saved locally.");
+    }
+  };
+
+  const resetShippingSettings = async () => {
+    setShippingSettings(DEFAULT_SHIPPING_SETTINGS);
+    try {
+      localStorage.setItem("esa_cam_shipping_settings", JSON.stringify(DEFAULT_SHIPPING_SETTINGS));
+      await fetch("/api/shipping-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(DEFAULT_SHIPPING_SETTINGS),
+      });
+    } catch {
+      // ignore
+    }
+    toast.success("Shipping settings restored to factory defaults");
+  };
+
   return (
     <StoreContext.Provider
       value={{
@@ -954,11 +1073,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         updateHomepageSection,
         resetHomepageSection,
         resetAllHomepageContent,
+        shippingSettings,
+        updateShippingSettings,
+        calculateShippingFee,
+        resetShippingSettings,
       }}
     >
       {children}
     </StoreContext.Provider>
   );
+
 
 }
 
