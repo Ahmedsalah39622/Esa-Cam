@@ -52,6 +52,11 @@
     "typescript": "^5"
   },
   "pnpm": {
+    "allowedScripts": [
+      "build",
+      "preinstall",
+      "postinstall"
+    ],
     "onlyBuiltDependencies": [
       "@tailwindcss/oxide",
       "sharp",
