@@ -40,6 +40,8 @@ function StoreContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const urlCat = searchParams.get("cat") as ProductCategory | "deals" | null;
+  const urlBrand = searchParams.get("brand");
+  const urlSearch = searchParams.get("q");
 
   const [selectedCategory, setSelectedCategory] = useState<ProductCategory | "all" | "deals">("all");
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
@@ -63,7 +65,19 @@ function StoreContent() {
     } else {
       setSelectedCategory("all");
     }
-  }, [urlCat]);
+
+    if (urlBrand) {
+      setSelectedBrands([urlBrand]);
+    } else {
+      setSelectedBrands([]);
+    }
+
+    if (urlSearch) {
+      setSearchQuery(urlSearch);
+    } else {
+      setSearchQuery("");
+    }
+  }, [urlCat, urlBrand, urlSearch]);
 
   const handleSelectCategory = (catId: ProductCategory | "all" | "deals") => {
     setSelectedCategory(catId);
@@ -133,8 +147,13 @@ function StoreContent() {
         }
 
         // Brand
-        if (selectedBrands.length > 0 && !selectedBrands.includes(product.brand)) {
-          return false;
+        if (selectedBrands.length > 0) {
+          const hasBrand = selectedBrands.some(
+            (b) =>
+              product.brand?.toLowerCase() === b.toLowerCase() ||
+              product.name?.toLowerCase().includes(b.toLowerCase())
+          );
+          if (!hasBrand) return false;
         }
 
         // Mount

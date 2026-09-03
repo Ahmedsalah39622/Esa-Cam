@@ -15,19 +15,183 @@ import {
   LogOut,
   ChevronDown,
   Phone,
+  Layers,
+  Sparkles,
+  Camera,
+  Aperture,
+  Zap,
+  Mic,
+  SlidersHorizontal,
 } from "lucide-react";
+
+interface SubItem {
+  label: string;
+  href: string;
+  count?: number;
+  hasArrow?: boolean;
+}
+
+interface NavDepartment {
+  id: string;
+  name: string;
+  href: string;
+  description: string;
+  viewAllText: string;
+  icon: React.ElementType;
+  items: SubItem[];
+}
+
+const NAV_DEPARTMENTS: NavDepartment[] = [
+  {
+    id: "cameras",
+    name: "Cameras",
+    href: "/store?cat=cameras",
+    description: "Official Cinema Bodies & Pro Mirrorless",
+    viewAllText: "View All Cameras (226 Items) →",
+    icon: Camera,
+    items: [
+      { label: "Canon Camera", href: "/store?cat=cameras&brand=Canon", count: 46 },
+      { label: "Sony Camera", href: "/store?cat=cameras&brand=Sony", count: 58 },
+      { label: "Nikon Camera", href: "/store?cat=cameras&brand=Nikon", count: 38 },
+      { label: "Fujifilm Camera", href: "/store?cat=cameras&brand=Fujifilm", count: 12 },
+      { label: "Kodak Camera", href: "/store?cat=cameras&brand=Kodak", count: 2 },
+      { label: "Red Camera", href: "/store?cat=cameras&brand=RED", count: 4 },
+      { label: "Streaming & PTZ Camera", href: "/store?cat=cameras&q=PTZ", count: 6 },
+      { label: "Action Cameras & Accessories", href: "/store?cat=cameras&q=Action", count: 8, hasArrow: true },
+    ],
+  },
+  {
+    id: "lenses",
+    name: "Lenses & Accessories",
+    href: "/store?cat=lenses",
+    description: "Master Cinema Primes, Telephotos & Zooms",
+    viewAllText: "View All Lenses & Optics (392 Items) →",
+    icon: Aperture,
+    items: [
+      { label: "Sony E-Mount Lenses", href: "/store?cat=lenses&brand=Sony", count: 78 },
+      { label: "Canon RF / EF Lenses", href: "/store?cat=lenses&brand=Canon", count: 84 },
+      { label: "Nikon Z-Mount Lenses", href: "/store?cat=lenses&brand=Nikon", count: 64 },
+      { label: "Sigma Art & Cine Lenses", href: "/store?cat=lenses&brand=Sigma", count: 34 },
+      { label: "Viltrox Cinema & Primes", href: "/store?cat=lenses&brand=Viltrox", count: 14 },
+      { label: "Tamron Zoom Lenses", href: "/store?cat=lenses&brand=Tamron", count: 10 },
+      { label: "Cinema Primes & Anamorphic", href: "/store?cat=lenses&q=Cinema", count: 18 },
+      { label: "Lens Filters & Adapters", href: "/store?cat=lenses&q=Filter", count: 42, hasArrow: true },
+    ],
+  },
+  {
+    id: "lighting",
+    name: "Lighting & Studio",
+    href: "/store?cat=lighting",
+    description: "High-Power COB, Tubes, Flashes & Modifiers",
+    viewAllText: "View All Lighting & Studio (665 Items) →",
+    icon: Zap,
+    items: [
+      { label: "LED Monolights & Point-Source", href: "/store?cat=lighting&q=Monolight", count: 48 },
+      { label: "RGB Tube Lights & Soft Panels", href: "/store?cat=lighting&q=RGB", count: 65 },
+      { label: "Godox Strobe & Studio Lights", href: "/store?cat=lighting&brand=Godox", count: 30 },
+      { label: "Aputure & Amaran Fixtures", href: "/store?cat=lighting&brand=Aputure", count: 15 },
+      { label: "Nanlite & Forza Studio Light", href: "/store?cat=lighting&brand=Nanlite", count: 51 },
+      { label: "Camera Flashes & Speedlights", href: "/store?cat=flashes", count: 168 },
+      { label: "Softboxes, Grids & Diffusers", href: "/store?cat=lighting&q=Softbox", count: 72 },
+      { label: "C-Stands, Booms & Grip", href: "/store?cat=lighting&q=Stand", count: 36, hasArrow: true },
+    ],
+  },
+  {
+    id: "audio",
+    name: "Audio",
+    href: "/store?cat=audio",
+    description: "Broadcast Wireless, Shotguns & Recorders",
+    viewAllText: "View All Audio Gear (354 Items) →",
+    icon: Mic,
+    items: [
+      { label: "Wireless Lavalier Microphone Kits", href: "/store?cat=audio&q=Wireless", count: 94 },
+      { label: "DJI Mic & Mic 2 Series", href: "/store?cat=audio&brand=DJI", count: 16 },
+      { label: "RØDE Broadcast Microphones", href: "/store?cat=audio&brand=RODE", count: 18 },
+      { label: "Boya & Hollyland Systems", href: "/store?cat=audio&brand=Boya", count: 35 },
+      { label: "Shotgun & Directional Mics", href: "/store?cat=audio&q=Shotgun", count: 42 },
+      { label: "32-Bit Float Audio Recorders", href: "/store?cat=audio&q=Recorder", count: 28 },
+      { label: "Wireless Video Transmitters (Mars)", href: "/store?q=Mars", count: 14 },
+      { label: "On-Camera Field Monitors", href: "/store?q=Monitor", count: 22, hasArrow: true },
+    ],
+  },
+  {
+    id: "gimbals",
+    name: "Gimbals & Stabilizers",
+    href: "/store?cat=gimbals",
+    description: "3-Axis Cinema Stabilizers, Cages & Sliders",
+    viewAllText: "View All Stabilizers & Rigs (504 Items) →",
+    icon: SlidersHorizontal,
+    items: [
+      { label: "DJI Ronin RS 3 / RS 4 Pro", href: "/store?cat=gimbals&brand=DJI", count: 28 },
+      { label: "Zhiyun Handheld Stabilizers", href: "/store?cat=gimbals&brand=Zhiyun", count: 12 },
+      { label: "Smartphone Gimbals & Vlogging", href: "/store?cat=gimbals&q=Mobile", count: 16 },
+      { label: "Tilta Modular Rigs & Handles", href: "/store?brand=Tilta", count: 110 },
+      { label: "SmallRig Production Cages", href: "/store?brand=SmallRig", count: 95 },
+      { label: "Video Tripods & Fluid Heads", href: "/store?cat=tripods", count: 231 },
+      { label: "Wireless Follow Focus Systems", href: "/store?q=Follow+Focus", count: 8 },
+      { label: "Matte Boxes & Carbon Rods", href: "/store?q=Matte", count: 15, hasArrow: true },
+    ],
+  },
+];
+
+const ALL_13_CATEGORIES = [
+  { label: "Cameras", href: "/store?cat=cameras", count: 226 },
+  { label: "Lenses & Accessories", href: "/store?cat=lenses", count: 392 },
+  { label: "Printers & Instax Cameras", href: "/store?q=Instax", count: 21 },
+  { label: "Professional Video", href: "/store?q=Cinema", count: 187 },
+  { label: "Batteries & Power", href: "/store?q=Battery", count: 295 },
+  { label: "Accessories", href: "/store?cat=accessories", count: 250 },
+  { label: "Lighting & Studio", href: "/store?cat=lighting", count: 665 },
+  { label: "Tripods & Supports", href: "/store?cat=tripods", count: 231 },
+  { label: "Gimbals & Stabilizers", href: "/store?cat=gimbals", count: 135 },
+  { label: "Rigs & Supports", href: "/store?q=Cage", count: 369 },
+  { label: "Storages & Accessories", href: "/store?cat=memory-cards", count: 163 },
+  { label: "Audio", href: "/store?cat=audio", count: 354 },
+  { label: "Mobile Equipment", href: "/store?cat=bags", count: 239 },
+];
 
 export function NavinaHeader() {
   const { cartItemCount, setIsCartOpen, homepageContent } = useStore();
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [isAllDeptsOpen, setIsAllDeptsOpen] = useState(false);
+  const [expandedMobileCategory, setExpandedMobileCategory] = useState<string | null>(null);
+
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const closeTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const announcement = homepageContent?.announcement || {
     announcementText: "OFFICIAL AUTHORIZED CINEMA & OPTICS DISTRIBUTOR",
     courierText: "VIP White-Glove Courier across Egypt",
     courierLink: "/store",
+  };
+
+  const handleMouseEnter = (deptId: string) => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+    setIsAllDeptsOpen(false);
+    setActiveDropdown(deptId);
+  };
+
+  const handleMouseLeave = () => {
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = setTimeout(() => {
+      setActiveDropdown(null);
+      setIsAllDeptsOpen(false);
+    }, 180);
+  };
+
+  const handleDeptsMouseEnter = () => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+    setActiveDropdown(null);
+    setIsAllDeptsOpen(true);
   };
 
   // Close user dropdown when clicking outside
@@ -43,14 +207,6 @@ export function NavinaHeader() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  const navLinks = [
-    { name: "Cameras", href: "/store" },
-    { name: "Z-Mount & Optics", href: "/store" },
-    { name: "Lighting & Sound", href: "/store" },
-    { name: "Pre-Owned Gear", href: "/store" },
-    { name: "Studio Solutions", href: "#studios" },
-  ];
 
   return (
     <header className="sticky top-0 z-50 w-full bg-[#000000] text-[#FFFFFF] border-b border-[#27272A] select-none">
@@ -117,18 +273,163 @@ export function NavinaHeader() {
             </Link>
           </div>
 
-          {/* Center: Clean Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-8">
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                href={link.href}
-                className="text-xs font-black uppercase tracking-widest text-[#D4D4D8] hover:text-[#FFE600] transition-colors relative py-1 group"
+          {/* Center: Dynamic Desktop Navigation with Rich Dropdowns */}
+          <nav className="hidden lg:flex items-center gap-4 xl:gap-6">
+            {NAV_DEPARTMENTS.map((dept) => {
+              const isOpen = activeDropdown === dept.id;
+              return (
+                <div
+                  key={dept.id}
+                  className="relative py-6"
+                  onMouseEnter={() => handleMouseEnter(dept.id)}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  <Link
+                    href={dept.href}
+                    className={`text-xs font-black uppercase tracking-wider transition-colors relative py-1 flex items-center gap-1 group ${
+                      isOpen ? "text-[#FFE600]" : "text-[#D4D4D8] hover:text-[#FFE600]"
+                    }`}
+                  >
+                    <span>{dept.name}</span>
+                    <ChevronDown
+                      className={`w-3 h-3 text-[#A1A1AA] transition-transform duration-200 ${
+                        isOpen ? "rotate-180 text-[#FFE600]" : "group-hover:text-[#FFE600]"
+                      }`}
+                    />
+                    <span
+                      className={`absolute bottom-0 left-0 h-[2px] bg-[#FFE600] transition-all duration-200 ${
+                        isOpen ? "w-full" : "w-0 group-hover:w-full"
+                      }`}
+                    />
+                  </Link>
+
+                  {/* Desktop Dropdown Flyout */}
+                  {isOpen && (
+                    <div
+                      onMouseEnter={() => handleMouseEnter(dept.id)}
+                      onMouseLeave={handleMouseLeave}
+                      className="absolute top-full left-0 mt-0 w-72 bg-[#121214] border border-[#27272A] border-t-2 border-t-[#FFE600] rounded-b-xl shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150 overflow-hidden"
+                    >
+                      {/* Dropdown Header */}
+                      <div className="bg-[#18181B] px-4 py-2.5 border-b border-[#27272A] flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#FFE600]" />
+                          <span className="text-[10px] font-mono font-bold tracking-wider uppercase text-[#D4D4D8]">
+                            {dept.name}
+                          </span>
+                        </div>
+                        <span className="text-[9px] font-mono text-[#A1A1AA]">
+                          Catalog Facet
+                        </span>
+                      </div>
+
+                      {/* Items List */}
+                      <div className="py-1.5 max-h-[380px] overflow-y-auto">
+                        {dept.items.map((sub, idx) => (
+                          <Link
+                            key={idx}
+                            href={sub.href}
+                            onClick={() => setActiveDropdown(null)}
+                            className="group flex items-center justify-between px-4 py-2.5 hover:bg-[#1E1E22] transition-colors border-b border-[#1E1E22]/40 last:border-0"
+                          >
+                            <span className="text-xs font-medium text-[#D4D4D8] group-hover:text-white group-hover:translate-x-0.5 transition-all">
+                              {sub.label}
+                            </span>
+                            <div className="flex items-center gap-1.5">
+                              {sub.count !== undefined && (
+                                <span className="text-[10px] font-mono text-[#71717A] group-hover:text-[#FFE600] transition-colors">
+                                  {sub.count}
+                                </span>
+                              )}
+                              <ChevronRight className="w-3.5 h-3.5 text-[#52525B] group-hover:text-[#FFE600] group-hover:translate-x-0.5 transition-transform" />
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+
+                      {/* Dropdown Footer */}
+                      <Link
+                        href={dept.href}
+                        onClick={() => setActiveDropdown(null)}
+                        className="block bg-[#09090B] px-4 py-2.5 text-center text-xs font-bold text-[#FFE600] hover:bg-[#FFE600] hover:text-black transition-colors font-mono tracking-wider uppercase border-t border-[#27272A]"
+                      >
+                        {dept.viewAllText}
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* All Departments Mega Flyout Trigger (Image 3) */}
+            <div
+              className="relative py-6"
+              onMouseEnter={handleDeptsMouseEnter}
+              onMouseLeave={handleMouseLeave}
+            >
+              <button
+                className={`text-xs font-black uppercase tracking-wider transition-colors py-1 flex items-center gap-1.5 px-2.5 py-1 rounded-sm border cursor-pointer ${
+                  isAllDeptsOpen
+                    ? "border-[#FFE600] bg-[#FFE600]/10 text-[#FFE600]"
+                    : "border-[#27272A] hover:border-[#FFE600]/40 text-[#D4D4D8] hover:text-[#FFE600]"
+                }`}
               >
-                {link.name}
-                <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-[#FFE600] group-hover:w-full transition-all duration-200" />
-              </Link>
-            ))}
+                <Layers className="w-3.5 h-3.5 text-[#FFE600]" />
+                <span>All Departments</span>
+                <ChevronDown
+                  className={`w-3 h-3 text-[#A1A1AA] transition-transform duration-200 ${
+                    isAllDeptsOpen ? "rotate-180 text-[#FFE600]" : ""
+                  }`}
+                />
+              </button>
+
+              {/* All 13 Categories Menu (Exact Match Image 3) */}
+              {isAllDeptsOpen && (
+                <div
+                  onMouseEnter={handleDeptsMouseEnter}
+                  onMouseLeave={handleMouseLeave}
+                  className="absolute top-full right-0 xl:left-0 mt-0 w-80 bg-[#121214] border border-[#27272A] border-t-2 border-t-[#FFE600] rounded-b-xl shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150 overflow-hidden"
+                >
+                  <div className="bg-[#18181B] px-4 py-2.5 border-b border-[#27272A] flex items-center justify-between">
+                    <span className="text-[10px] font-mono font-bold tracking-wider uppercase text-[#FFE600] flex items-center gap-1.5">
+                      <Sparkles className="w-3 h-3" /> Store Departments
+                    </span>
+                    <span className="text-[10px] font-mono text-[#A1A1AA]">
+                      13 Categories
+                    </span>
+                  </div>
+
+                  <div className="py-1 max-h-[420px] overflow-y-auto">
+                    {ALL_13_CATEGORIES.map((cat, idx) => (
+                      <Link
+                        key={idx}
+                        href={cat.href}
+                        onClick={() => setIsAllDeptsOpen(false)}
+                        className="group flex items-center justify-between px-4 py-2 hover:bg-[#1E1E22] transition-colors border-b border-[#1E1E22]/40 last:border-0"
+                      >
+                        <span className="text-xs font-medium text-[#D4D4D8] group-hover:text-white group-hover:translate-x-0.5 transition-all">
+                          {cat.label}
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-mono text-[#71717A] group-hover:text-[#FFE600] transition-colors">
+                            {cat.count}
+                          </span>
+                          <ChevronRight className="w-3.5 h-3.5 text-[#52525B] group-hover:text-[#FFE600] group-hover:translate-x-0.5 transition-transform" />
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+
+                  <Link
+                    href="/store"
+                    onClick={() => setIsAllDeptsOpen(false)}
+                    className="block bg-[#09090B] px-4 py-2.5 text-center text-xs font-bold text-[#FFE600] hover:bg-[#FFE600] hover:text-black transition-colors font-mono tracking-wider uppercase border-t border-[#27272A]"
+                  >
+                    Explore Complete Inventory (2,660) →
+                  </Link>
+                </div>
+              )}
+            </div>
           </nav>
 
           {/* Right: Search, Login / Account Dropdown, & Cart Button */}
@@ -237,18 +538,106 @@ export function NavinaHeader() {
 
       {/* Mobile Drawer Menu */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden border-t border-[#27272A] bg-[#0A0A0A] px-6 py-6 space-y-4 animate-in slide-in-from-top-2 duration-200">
-          <nav className="flex flex-col space-y-3 font-sans">
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                href={link.href}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="text-sm font-black uppercase tracking-wider text-white hover:text-[#FFE600] py-2 border-b border-[#1F1F23]"
-              >
-                {link.name}
-              </Link>
-            ))}
+        <div className="lg:hidden border-t border-[#27272A] bg-[#0A0A0A] px-5 py-6 space-y-4 animate-in slide-in-from-top-2 duration-200 max-h-[85vh] overflow-y-auto">
+          <nav className="flex flex-col space-y-2 font-sans">
+            {/* Departments Accordions */}
+            {NAV_DEPARTMENTS.map((dept) => {
+              const isExpanded = expandedMobileCategory === dept.id;
+              return (
+                <div key={dept.id} className="border-b border-[#1F1F23] pb-2">
+                  <div className="flex items-center justify-between py-2">
+                    <Link
+                      href={dept.href}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="text-sm font-black uppercase tracking-wider text-white hover:text-[#FFE600]"
+                    >
+                      {dept.name}
+                    </Link>
+                    <button
+                      onClick={() =>
+                        setExpandedMobileCategory(isExpanded ? null : dept.id)
+                      }
+                      className="p-1.5 text-[#A1A1AA] hover:text-[#FFE600]"
+                      aria-label="Toggle subcategories"
+                    >
+                      <ChevronDown
+                        className={`w-4 h-4 transition-transform ${
+                          isExpanded ? "rotate-180 text-[#FFE600]" : ""
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  {isExpanded && (
+                    <div className="pl-3 pr-1 py-1 space-y-1 bg-[#141416] rounded-lg border border-[#27272A]">
+                      {dept.items.map((sub, idx) => (
+                        <Link
+                          key={idx}
+                          href={sub.href}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="flex items-center justify-between py-2 px-2 text-xs text-[#A1A1AA] hover:text-[#FFE600] hover:bg-[#1C1C1F] rounded"
+                        >
+                          <span>{sub.label}</span>
+                          {sub.count !== undefined && (
+                            <span className="text-[10px] font-mono text-[#71717A]">
+                              ({sub.count})
+                            </span>
+                          )}
+                        </Link>
+                      ))}
+                      <Link
+                        href={dept.href}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="block py-2 text-center text-xs font-bold text-[#FFE600] border-t border-[#27272A]"
+                      >
+                        {dept.viewAllText}
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* All 13 Categories Accordion */}
+            <div className="border-b border-[#1F1F23] pb-2">
+              <div className="flex items-center justify-between py-2">
+                <span className="text-sm font-black uppercase tracking-wider text-[#FFE600] flex items-center gap-1.5">
+                  <Layers className="w-4 h-4" /> All Departments
+                </span>
+                <button
+                  onClick={() =>
+                    setExpandedMobileCategory(
+                      expandedMobileCategory === "all-depts" ? null : "all-depts"
+                    )
+                  }
+                  className="p-1.5 text-[#A1A1AA] hover:text-[#FFE600]"
+                >
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform ${
+                      expandedMobileCategory === "all-depts" ? "rotate-180 text-[#FFE600]" : ""
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {expandedMobileCategory === "all-depts" && (
+                <div className="pl-3 pr-1 py-1 space-y-1 bg-[#141416] rounded-lg border border-[#27272A]">
+                  {ALL_13_CATEGORIES.map((cat, idx) => (
+                    <Link
+                      key={idx}
+                      href={cat.href}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center justify-between py-2 px-2 text-xs text-[#A1A1AA] hover:text-[#FFE600] hover:bg-[#1C1C1F] rounded"
+                    >
+                      <span>{cat.label}</span>
+                      <span className="text-[10px] font-mono text-[#71717A]">
+                        ({cat.count})
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* User Account / Auth Section on Mobile */}
             {isAuthenticated ? (
