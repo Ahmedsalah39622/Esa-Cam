@@ -83,6 +83,12 @@ export interface FooterContent {
   email: string;
   address: string;
   copyright: string;
+  instagramUrl: string;
+  youtubeUrl: string;
+  tiktokUrl: string;
+  facebookUrl: string;
+  twitterUrl: string;
+  whatsappNumber: string;
 }
 
 export interface HomepageContentState {
@@ -233,5 +239,11 @@ export const DEFAULT_HOMEPAGE_CONTENT: HomepageContentState = {
     email: "pro@esacam.com",
     address: "24 Hassan Assem St, Zamalek, Cairo, Egypt",
     copyright: "ESA CAM Optics Lab • All rights reserved.",
+    instagramUrl: "https://instagram.com/esacam.store",
+    youtubeUrl: "https://youtube.com/@esacam",
+    tiktokUrl: "https://tiktok.com/@esacam.store",
+    facebookUrl: "https://facebook.com/esacam.store",
+    twitterUrl: "https://x.com/esacam_store",
+    whatsappNumber: "+201023456789",
   },
 };

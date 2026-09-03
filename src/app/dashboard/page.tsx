@@ -3393,6 +3393,80 @@ export default function DashboardPage() {
                       </div>
                     </div>
 
+                    {/* Social Media & WhatsApp */}
+                    <div className="pt-4 border-t border-border space-y-3">
+                      <h5 className="font-bold text-foreground text-xs flex items-center gap-2">
+                        <Globe className="w-3.5 h-3.5 text-[#FFE600]" />
+                        Social Media Channels & WhatsApp
+                      </h5>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="font-semibold text-foreground block">WhatsApp Number</label>
+                          <input
+                            type="text"
+                            value={footerDraft.whatsappNumber || ""}
+                            onChange={(e) => setFooterDraft({ ...footerDraft, whatsappNumber: e.target.value })}
+                            placeholder="+201023456789"
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-secondary/30 text-foreground font-mono"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="font-semibold text-foreground block">Instagram URL</label>
+                          <input
+                            type="url"
+                            value={footerDraft.instagramUrl || ""}
+                            onChange={(e) => setFooterDraft({ ...footerDraft, instagramUrl: e.target.value })}
+                            placeholder="https://instagram.com/esacam.store"
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-secondary/30 text-foreground font-mono text-[11px]"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="font-semibold text-foreground block">Facebook URL</label>
+                          <input
+                            type="url"
+                            value={footerDraft.facebookUrl || ""}
+                            onChange={(e) => setFooterDraft({ ...footerDraft, facebookUrl: e.target.value })}
+                            placeholder="https://facebook.com/esacam.store"
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-secondary/30 text-foreground font-mono text-[11px]"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="font-semibold text-foreground block">YouTube URL</label>
+                          <input
+                            type="url"
+                            value={footerDraft.youtubeUrl || ""}
+                            onChange={(e) => setFooterDraft({ ...footerDraft, youtubeUrl: e.target.value })}
+                            placeholder="https://youtube.com/@esacam"
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-secondary/30 text-foreground font-mono text-[11px]"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="font-semibold text-foreground block">TikTok URL</label>
+                          <input
+                            type="url"
+                            value={footerDraft.tiktokUrl || ""}
+                            onChange={(e) => setFooterDraft({ ...footerDraft, tiktokUrl: e.target.value })}
+                            placeholder="https://tiktok.com/@esacam.store"
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-secondary/30 text-foreground font-mono text-[11px]"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="font-semibold text-foreground block">X (Twitter) URL</label>
+                          <input
+                            type="url"
+                            value={footerDraft.twitterUrl || ""}
+                            onChange={(e) => setFooterDraft({ ...footerDraft, twitterUrl: e.target.value })}
+                            placeholder="https://x.com/esacam_store"
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-secondary/30 text-foreground font-mono text-[11px]"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="flex justify-between items-center pt-3 border-t border-border">
                       <Button
                         onClick={() => resetHomepageSection("footer")}

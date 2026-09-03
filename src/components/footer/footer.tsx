@@ -15,6 +15,12 @@ export function Footer() {
     email: "pro@esacam.com",
     address: "Zamalek Cinema Hub, Cairo",
     copyright: "ESA CAM. Authorized Cinema Distributor.",
+    instagramUrl: "https://instagram.com/esacam.store",
+    youtubeUrl: "https://youtube.com/@esacam",
+    tiktokUrl: "https://tiktok.com/@esacam.store",
+    facebookUrl: "https://facebook.com/esacam.store",
+    twitterUrl: "https://x.com/esacam_store",
+    whatsappNumber: "+201023456789",
   };
 
   const [email, setEmail] = useState("");
@@ -123,39 +129,84 @@ export function Footer() {
               Channels
             </h4>
             <ul className="space-y-3 font-semibold text-[#D4D4D8]">
-              <li>
-                <a
-                  href="https://instagram.com"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="hover:text-[#FFE600] transition-colors duration-200 inline-flex items-center gap-1.5"
-                >
-                  Instagram
-                  <ArrowUpRight className="w-3 h-3 opacity-40" />
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://youtube.com"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="hover:text-[#FFE600] transition-colors duration-200 inline-flex items-center gap-1.5"
-                >
-                  YouTube Cinema
-                  <ArrowUpRight className="w-3 h-3 opacity-40" />
-                </a>
-              </li>
-              <li>
-                <a
-                  href="https://x.com"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="hover:text-[#FFE600] transition-colors duration-200 inline-flex items-center gap-1.5"
-                >
-                  X (Twitter)
-                  <ArrowUpRight className="w-3 h-3 opacity-40" />
-                </a>
-              </li>
+              {footerData.instagramUrl && (
+                <li>
+                  <a
+                    href={footerData.instagramUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hover:text-[#FFE600] transition-colors duration-200 inline-flex items-center gap-1.5"
+                  >
+                    Instagram
+                    <ArrowUpRight className="w-3 h-3 opacity-40" />
+                  </a>
+                </li>
+              )}
+              {footerData.youtubeUrl && (
+                <li>
+                  <a
+                    href={footerData.youtubeUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hover:text-[#FFE600] transition-colors duration-200 inline-flex items-center gap-1.5"
+                  >
+                    YouTube
+                    <ArrowUpRight className="w-3 h-3 opacity-40" />
+                  </a>
+                </li>
+              )}
+              {footerData.tiktokUrl && (
+                <li>
+                  <a
+                    href={footerData.tiktokUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hover:text-[#FFE600] transition-colors duration-200 inline-flex items-center gap-1.5"
+                  >
+                    TikTok
+                    <ArrowUpRight className="w-3 h-3 opacity-40" />
+                  </a>
+                </li>
+              )}
+              {footerData.facebookUrl && (
+                <li>
+                  <a
+                    href={footerData.facebookUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hover:text-[#FFE600] transition-colors duration-200 inline-flex items-center gap-1.5"
+                  >
+                    Facebook
+                    <ArrowUpRight className="w-3 h-3 opacity-40" />
+                  </a>
+                </li>
+              )}
+              {footerData.twitterUrl && (
+                <li>
+                  <a
+                    href={footerData.twitterUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hover:text-[#FFE600] transition-colors duration-200 inline-flex items-center gap-1.5"
+                  >
+                    X (Twitter)
+                    <ArrowUpRight className="w-3 h-3 opacity-40" />
+                  </a>
+                </li>
+              )}
+              {footerData.whatsappNumber && (
+                <li>
+                  <a
+                    href={`https://wa.me/${footerData.whatsappNumber.replace(/[^0-9]/g, "")}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="hover:text-[#FFE600] transition-colors duration-200 inline-flex items-center gap-1.5"
+                  >
+                    WhatsApp
+                    <ArrowUpRight className="w-3 h-3 opacity-40" />
+                  </a>
+                </li>
+              )}
             </ul>
           </div>
 
