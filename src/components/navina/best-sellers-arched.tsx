@@ -8,7 +8,7 @@ import { ArrowRight, ChevronLeft, ChevronRight, Star } from "lucide-react";
 import { PRODUCTS, Product } from "@/data/products";
 
 export function BestSellersArched() {
-  const { setQuickViewProduct, formatPrice, homepageContent } = useStore();
+  const { setQuickViewProduct, formatPrice, homepageContent, products } = useStore();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const bestSellers = homepageContent?.bestSellers || {
@@ -17,15 +17,17 @@ export function BestSellersArched() {
     subtitle: "Authorized flagship bodies, master prime sets, and high-power studio lighting in Egypt.",
   };
 
+  const pool = products && products.length > 0 ? products : PRODUCTS;
+
   const flagshipEditions: Product[] = [
-    PRODUCTS.find((p) => p.id === "esa-637" || p.id === "sony-fx3") || PRODUCTS[0],
-    PRODUCTS.find((p) => p.id === "canon-eos-r5-c") || PRODUCTS[1],
-    PRODUCTS.find((p) => p.id === "blackmagic-cinema-6k-ff") || PRODUCTS[2],
-    PRODUCTS.find((p) => p.id === "sony-24-70-gm2") || PRODUCTS[3],
-    PRODUCTS.find((p) => p.id === "dji-rs4-pro") || PRODUCTS[4],
-    PRODUCTS.find((p) => p.id === "aputure-600d-pro") || PRODUCTS[5],
-    PRODUCTS.find((p) => p.id === "fujifilm-x-t5-used") || PRODUCTS[6],
-    PRODUCTS.find((p) => p.id === "dji-mic-2-kit") || PRODUCTS[7],
+    pool.find((p) => p.id === "esa-637" || p.id === "sony-fx3") || pool[0],
+    pool.find((p) => p.id === "esa-5745") || pool[1],
+    pool.find((p) => p.id === "esa-5735") || pool[2],
+    pool.find((p) => p.id === "esa-5729") || pool[3],
+    pool.find((p) => p.id === "icam-62091") || pool[4],
+    pool.find((p) => p.id === "icam-48665") || pool[5],
+    pool.find((p) => p.id === "icam-55125") || pool[6],
+    pool.find((p) => p.id === "icam-11631") || pool[7],
   ];
 
   const handleScroll = (direction: "left" | "right") => {
@@ -106,9 +108,14 @@ export function BestSellersArched() {
                   </span>
                 )}
                 <Image
-                  src={product.image}
+                  src={product.image || "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=800&q=80"}
                   alt={product.name}
                   fill
+                  unoptimized
+                  onError={(e) => {
+                    const target = e.currentTarget as HTMLImageElement;
+                    target.src = "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=800&q=80";
+                  }}
                   className="object-contain p-4 group-hover:scale-105 transition-transform duration-500"
                 />
               </div>

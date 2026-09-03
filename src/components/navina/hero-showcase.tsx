@@ -206,6 +206,10 @@ export function HeroShowcase() {
                     alt={currentProduct.name}
                     fill
                     unoptimized
+                    onError={(e) => {
+                      const target = e.currentTarget as HTMLImageElement;
+                      target.src = "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=800&q=80";
+                    }}
                     className="object-contain p-2"
                   />
                 </div>

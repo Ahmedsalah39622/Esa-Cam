@@ -147,11 +147,28 @@ export async function GET() {
       );
 
       if (rows && rows.length > 0) {
+        const memoryMap = new Map(memoryProducts.map((p) => [p.id, p.image_url]));
+        const healedRows = rows.map((r) => {
+          if (
+            !r.image_url ||
+            r.image_url.includes("esacamstore.com/wp-content/uploads") ||
+            r.image_url.includes("img_")
+          ) {
+            const memoryImage = memoryMap.get(r.id);
+            if (memoryImage && !memoryImage.includes("esacamstore.com")) {
+              r.image_url = memoryImage;
+            } else {
+              r.image_url = "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=800&q=80";
+            }
+          }
+          return r;
+        });
+
         return NextResponse.json({
           success: true,
           source: "database",
-          count: rows.length,
-          data: rows,
+          count: healedRows.length,
+          data: healedRows,
         });
       }
     }
