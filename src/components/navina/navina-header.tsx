@@ -14,6 +14,7 @@ import {
   User,
   LogOut,
   ChevronDown,
+  Phone,
 } from "lucide-react";
 
 export function NavinaHeader() {
@@ -60,6 +61,25 @@ export function NavinaHeader() {
           <span className="text-white font-bold">{announcement.announcementText}</span>
         </div>
         <div className="hidden md:flex items-center gap-4">
+          {homepageContent?.footer?.hotline && (
+            <a
+              href={`tel:${homepageContent.footer.hotline}`}
+              className="hover:text-[#FFE600] transition-colors flex items-center gap-1 text-white font-mono"
+            >
+              <Phone className="w-3 h-3 text-[#FFE600]" />
+              <span>{homepageContent.footer.hotline}</span>
+            </a>
+          )}
+          {homepageContent?.footer?.whatsappNumber && (
+            <a
+              href={`https://wa.me/${homepageContent.footer.whatsappNumber.replace(/[^0-9]/g, "")}`}
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-[#FFE600] transition-colors flex items-center gap-1 text-emerald-400 font-bold font-mono"
+            >
+              <span>WhatsApp</span>
+            </a>
+          )}
           <Link href={announcement.courierLink || "/store"} className="hover:text-[#FFE600] transition-colors flex items-center gap-1">
             <span>{announcement.courierText}</span>
             <ChevronRight className="w-3 h-3 text-[#FFE600]" />
@@ -282,6 +302,30 @@ export function NavinaHeader() {
                 {cartItemCount}
               </span>
             </Link>
+
+            {/* Quick Contact on Mobile */}
+            {(homepageContent?.footer?.hotline || homepageContent?.footer?.whatsappNumber) && (
+              <div className="pt-3 border-t border-[#1F1F23] flex items-center gap-2">
+                {homepageContent?.footer?.whatsappNumber && (
+                  <a
+                    href={`https://wa.me/${homepageContent.footer.whatsappNumber.replace(/[^0-9]/g, "")}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex-1 py-2 px-3 bg-emerald-600/20 text-emerald-400 border border-emerald-500/40 rounded-sm text-xs font-bold text-center"
+                  >
+                    💬 WhatsApp
+                  </a>
+                )}
+                {homepageContent?.footer?.hotline && (
+                  <a
+                    href={`tel:${homepageContent.footer.hotline}`}
+                    className="flex-1 py-2 px-3 bg-white/10 text-[#FFE600] border border-[#FFE600]/30 rounded-sm text-xs font-bold text-center"
+                  >
+                    📞 Call Hotline
+                  </a>
+                )}
+              </div>
+            )}
           </nav>
         </div>
       )}

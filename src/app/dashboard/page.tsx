@@ -1491,7 +1491,7 @@ export default function DashboardPage() {
   ];
 
   interface NavItem {
-    id: typeof activeTab;
+    id: typeof activeTab | "footer_contacts";
     label: string;
     icon: React.ReactNode;
     count?: number;
@@ -1518,6 +1518,7 @@ export default function DashboardPage() {
       title: "Storefront & Experience CMS",
       items: [
         { id: "homepage_cms", label: "Homepage Sections & Content", icon: <Layout className="w-4 h-4" />, badge: "Live Sync" },
+        { id: "footer_contacts", label: "📞 أرقام التواصل والسوشيال ميديا", icon: <Phone className="w-4 h-4 text-emerald-400" />, badge: "Hotline" },
       ],
     },
     {
@@ -1670,12 +1671,20 @@ export default function DashboardPage() {
               </p>
               <div className="space-y-1">
                 {section.items.map((tab) => {
-                  const isActive = activeTab === tab.id;
+                  const isActive =
+                    tab.id === "footer_contacts"
+                      ? activeTab === "homepage_cms" && cmsSection === "footer"
+                      : activeTab === tab.id && !(tab.id === "homepage_cms" && cmsSection === "footer");
                   return (
                     <button
                       key={tab.id}
                       onClick={() => {
-                        setActiveTab(tab.id as typeof activeTab);
+                        if (tab.id === "footer_contacts") {
+                          setActiveTab("homepage_cms");
+                          setCmsSection("footer");
+                        } else {
+                          setActiveTab(tab.id as typeof activeTab);
+                        }
                         setIsMobileSidebarOpen(false);
                       }}
                       className={`w-full px-3 py-2.5 rounded-xl flex items-center justify-between transition-all cursor-pointer text-xs font-semibold ${
@@ -2098,7 +2107,7 @@ export default function DashboardPage() {
                   { id: "editorial", label: "Editorial Story Banner", icon: <FileText className="w-3.5 h-3.5 text-purple-500" /> },
                   { id: "best_sellers", label: "Flagship Editions Carousel", icon: <Award className="w-3.5 h-3.5 text-emerald-500" /> },
                   { id: "announcement", label: "Top Announcement Strip", icon: <Globe className="w-3.5 h-3.5 text-[#FFE600]" /> },
-                  { id: "footer", label: "Footer & Experience Hub", icon: <Building2 className="w-3.5 h-3.5 text-zinc-400" /> },
+                  { id: "footer", label: "📞 أرقام التواصل والسوشيال ميديا (Social & Phone)", icon: <Phone className="w-3.5 h-3.5 text-emerald-400" /> },
                 ].map((tab) => (
                   <button
                     key={tab.id}
@@ -3340,167 +3349,373 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              {/* CMS SECTION 7: FOOTER & EXPERIENCE HUB */}
+              {/* CMS SECTION 7: SOCIAL MEDIA & CONTACT NUMBERS */}
               {cmsSection === "footer" && (
-                <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-xs space-y-6 animate-in fade-in">
-                  <div className="flex items-center justify-between border-b border-border pb-4">
+                <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-xs space-y-8 animate-in fade-in">
+                  {/* Header */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-5">
                     <div>
-                      <h4 className="text-base font-bold text-foreground">Footer &amp; Showroom Contacts</h4>
-                      <p className="text-xs text-muted-foreground font-mono">
-                        Official hotline, email, showroom locations, and copyright line
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <h4 className="text-lg font-black text-foreground">
+                          إدارة أرقام التواصل والسوشيال ميديا (Social Media &amp; Contacts)
+                        </h4>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        تحكم بالكامل في رقم الهاتف والخط الساخن، رقم الواتساب، وروابط حسابات السوشيال ميديا المعروضة في الفوتر والشريط العلوي وصفحة الدفع.
                       </p>
                     </div>
+
+                    <Button
+                      onClick={() => updateHomepageSection("footer", footerDraft)}
+                      className="rounded-xl text-xs font-bold gap-2 cursor-pointer bg-[#FFE600] text-black hover:bg-[#FFD000] px-6 h-10 shrink-0 shadow-md"
+                    >
+                      <Check className="w-4 h-4" />
+                      <span>حفظ ونشر التعديلات (Save &amp; Publish)</span>
+                    </Button>
                   </div>
 
-                  <div className="space-y-4 text-xs">
-                    <div className="space-y-1">
-                      <label className="font-semibold text-foreground block">Filmmaker Community Tagline</label>
-                      <textarea
-                        rows={2}
-                        value={footerDraft.tagline}
-                        onChange={(e) => setFooterDraft({ ...footerDraft, tagline: e.target.value })}
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-secondary/30 text-foreground"
-                      />
+                  {/* Section 1: Phone Numbers & Direct Support */}
+                  <div className="p-5 rounded-2xl bg-secondary/20 border border-border space-y-4">
+                    <div className="flex items-center justify-between border-b border-border/60 pb-3">
+                      <div className="flex items-center gap-2">
+                        <Phone className="w-4 h-4 text-emerald-400" />
+                        <h5 className="font-bold text-foreground text-sm">
+                          أرقام الهواتف والتواصل المباشر (Phone &amp; Direct Support)
+                        </h5>
+                      </div>
+                      <span className="text-[10px] font-mono text-muted-foreground">
+                        تظهر في الفوتر، الشريط العلوي، وتأكيد الطلبات
+                      </span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <label className="font-semibold text-foreground block">Hotline Phone Number</label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      {/* Hotline */}
+                      <div className="space-y-1.5">
+                        <label className="font-bold text-foreground text-xs flex items-center justify-between">
+                          <span>رقم الهاتف / الخط الساخن (Hotline Phone):</span>
+                          {footerDraft.hotline && (
+                            <a
+                              href={`tel:${footerDraft.hotline}`}
+                              className="text-[10px] text-primary hover:underline font-mono inline-flex items-center gap-1"
+                            >
+                              <Phone className="w-2.5 h-2.5" />
+                              تجربة الاتصال
+                            </a>
+                          )}
+                        </label>
                         <input
                           type="text"
                           value={footerDraft.hotline}
                           onChange={(e) => setFooterDraft({ ...footerDraft, hotline: e.target.value })}
-                          placeholder="+20 2 2736 3456"
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-secondary/30 text-foreground font-mono"
+                          placeholder="+20 (02) 2736-CAM أو 01023456789"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-foreground font-mono text-xs focus:ring-1 focus:ring-primary"
                         />
+                        <p className="text-[10px] text-muted-foreground">
+                          الرقم المعروض في الفوتر للعملاء والاتصال المباشر.
+                        </p>
                       </div>
-                      <div className="space-y-1">
-                        <label className="font-semibold text-foreground block">Official Support Email</label>
+
+                      {/* WhatsApp */}
+                      <div className="space-y-1.5">
+                        <label className="font-bold text-foreground text-xs flex items-center justify-between">
+                          <span>رقم الواتساب الرسمي (Official WhatsApp):</span>
+                          {footerDraft.whatsappNumber && (
+                            <a
+                              href={`https://wa.me/${footerDraft.whatsappNumber.replace(/[^0-9]/g, "")}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[10px] text-emerald-500 hover:underline font-mono inline-flex items-center gap-1"
+                            >
+                              <ExternalLink className="w-2.5 h-2.5" />
+                              فتح محادثة تجريبية
+                            </a>
+                          )}
+                        </label>
+                        <input
+                          type="text"
+                          value={footerDraft.whatsappNumber || ""}
+                          onChange={(e) => setFooterDraft({ ...footerDraft, whatsappNumber: e.target.value })}
+                          placeholder="+201023456789"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-foreground font-mono text-xs focus:ring-1 focus:ring-primary"
+                        />
+                        <p className="text-[10px] text-muted-foreground">
+                          يستخدم لزر الواتساب في الفوتر، الشات، ورسالة تأكيد الطلبات في Checkout.
+                        </p>
+                      </div>
+
+                      {/* Support Email */}
+                      <div className="space-y-1.5">
+                        <label className="font-bold text-foreground text-xs flex items-center justify-between">
+                          <span>البريد الإلكتروني للدعم والمبيعات (Support Email):</span>
+                          {footerDraft.email && (
+                            <a
+                              href={`mailto:${footerDraft.email}`}
+                              className="text-[10px] text-primary hover:underline font-mono inline-flex items-center gap-1"
+                            >
+                              <ExternalLink className="w-2.5 h-2.5" />
+                              إرسال بريد تجريبي
+                            </a>
+                          )}
+                        </label>
                         <input
                           type="email"
                           value={footerDraft.email}
                           onChange={(e) => setFooterDraft({ ...footerDraft, email: e.target.value })}
                           placeholder="pro@esacam.com"
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-secondary/30 text-foreground font-mono"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-foreground font-mono text-xs focus:ring-1 focus:ring-primary"
                         />
                       </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <label className="font-semibold text-foreground block">Flagship Showroom Locations</label>
+                      {/* Showroom Address */}
+                      <div className="space-y-1.5">
+                        <label className="font-bold text-foreground text-xs block">
+                          عنوان المعارض ومراكز التجربة (Showroom Hubs):
+                        </label>
                         <input
                           type="text"
                           value={footerDraft.address}
                           onChange={(e) => setFooterDraft({ ...footerDraft, address: e.target.value })}
-                          placeholder="Zamalek Cinema Hub, Cairo"
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-secondary/30 text-foreground"
+                          placeholder="24 Hassan Assem St, Zamalek, Cairo, Egypt"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-foreground text-xs focus:ring-1 focus:ring-primary"
                         />
                       </div>
-                      <div className="space-y-1">
-                        <label className="font-semibold text-foreground block">Copyright Text</label>
+                    </div>
+                  </div>
+
+                  {/* Section 2: Social Media Channels */}
+                  <div className="p-5 rounded-2xl bg-secondary/20 border border-border space-y-4">
+                    <div className="flex items-center justify-between border-b border-border/60 pb-3">
+                      <div className="flex items-center gap-2">
+                        <Globe className="w-4 h-4 text-[#FFE600]" />
+                        <h5 className="font-bold text-foreground text-sm">
+                          روابط منصات التواصل الاجتماعي (Social Media Channels)
+                        </h5>
+                      </div>
+                      <span className="text-[10px] font-mono text-muted-foreground">
+                        أدخل الروابط كاملة (مع https://)
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      {/* Instagram */}
+                      <div className="space-y-1.5">
+                        <label className="font-bold text-foreground text-xs flex items-center justify-between">
+                          <span>رابط انستجرام (Instagram URL):</span>
+                          {footerDraft.instagramUrl && (
+                            <a
+                              href={footerDraft.instagramUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[10px] text-pink-400 hover:underline font-mono inline-flex items-center gap-1"
+                            >
+                              <ExternalLink className="w-2.5 h-2.5" />
+                              زيارة الحساب
+                            </a>
+                          )}
+                        </label>
+                        <input
+                          type="url"
+                          value={footerDraft.instagramUrl || ""}
+                          onChange={(e) => setFooterDraft({ ...footerDraft, instagramUrl: e.target.value })}
+                          placeholder="https://instagram.com/esacam.store"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-foreground font-mono text-xs focus:ring-1 focus:ring-primary"
+                        />
+                      </div>
+
+                      {/* Facebook */}
+                      <div className="space-y-1.5">
+                        <label className="font-bold text-foreground text-xs flex items-center justify-between">
+                          <span>رابط فيسبوك (Facebook URL):</span>
+                          {footerDraft.facebookUrl && (
+                            <a
+                              href={footerDraft.facebookUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[10px] text-blue-400 hover:underline font-mono inline-flex items-center gap-1"
+                            >
+                              <ExternalLink className="w-2.5 h-2.5" />
+                              زيارة الصفحة
+                            </a>
+                          )}
+                        </label>
+                        <input
+                          type="url"
+                          value={footerDraft.facebookUrl || ""}
+                          onChange={(e) => setFooterDraft({ ...footerDraft, facebookUrl: e.target.value })}
+                          placeholder="https://facebook.com/esacam.store"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-foreground font-mono text-xs focus:ring-1 focus:ring-primary"
+                        />
+                      </div>
+
+                      {/* TikTok */}
+                      <div className="space-y-1.5">
+                        <label className="font-bold text-foreground text-xs flex items-center justify-between">
+                          <span>رابط تيك توك (TikTok URL):</span>
+                          {footerDraft.tiktokUrl && (
+                            <a
+                              href={footerDraft.tiktokUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[10px] text-cyan-400 hover:underline font-mono inline-flex items-center gap-1"
+                            >
+                              <ExternalLink className="w-2.5 h-2.5" />
+                              زيارة الحساب
+                            </a>
+                          )}
+                        </label>
+                        <input
+                          type="url"
+                          value={footerDraft.tiktokUrl || ""}
+                          onChange={(e) => setFooterDraft({ ...footerDraft, tiktokUrl: e.target.value })}
+                          placeholder="https://tiktok.com/@esacam.store"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-foreground font-mono text-xs focus:ring-1 focus:ring-primary"
+                        />
+                      </div>
+
+                      {/* YouTube */}
+                      <div className="space-y-1.5">
+                        <label className="font-bold text-foreground text-xs flex items-center justify-between">
+                          <span>رابط يوتيوب (YouTube URL):</span>
+                          {footerDraft.youtubeUrl && (
+                            <a
+                              href={footerDraft.youtubeUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[10px] text-rose-500 hover:underline font-mono inline-flex items-center gap-1"
+                            >
+                              <ExternalLink className="w-2.5 h-2.5" />
+                              زيارة القناة
+                            </a>
+                          )}
+                        </label>
+                        <input
+                          type="url"
+                          value={footerDraft.youtubeUrl || ""}
+                          onChange={(e) => setFooterDraft({ ...footerDraft, youtubeUrl: e.target.value })}
+                          placeholder="https://youtube.com/@esacam"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-foreground font-mono text-xs focus:ring-1 focus:ring-primary"
+                        />
+                      </div>
+
+                      {/* X / Twitter */}
+                      <div className="space-y-1.5 md:col-span-2">
+                        <label className="font-bold text-foreground text-xs flex items-center justify-between">
+                          <span>رابط منصة إكس / تويتر (X / Twitter URL):</span>
+                          {footerDraft.twitterUrl && (
+                            <a
+                              href={footerDraft.twitterUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[10px] text-foreground hover:underline font-mono inline-flex items-center gap-1"
+                            >
+                              <ExternalLink className="w-2.5 h-2.5" />
+                              زيارة الحساب
+                            </a>
+                          )}
+                        </label>
+                        <input
+                          type="url"
+                          value={footerDraft.twitterUrl || ""}
+                          onChange={(e) => setFooterDraft({ ...footerDraft, twitterUrl: e.target.value })}
+                          placeholder="https://x.com/esacam_store"
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-foreground font-mono text-xs focus:ring-1 focus:ring-primary"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section 3: Footer Texts & Copyright */}
+                  <div className="p-5 rounded-2xl bg-secondary/20 border border-border space-y-4">
+                    <h5 className="font-bold text-foreground text-sm flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-purple-400" />
+                      النصوص القانونية ورسالة المجتمع (Community Tagline &amp; Copyright)
+                    </h5>
+
+                    <div className="space-y-3">
+                      <div className="space-y-1.5">
+                        <label className="font-bold text-foreground text-xs block">
+                          رسالة مجتمع صناع السينما (Community Tagline):
+                        </label>
+                        <textarea
+                          rows={2}
+                          value={footerDraft.tagline}
+                          onChange={(e) => setFooterDraft({ ...footerDraft, tagline: e.target.value })}
+                          placeholder="Official Authorized Cinema &amp; Optics Distributor in Egypt..."
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-foreground text-xs focus:ring-1 focus:ring-primary"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="font-bold text-foreground text-xs block">
+                          سطر حقوق الملكية (Copyright Line):
+                        </label>
                         <input
                           type="text"
                           value={footerDraft.copyright}
                           onChange={(e) => setFooterDraft({ ...footerDraft, copyright: e.target.value })}
-                          placeholder="ESA CAM. Authorized Cinema Distributor."
-                          className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-secondary/30 text-foreground font-mono text-[11px]"
+                          placeholder="ESA CAM Optics Lab • All rights reserved."
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-foreground font-mono text-xs focus:ring-1 focus:ring-primary"
                         />
                       </div>
                     </div>
+                  </div>
 
-                    {/* Social Media & WhatsApp */}
-                    <div className="pt-4 border-t border-border space-y-3">
-                      <h5 className="font-bold text-foreground text-xs flex items-center gap-2">
-                        <Globe className="w-3.5 h-3.5 text-[#FFE600]" />
-                        Social Media Channels & WhatsApp
-                      </h5>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                          <label className="font-semibold text-foreground block">WhatsApp Number</label>
-                          <input
-                            type="text"
-                            value={footerDraft.whatsappNumber || ""}
-                            onChange={(e) => setFooterDraft({ ...footerDraft, whatsappNumber: e.target.value })}
-                            placeholder="+201023456789"
-                            className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-secondary/30 text-foreground font-mono"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="font-semibold text-foreground block">Instagram URL</label>
-                          <input
-                            type="url"
-                            value={footerDraft.instagramUrl || ""}
-                            onChange={(e) => setFooterDraft({ ...footerDraft, instagramUrl: e.target.value })}
-                            placeholder="https://instagram.com/esacam.store"
-                            className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-secondary/30 text-foreground font-mono text-[11px]"
-                          />
-                        </div>
+                  {/* Live Preview Card */}
+                  <div className="p-5 rounded-2xl bg-black border border-[#27272A] text-white space-y-3 shadow-xl">
+                    <div className="flex items-center justify-between border-b border-white/10 pb-2">
+                      <span className="text-[11px] font-mono text-[#FFE600] font-bold uppercase flex items-center gap-1.5">
+                        <Eye className="w-3.5 h-3.5" />
+                        معاينة حية لطريقة عرض الروابط وأرقام التواصل (Live Preview)
+                      </span>
+                      <span className="text-[10px] font-mono text-emerald-400">● مباشر</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs font-mono pt-1">
+                      <div>
+                        <span className="text-[10px] text-[#71717A] block uppercase mb-1">الخط الساخن:</span>
+                        <a href={`tel:${footerDraft.hotline}`} className="text-[#FFE600] font-bold hover:underline">
+                          {footerDraft.hotline || "لم يحدد رقم بعد"}
+                        </a>
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                          <label className="font-semibold text-foreground block">Facebook URL</label>
-                          <input
-                            type="url"
-                            value={footerDraft.facebookUrl || ""}
-                            onChange={(e) => setFooterDraft({ ...footerDraft, facebookUrl: e.target.value })}
-                            placeholder="https://facebook.com/esacam.store"
-                            className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-secondary/30 text-foreground font-mono text-[11px]"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="font-semibold text-foreground block">YouTube URL</label>
-                          <input
-                            type="url"
-                            value={footerDraft.youtubeUrl || ""}
-                            onChange={(e) => setFooterDraft({ ...footerDraft, youtubeUrl: e.target.value })}
-                            placeholder="https://youtube.com/@esacam"
-                            className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-secondary/30 text-foreground font-mono text-[11px]"
-                          />
-                        </div>
+                      <div>
+                        <span className="text-[10px] text-[#71717A] block uppercase mb-1">الواتساب:</span>
+                        <span className="text-emerald-400 font-bold">
+                          {footerDraft.whatsappNumber || "لم يحدد رقم بعد"}
+                        </span>
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                          <label className="font-semibold text-foreground block">TikTok URL</label>
-                          <input
-                            type="url"
-                            value={footerDraft.tiktokUrl || ""}
-                            onChange={(e) => setFooterDraft({ ...footerDraft, tiktokUrl: e.target.value })}
-                            placeholder="https://tiktok.com/@esacam.store"
-                            className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-secondary/30 text-foreground font-mono text-[11px]"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="font-semibold text-foreground block">X (Twitter) URL</label>
-                          <input
-                            type="url"
-                            value={footerDraft.twitterUrl || ""}
-                            onChange={(e) => setFooterDraft({ ...footerDraft, twitterUrl: e.target.value })}
-                            placeholder="https://x.com/esacam_store"
-                            className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-secondary/30 text-foreground font-mono text-[11px]"
-                          />
+                      <div>
+                        <span className="text-[10px] text-[#71717A] block uppercase mb-1">القنوات المفعلة:</span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {footerDraft.instagramUrl && <span className="px-1.5 py-0.5 rounded bg-white/10 text-[10px]">Instagram</span>}
+                          {footerDraft.facebookUrl && <span className="px-1.5 py-0.5 rounded bg-white/10 text-[10px]">Facebook</span>}
+                          {footerDraft.tiktokUrl && <span className="px-1.5 py-0.5 rounded bg-white/10 text-[10px]">TikTok</span>}
+                          {footerDraft.youtubeUrl && <span className="px-1.5 py-0.5 rounded bg-white/10 text-[10px]">YouTube</span>}
+                          {footerDraft.twitterUrl && <span className="px-1.5 py-0.5 rounded bg-white/10 text-[10px]">X</span>}
                         </div>
                       </div>
                     </div>
+                  </div>
 
-                    <div className="flex justify-between items-center pt-3 border-t border-border">
-                      <Button
-                        onClick={() => resetHomepageSection("footer")}
-                        variant="ghost"
-                        size="sm"
-                        className="rounded-xl text-xs cursor-pointer text-muted-foreground hover:text-foreground"
-                      >
-                        <RotateCcw className="w-3.5 h-3.5 mr-1" />
-                        <span>Reset to Defaults</span>
-                      </Button>
-                      <Button
-                        onClick={() => updateHomepageSection("footer", footerDraft)}
-                        className="rounded-xl text-xs font-bold gap-2 cursor-pointer bg-[#FFE600] text-black hover:bg-[#FFD000] px-6 h-10"
-                      >
-                        <Check className="w-4 h-4" />
-                        <span>Save Footer &amp; Publish Live</span>
-                      </Button>
-                    </div>
+                  {/* Footer Action Buttons */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-border">
+                    <Button
+                      onClick={() => resetHomepageSection("footer")}
+                      variant="ghost"
+                      size="sm"
+                      className="rounded-xl text-xs cursor-pointer text-muted-foreground hover:text-foreground"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 mr-1" />
+                      <span>استعادة الإعدادات الافتراضية (Reset)</span>
+                    </Button>
+
+                    <Button
+                      onClick={() => updateHomepageSection("footer", footerDraft)}
+                      className="rounded-xl text-xs font-bold gap-2 cursor-pointer bg-[#FFE600] text-black hover:bg-[#FFD000] px-8 h-11 shadow-lg"
+                    >
+                      <Check className="w-4 h-4" />
+                      <span>حفظ ونشر التعديلات فوراً (Save &amp; Publish Live)</span>
+                    </Button>
                   </div>
                 </div>
               )}

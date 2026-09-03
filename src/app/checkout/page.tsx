@@ -50,6 +50,7 @@ export default function CheckoutPage() {
     clearCart,
     shippingSettings,
     calculateShippingFee,
+    homepageContent,
   } = useStore();
 
   const [paymentMethod, setPaymentMethod] = useState<"card" | "cod" | "installments" | "wire">("cod");
@@ -268,15 +269,21 @@ export default function CheckoutPage() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 pt-2">
-            <a
-              href={`https://wa.me/201022736456?text=${whatsappMsg}`}
-              target="_blank"
-              rel="noreferrer"
-              className="flex-1 h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-md"
-            >
-              <MessageCircle className="w-4 h-4" />
-              <span>Confirm on WhatsApp</span>
-            </a>
+            {(() => {
+              const waRaw = homepageContent?.footer?.whatsappNumber || "201022736456";
+              const waClean = waRaw.replace(/[^0-9]/g, "") || "201022736456";
+              return (
+                <a
+                  href={`https://wa.me/${waClean}?text=${whatsappMsg}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex-1 h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-md"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  <span>Confirm on WhatsApp</span>
+                </a>
+              );
+            })()}
 
             <Button asChild variant="outline" className="flex-1 h-12 rounded-xl font-bold text-xs">
               <Link href="/">
