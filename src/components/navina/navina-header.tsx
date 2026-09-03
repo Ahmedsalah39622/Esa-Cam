@@ -62,7 +62,7 @@ const NAV_DEPARTMENTS: NavDepartment[] = [
   },
   {
     id: "lenses",
-    name: "Lenses & Accessories",
+    name: "Lenses",
     href: "/store?cat=lenses",
     description: "Master Cinema Primes, Telephotos & Zooms",
     viewAllText: "View All Lenses & Optics (392 Items) →",
@@ -80,7 +80,7 @@ const NAV_DEPARTMENTS: NavDepartment[] = [
   },
   {
     id: "lighting",
-    name: "Lighting & Studio",
+    name: "Lighting",
     href: "/store?cat=lighting",
     description: "High-Power COB, Tubes, Flashes & Modifiers",
     viewAllText: "View All Lighting & Studio (665 Items) →",
@@ -116,7 +116,7 @@ const NAV_DEPARTMENTS: NavDepartment[] = [
   },
   {
     id: "gimbals",
-    name: "Gimbals & Stabilizers",
+    name: "Gimbals & Rigs",
     href: "/store?cat=gimbals",
     description: "3-Axis Cinema Stabilizers, Cages & Sliders",
     viewAllText: "View All Stabilizers & Rigs (504 Items) →",
@@ -245,10 +245,10 @@ export function NavinaHeader() {
 
 
       {/* Main Nikon-Style Header Bar */}
-      <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-12">
-        <div className="flex items-center justify-between h-20">
-          {/* Left: Hamburger (Mobile) + Nikon-Style Brand Logo */}
-          <div className="flex items-center gap-6">
+      <div className="w-full max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
+        <div className="flex items-center justify-between h-20 gap-4 xl:gap-8">
+          {/* Left: Hamburger (Mobile) + Brand Logo */}
+          <div className="flex items-center gap-4 sm:gap-6 mr-6 lg:mr-10 xl:mr-14 shrink-0">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="lg:hidden text-white hover:text-[#FFE600] transition-colors p-1 cursor-pointer"
@@ -257,8 +257,8 @@ export function NavinaHeader() {
               {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
 
-            {/* Nikon-Inspired Logo Block */}
-            <Link href="/" className="flex items-center group">
+            {/* Logo Block */}
+            <Link href="/" className="flex items-center group shrink-0">
               <div className="bg-[#FFE600] text-black px-3 py-1.5 font-black text-xl sm:text-2xl tracking-tighter uppercase font-sans mr-2 shadow-xs group-hover:scale-105 transition-transform">
                 ESA
               </div>
@@ -274,25 +274,25 @@ export function NavinaHeader() {
           </div>
 
           {/* Center: Dynamic Desktop Navigation with Rich Dropdowns */}
-          <nav className="hidden lg:flex items-center gap-4 xl:gap-6">
+          <nav className="hidden lg:flex items-center gap-5 xl:gap-8 flex-1 justify-center">
             {NAV_DEPARTMENTS.map((dept) => {
               const isOpen = activeDropdown === dept.id;
               return (
                 <div
                   key={dept.id}
-                  className="relative py-6"
+                  className="relative py-6 shrink-0"
                   onMouseEnter={() => handleMouseEnter(dept.id)}
                   onMouseLeave={handleMouseLeave}
                 >
                   <Link
                     href={dept.href}
-                    className={`text-xs font-black uppercase tracking-wider transition-colors relative py-1 flex items-center gap-1 group ${
+                    className={`text-xs font-black uppercase tracking-wider transition-colors relative py-1 flex items-center gap-1.5 whitespace-nowrap group ${
                       isOpen ? "text-[#FFE600]" : "text-[#D4D4D8] hover:text-[#FFE600]"
                     }`}
                   >
                     <span>{dept.name}</span>
                     <ChevronDown
-                      className={`w-3 h-3 text-[#A1A1AA] transition-transform duration-200 ${
+                      className={`w-3 h-3 text-[#A1A1AA] transition-transform duration-200 shrink-0 ${
                         isOpen ? "rotate-180 text-[#FFE600]" : "group-hover:text-[#FFE600]"
                       }`}
                     />
@@ -363,21 +363,21 @@ export function NavinaHeader() {
 
             {/* All Departments Mega Flyout Trigger (Image 3) */}
             <div
-              className="relative py-6"
+              className="relative py-6 shrink-0 ml-1 xl:ml-3"
               onMouseEnter={handleDeptsMouseEnter}
               onMouseLeave={handleMouseLeave}
             >
               <button
-                className={`text-xs font-black uppercase tracking-wider transition-colors py-1 flex items-center gap-1.5 px-2.5 py-1 rounded-sm border cursor-pointer ${
+                className={`text-xs font-black uppercase tracking-wider transition-colors py-1.5 flex items-center gap-2 px-3.5 rounded-sm border cursor-pointer whitespace-nowrap ${
                   isAllDeptsOpen
                     ? "border-[#FFE600] bg-[#FFE600]/10 text-[#FFE600]"
                     : "border-[#27272A] hover:border-[#FFE600]/40 text-[#D4D4D8] hover:text-[#FFE600]"
                 }`}
               >
-                <Layers className="w-3.5 h-3.5 text-[#FFE600]" />
-                <span>All Departments</span>
+                <Layers className="w-3.5 h-3.5 text-[#FFE600] shrink-0" />
+                <span className="whitespace-nowrap">All Departments</span>
                 <ChevronDown
-                  className={`w-3 h-3 text-[#A1A1AA] transition-transform duration-200 ${
+                  className={`w-3 h-3 text-[#A1A1AA] transition-transform duration-200 shrink-0 ${
                     isAllDeptsOpen ? "rotate-180 text-[#FFE600]" : ""
                   }`}
                 />
