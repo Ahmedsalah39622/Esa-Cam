@@ -2,6 +2,7 @@
 
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Product } from "@/data/products";
 import { useStore } from "@/context/store-context";
 import { Star, Eye, ShoppingCart, Heart } from "lucide-react";
@@ -12,7 +13,6 @@ export function ProductCard({ product }: { product: Product }) {
   const {
     formatPrice,
     addToCart,
-    setQuickViewProduct,
     toggleWishlist,
     isInWishlist,
   } = useStore();
@@ -75,17 +75,19 @@ export function ProductCard({ product }: { product: Product }) {
         </button>
 
         {/* Quick View Hover Button (Center Overlay) */}
-        <div className="hidden sm:flex absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity items-center justify-center gap-2 p-4">
+        <Link
+          href={`/store/${product.id}`}
+          className="hidden sm:flex absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity items-center justify-center gap-2 p-4"
+        >
           <Button
-            onClick={() => setQuickViewProduct(product)}
             variant="secondary"
             size="sm"
             className="rounded-xl text-xs font-semibold shadow-lg backdrop-blur-md bg-card/95 text-foreground hover:bg-card cursor-pointer"
           >
             <Eye className="w-3.5 h-3.5 mr-1.5" />
-            Quick View Specs
+            View Product
           </Button>
-        </div>
+        </Link>
       </div>
 
       {/* Product Content Details */}
@@ -104,13 +106,13 @@ export function ProductCard({ product }: { product: Product }) {
           </div>
 
           {/* Product Name */}
-          <h3
-            onClick={() => setQuickViewProduct(product)}
-            className="font-bold text-xs sm:text-sm text-foreground line-clamp-2 leading-snug cursor-pointer hover:text-primary transition-colors"
+          <Link
+            href={`/store/${product.id}`}
+            className="font-bold text-xs sm:text-sm text-foreground line-clamp-2 leading-snug cursor-pointer hover:text-primary transition-colors block"
             title={product.name}
           >
             {product.name}
-          </h3>
+          </Link>
 
           {/* Key spec highlight */}
           {product.specs?.[0] && (

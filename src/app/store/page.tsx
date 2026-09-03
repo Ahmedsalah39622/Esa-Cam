@@ -32,7 +32,6 @@ function StoreContent() {
   const {
     products,
     formatPrice,
-    setQuickViewProduct,
     addToCart,
     toggleWishlist,
     isInWishlist,
@@ -595,12 +594,12 @@ function StoreContent() {
                           </div>
                         </div>
 
-                        <h3
-                          onClick={() => setQuickViewProduct(product)}
-                          className="text-base font-bold text-foreground hover:text-primary cursor-pointer leading-snug"
+                        <Link
+                          href={`/store/${product.id}`}
+                          className="text-base font-bold text-foreground hover:text-primary cursor-pointer leading-snug block"
                         >
                           {product.name}
-                        </h3>
+                        </Link>
 
                         <p className="text-xs text-muted-foreground line-clamp-2">
                           {product.shortDescription}
@@ -641,14 +640,13 @@ function StoreContent() {
                             <ShoppingCart className="w-3.5 h-3.5" />
                             <span>Add</span>
                           </Button>
-                          <Button
-                            onClick={() => setQuickViewProduct(product)}
-                            variant="outline"
-                            className="h-9 px-2.5 rounded-xl text-xs cursor-pointer"
-                            title="Quick Specs"
+                          <Link
+                            href={`/store/${product.id}`}
+                            className="h-9 px-2.5 rounded-xl text-xs cursor-pointer inline-flex items-center justify-center border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground"
+                            title="View Product"
                           >
                             <Eye className="w-3.5 h-3.5" />
-                          </Button>
+                          </Link>
                           <button
                             onClick={() => toggleWishlist(product.id)}
                             className={`h-9 w-9 rounded-xl border border-border flex items-center justify-center transition-colors cursor-pointer ${
