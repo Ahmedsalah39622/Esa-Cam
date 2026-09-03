@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 export function DealBento() {
   const { formatPrice, addToCart, setIsCartOpen } = useStore();
 
-  const fx3 = PRODUCTS.find((p) => p.id === "sony-fx3");
+  const fx3 = PRODUCTS.find((p) => p.id === "esa-637" || p.id === "sony-fx3");
   const fujiUsed = PRODUCTS.find((p) => p.id === "fujifilm-x-t5-used");
 
   const handleAddIndieBundle = () => {

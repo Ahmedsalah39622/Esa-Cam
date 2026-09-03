@@ -403,7 +403,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     audio: Product | null;
     power: Product | null;
   }>({
-    camera: PRODUCTS.find((p) => p.id === "sony-fx3") || null,
+    camera: PRODUCTS.find((p) => p.id === "esa-637" || p.id === "sony-fx3") || null,
     lens: PRODUCTS.find((p) => p.id === "sony-24-70-gm2") || null,
     gimbal: PRODUCTS.find((p) => p.id === "dji-rs4-pro") || null,
     audio: PRODUCTS.find((p) => p.id === "dji-mic-2-kit") || null,

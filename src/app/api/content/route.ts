@@ -1,12 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query, getDbPool } from "@/lib/db";
+import fs from "fs";
+import path from "path";
 
 export const dynamic = "force-dynamic";
 
 import { DEFAULT_HOMEPAGE_CONTENT, HomepageContentState } from "@/data/homepage-content";
 
-// In-memory fallback storage
-let inMemoryContent: HomepageContentState = { ...DEFAULT_HOMEPAGE_CONTENT };
+const CONTENT_FILE_PATH = path.join(process.cwd(), "src/data/homepage-content.json");
+
+function loadContentFromDisk(): HomepageContentState {
+  try {
+    if (fs.existsSync(CONTENT_FILE_PATH)) {
+      const raw = fs.readFileSync(CONTENT_FILE_PATH, "utf8");
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object") {
+        return {
+          ...DEFAULT_HOMEPAGE_CONTENT,
+          ...parsed,
+        };
+      }
+    }
+  } catch (err) {
+    console.warn("Could not read homepage-content.json from disk:", err);
+  }
+  return { ...DEFAULT_HOMEPAGE_CONTENT };
+}
+
+function saveContentToDisk(content: HomepageContentState) {
+  try {
+    fs.writeFileSync(CONTENT_FILE_PATH, JSON.stringify(content, null, 2), "utf8");
+  } catch (err) {
+    console.warn("Could not write homepage-content.json to disk:", err);
+  }
+}
+
+// In-memory & disk-backed fallback storage
+let inMemoryContent: HomepageContentState = loadContentFromDisk();
 
 interface ContentRow {
   section_key: string;
@@ -30,7 +60,7 @@ export async function GET() {
 
         const rows = await query<ContentRow>("SELECT section_key, content_json FROM homepage_sections");
 
-        if (rows.length > 0) {
+        if (rows && rows.length > 0) {
           const loadedContent: Partial<HomepageContentState> = {};
           for (const row of rows) {
             const key = row.section_key as keyof HomepageContentState;
@@ -42,17 +72,21 @@ export async function GET() {
             ...DEFAULT_HOMEPAGE_CONTENT,
             ...loadedContent,
           };
+          inMemoryContent = merged;
+          saveContentToDisk(merged);
           return NextResponse.json({ success: true, source: "database", data: merged });
         }
       } catch (dbErr) {
-        console.error("Database query for homepage content error, using memory/defaults:", dbErr);
+        console.error("Database query for homepage content error, using disk fallback:", dbErr);
       }
     }
 
-    return NextResponse.json({ success: true, source: "fallback", data: inMemoryContent });
+    inMemoryContent = loadContentFromDisk();
+    return NextResponse.json({ success: true, source: "disk", data: inMemoryContent });
   } catch (error) {
     console.error("GET /api/content error:", error);
-    return NextResponse.json({ success: true, source: "default", data: DEFAULT_HOMEPAGE_CONTENT });
+    inMemoryContent = loadContentFromDisk();
+    return NextResponse.json({ success: true, source: "fallback", data: inMemoryContent });
   }
 }
 
@@ -63,6 +97,7 @@ export async function POST(req: NextRequest) {
 
     if (allSections) {
       inMemoryContent = { ...inMemoryContent, ...allSections };
+      saveContentToDisk(inMemoryContent);
 
       const pool = getDbPool();
       if (pool) {
@@ -101,6 +136,7 @@ export async function POST(req: NextRequest) {
         ...inMemoryContent,
         [sectionKey]: content,
       };
+      saveContentToDisk(inMemoryContent);
 
       const pool = getDbPool();
       if (pool) {

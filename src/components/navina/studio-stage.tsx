@@ -66,7 +66,7 @@ export function StudioStage() {
       gearUsed: [
         {
           role: customStage?.gearRole || "Cinema Camera Core",
-          productId: customStage?.featuredProductId || "sony-fx3",
+          productId: customStage?.featuredProductId || "esa-637",
           name: customStage?.gearName || "Sony FX3 Cinema Line Full-Frame",
           setting: customStage?.gearSetting || "4K 120p • Active Fan Cooling",
         },

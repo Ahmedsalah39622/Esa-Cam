@@ -18,7 +18,7 @@ export function BestSellersArched() {
   };
 
   const flagshipEditions: Product[] = [
-    PRODUCTS.find((p) => p.id === "sony-fx3") || PRODUCTS[0],
+    PRODUCTS.find((p) => p.id === "esa-637" || p.id === "sony-fx3") || PRODUCTS[0],
     PRODUCTS.find((p) => p.id === "canon-eos-r5-c") || PRODUCTS[1],
     PRODUCTS.find((p) => p.id === "blackmagic-cinema-6k-ff") || PRODUCTS[2],
     PRODUCTS.find((p) => p.id === "sony-24-70-gm2") || PRODUCTS[3],

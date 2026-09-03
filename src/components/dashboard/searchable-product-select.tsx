@@ -45,10 +45,20 @@ export function SearchableProductSelect({
 
   const selectedProduct = useMemo(() => {
     if (selectedProductId) {
-      return products.find((p) => p.id === selectedProductId) || null;
+      return (
+        products.find(
+          (p) =>
+            p.id === selectedProductId ||
+            (selectedProductId === "sony-fx3" && p.id === "esa-637")
+        ) || null
+      );
     }
     if (selectedProductName) {
-      return products.find((p) => p.name.toLowerCase() === selectedProductName.toLowerCase()) || null;
+      return (
+        products.find(
+          (p) => p.name.toLowerCase() === selectedProductName.toLowerCase()
+        ) || null
+      );
     }
     return null;
   }, [products, selectedProductId, selectedProductName]);
@@ -249,8 +259,15 @@ export function SearchableProductSelect({
                         </span>
                       ) : (
                         <Button
+                          type="button"
                           variant="ghost"
                           size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectProduct(prod);
+                            setIsOpen(false);
+                            setSearchQuery("");
+                          }}
                           className="h-7 text-[11px] rounded-lg px-2 text-muted-foreground hover:text-foreground cursor-pointer"
                         >
                           Select

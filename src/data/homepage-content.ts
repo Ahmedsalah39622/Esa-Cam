@@ -111,7 +111,7 @@ export const DEFAULT_HOMEPAGE_CONTENT: HomepageContentState = {
     slides: [
       {
         id: "slide-1",
-        productId: "sony-fx3",
+        productId: "esa-637",
         badge: "FLAGSHIP CINEMA SYSTEM",
         tagline: "AT THE HEART OF THE IMAGE",
         headline: "READY. ACTION.",
@@ -197,7 +197,7 @@ export const DEFAULT_HOMEPAGE_CONTENT: HomepageContentState = {
     iso: "ISO 800 / Dual Base",
     shutterAngle: "180.0° (1/120s)",
     colorProfile: "12-Bit N-Log • Rec.2020",
-    featuredProductId: "sony-fx3",
+    featuredProductId: "esa-637",
     gearRole: "Cinema Camera Core",
     gearName: "Sony FX3 Cinema Line Full-Frame",
     gearSetting: "4K 120p • Active Fan Cooling",

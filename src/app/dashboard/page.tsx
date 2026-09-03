@@ -2156,7 +2156,7 @@ export default function DashboardPage() {
                           const newSlideIdx = heroSlidesDraft.length + 1;
                           const newSlide = {
                             id: `slide-${Date.now()}`,
-                            productId: "sony-fx3",
+                            productId: "esa-637",
                             badge: `FLAGSHIP RIG ${newSlideIdx}`,
                             tagline: "NEXT-GEN CINEMA SYSTEM",
                             headline: "CINEMA UNLEASHED.",
@@ -2222,7 +2222,7 @@ export default function DashboardPage() {
 
                         <SearchableProductSelect
                           products={products && products.length > 0 ? products : PRODUCTS}
-                          selectedProductId={heroSlidesDraft[activeHeroSlideIdx].productId || "sony-fx3"}
+                          selectedProductId={heroSlidesDraft[activeHeroSlideIdx]?.productId || "esa-637"}
                           onSelectProduct={(found) => {
                             const updated = [...heroSlidesDraft];
                             updated[activeHeroSlideIdx] = {
@@ -2488,7 +2488,15 @@ export default function DashboardPage() {
 
                             {/* Linked Product Spotlight Preview with Direct Dropdown */}
                             {(() => {
-                              const heroProd = PRODUCTS.find((p) => p.id === (heroSlidesDraft[activeHeroSlideIdx].productId || "sony-fx3")) || PRODUCTS[0];
+                              const allProds = products && products.length > 0 ? products : PRODUCTS;
+                              const currentPid = heroSlidesDraft[activeHeroSlideIdx]?.productId;
+                              const heroProd =
+                                allProds.find((p) => p.id === currentPid) ||
+                                allProds.find((p) => currentPid === "sony-fx3" && p.id === "esa-637") ||
+                                allProds.find((p) => p.id === "esa-637") ||
+                                PRODUCTS.find((p) => p.id === "esa-637") ||
+                                allProds[0] ||
+                                PRODUCTS[0];
                               return (
                                 <div className="p-3.5 bg-black/95 border border-[#FFE600]/40 rounded-2xl space-y-2 text-white text-xs shadow-lg">
                                   <div className="flex items-center justify-between">
@@ -2513,7 +2521,7 @@ export default function DashboardPage() {
                                   <div className="pt-1.5 border-t border-[#27272A]">
                                     <SearchableProductSelect
                                       products={products && products.length > 0 ? products : PRODUCTS}
-                                      selectedProductId={heroSlidesDraft[activeHeroSlideIdx].productId || "sony-fx3"}
+                                      selectedProductId={heroSlidesDraft[activeHeroSlideIdx]?.productId || "esa-637"}
                                       onSelectProduct={(found) => {
                                         const updated = [...heroSlidesDraft];
                                         updated[activeHeroSlideIdx] = {
@@ -2695,7 +2703,7 @@ export default function DashboardPage() {
                       <div className="space-y-1.5">
                         <SearchableProductSelect
                           products={products && products.length > 0 ? products : PRODUCTS}
-                          selectedProductId={stageDraft.featuredProductId || "sony-fx3"}
+                          selectedProductId={stageDraft.featuredProductId || "esa-637"}
                           onSelectProduct={(found) => {
                             setStageDraft({
                               ...stageDraft,
@@ -2740,7 +2748,15 @@ export default function DashboardPage() {
 
                       {/* Live Card Preview matching the screenshot */}
                       {(() => {
-                        const activeProd = PRODUCTS.find((p) => p.id === (stageDraft.featuredProductId || "sony-fx3")) || PRODUCTS[0];
+                        const allProds = products && products.length > 0 ? products : PRODUCTS;
+                        const currentPid = stageDraft.featuredProductId;
+                        const activeProd =
+                          allProds.find((p) => p.id === currentPid) ||
+                          allProds.find((p) => currentPid === "sony-fx3" && p.id === "esa-637") ||
+                          allProds.find((p) => p.id === "esa-637") ||
+                          PRODUCTS.find((p) => p.id === "esa-637") ||
+                          allProds[0] ||
+                          PRODUCTS[0];
                         return (
                           <div className="p-4 rounded-2xl bg-black border border-[#27272A] max-w-sm space-y-3 shadow-xl relative overflow-hidden text-white">
                             <div className="absolute top-0 right-0 w-8 h-8 bg-[#FFE600] [clip-path:polygon(100%_0,0_0,100%_100%)]" />

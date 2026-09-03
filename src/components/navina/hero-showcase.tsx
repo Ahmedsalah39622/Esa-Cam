@@ -20,7 +20,7 @@ import { DEFAULT_HOMEPAGE_CONTENT } from "@/data/homepage-content";
 const SLIDE_DURATION = 7000; // 7 seconds
 
 export function HeroShowcase() {
-  const { setQuickViewProduct, formatPrice, homepageContent } = useStore();
+  const { setQuickViewProduct, formatPrice, homepageContent, products } = useStore();
 
   const slides = homepageContent?.hero?.slides || DEFAULT_HOMEPAGE_CONTENT.hero.slides;
 
@@ -29,8 +29,17 @@ export function HeroShowcase() {
   const safeIndex = currentSlideIndex >= slides.length ? 0 : currentSlideIndex;
   const slide = slides[safeIndex] || slides[0] || DEFAULT_HOMEPAGE_CONTENT.hero.slides[0];
 
+  const allProducts = products && products.length > 0 ? products : PRODUCTS;
+  const slideProductId = (slide as { productId?: string })?.productId;
+
   const currentProduct: Product =
-    PRODUCTS.find((p) => p.id === (slide as { productId?: string }).productId) || PRODUCTS[0];
+    allProducts.find((p) => p.id === slideProductId) ||
+    allProducts.find((p) => slideProductId === "sony-fx3" && p.id === "esa-637") ||
+    PRODUCTS.find((p) => p.id === slideProductId) ||
+    allProducts.find((p) => p.id === "esa-637") ||
+    PRODUCTS.find((p) => p.id === "esa-637") ||
+    allProducts[0] ||
+    PRODUCTS[0];
 
   const nextSlide = () => {
     setCurrentSlideIndex((prev) => (prev + 1) % slides.length);
