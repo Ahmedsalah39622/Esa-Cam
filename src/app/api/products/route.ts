@@ -137,8 +137,27 @@ async function ensureProductsTable() {
   }
 }
 
+let dbCache: { data: ProductItem[]; timestamp: number } | null = null;
+const DB_CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache
+
 export async function GET() {
   try {
+    if (dbCache && Date.now() - dbCache.timestamp < DB_CACHE_TTL) {
+      return NextResponse.json(
+        {
+          success: true,
+          source: "database_cache",
+          count: dbCache.data.length,
+          data: dbCache.data,
+        },
+        {
+          headers: {
+            "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300",
+          },
+        }
+      );
+    }
+
     const pool = getDbPool();
     if (pool) {
       await ensureProductsTable();
@@ -164,12 +183,21 @@ export async function GET() {
           return r;
         });
 
-        return NextResponse.json({
-          success: true,
-          source: "database",
-          count: healedRows.length,
-          data: healedRows,
-        });
+        dbCache = { data: healedRows, timestamp: Date.now() };
+
+        return NextResponse.json(
+          {
+            success: true,
+            source: "database",
+            count: healedRows.length,
+            data: healedRows,
+          },
+          {
+            headers: {
+              "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300",
+            },
+          }
+        );
       }
     }
 
@@ -246,6 +274,9 @@ export async function POST(req: NextRequest) {
       specs_json: typeof cleanSpecs === "string" ? cleanSpecs : JSON.stringify(cleanSpecs),
       created_at: new Date().toISOString(),
     };
+
+    // Invalidate DB memory cache
+    dbCache = null;
 
     // Update in-memory cache and persist to disk
     memoryProducts = [newProdItem, ...memoryProducts.filter((p) => p.id !== productId)];
@@ -344,6 +375,7 @@ export async function PATCH(req: NextRequest) {
       return p;
     });
 
+    dbCache = null;
     saveProductsToDisk(memoryProducts);
 
     const pool = getDbPool();
@@ -398,6 +430,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ success: false, message: "Product ID is required" }, { status: 400 });
     }
 
+    dbCache = null;
     memoryProducts = memoryProducts.filter((p) => p.id !== id);
     saveProductsToDisk(memoryProducts);
 

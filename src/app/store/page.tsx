@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, Suspense } from "react";
+import React, { useState, useMemo, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Nav } from "@/components/hero/nav";
@@ -23,6 +23,8 @@ import {
   ShoppingCart,
   Heart,
   Star,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -214,6 +216,38 @@ function StoreContent() {
     (inStockOnly ? 1 : 0) +
     (onSaleOnly ? 1 : 0) +
     (searchQuery.trim() ? 1 : 0);
+
+  const ITEMS_PER_PAGE = 36;
+  const [currentPage, setCurrentPage] = useState(1);
+  const gridTopRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    selectedCategory,
+    selectedBrands,
+    selectedMounts,
+    inStockOnly,
+    onSaleOnly,
+    maxPrice,
+    searchQuery,
+    sortBy,
+  ]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
+
+  const paginatedProducts = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredProducts.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredProducts, currentPage]);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages) return;
+    setCurrentPage(newPage);
+    if (gridTopRef.current) {
+      gridTopRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -552,6 +586,8 @@ function StoreContent() {
               </div>
             )}
 
+            <div ref={gridTopRef} className="scroll-mt-28" />
+
             {/* Product Grid / List Render */}
             {filteredProducts.length === 0 ? (
               <div className="py-24 text-center bg-card rounded-3xl border border-border p-8 flex flex-col items-center justify-center space-y-4">
@@ -570,14 +606,14 @@ function StoreContent() {
               </div>
             ) : viewMode === "grid" ? (
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-2.5 sm:gap-4 md:gap-6">
-                {filteredProducts.map((product) => (
+                {paginatedProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>
             ) : (
               /* List View Mode with Technical Specs Table */
               <div className="space-y-4">
-                {filteredProducts.map((product) => {
+                {paginatedProducts.map((product) => {
                   const isWished = isInWishlist(product.id);
                   return (
                     <div
@@ -679,6 +715,75 @@ function StoreContent() {
                     </div>
                   );
                 })}
+              </div>
+            )}
+
+            {/* Pagination Controls */}
+            {filteredProducts.length > ITEMS_PER_PAGE && (
+              <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-border pt-6">
+                <div className="text-xs font-mono text-muted-foreground">
+                  Showing <strong className="text-foreground">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</strong> to{" "}
+                  <strong className="text-foreground">{Math.min(currentPage * ITEMS_PER_PAGE, filteredProducts.length)}</strong> of{" "}
+                  <strong className="text-foreground">{filteredProducts.length.toLocaleString()}</strong> equipment
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="h-9 px-3 rounded-xl text-xs font-semibold gap-1 cursor-pointer"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    <span className="hidden sm:inline">Prev</span>
+                  </Button>
+
+                  {/* Page Numbers */}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter((p) => {
+                      if (p === 1 || p === totalPages) return true;
+                      if (Math.abs(p - currentPage) <= 2) return true;
+                      return false;
+                    })
+                    .reduce<(number | string)[]>((acc, p, idx, arr) => {
+                      if (idx > 0 && p - (arr[idx - 1] as number) > 1) {
+                        acc.push("...");
+                      }
+                      acc.push(p);
+                      return acc;
+                    }, [])
+                    .map((item, idx) =>
+                      typeof item === "number" ? (
+                        <button
+                          key={idx}
+                          onClick={() => handlePageChange(item)}
+                          className={`h-9 min-w-9 px-3 rounded-xl text-xs font-mono font-bold transition-colors cursor-pointer ${
+                            currentPage === item
+                              ? "bg-primary text-primary-foreground shadow-xs"
+                              : "bg-secondary/60 hover:bg-secondary text-foreground"
+                          }`}
+                        >
+                          {item}
+                        </button>
+                      ) : (
+                        <span key={idx} className="px-1 text-xs text-muted-foreground font-mono">
+                          ...
+                        </span>
+                      )
+                    )}
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="h-9 px-3 rounded-xl text-xs font-semibold gap-1 cursor-pointer"
+                  >
+                    <span className="hidden sm:inline">Next</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             )}
           </main>

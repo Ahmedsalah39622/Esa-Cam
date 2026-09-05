@@ -452,32 +452,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           inTheBox: [row.name, "Accessories", "User Documentation"],
         }));
 
-        setProducts((current) => {
-          let localCustom: Product[] = [];
-          try {
-            const saved = localStorage.getItem("esa_cam_products");
-            if (saved) localCustom = JSON.parse(saved);
-          } catch {}
-
-          if (localCustom.length === 0) {
-            localCustom = current;
-          }
-
-          const serverMap = new Map(serverMapped.map((p) => [p.id, p]));
-          const merged = [...serverMapped];
-
-          for (const lp of localCustom) {
-            if (!serverMap.has(lp.id)) {
-              merged.unshift(lp);
-            }
-          }
-
-          try {
-            localStorage.setItem("esa_cam_products", JSON.stringify(merged));
-          } catch {}
-
-          return merged;
-        });
+        setProducts(serverMapped);
       }
     } catch (err) {
       console.warn("Could not fetch products from API:", err);
@@ -486,26 +461,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // Load products, cart, wishlist, brands, & homepage content on client
   useEffect(() => {
+    setProducts(PRODUCTS);
+    fetchProducts();
+
     try {
-      const savedProds = localStorage.getItem("esa_cam_products");
-      if (savedProds) {
-        const parsed = JSON.parse(savedProds);
-        if (Array.isArray(parsed) && parsed.length >= PRODUCTS.length) {
-          setProducts(parsed);
-        } else if (Array.isArray(parsed)) {
-          const catalogMap = new Map(PRODUCTS.map((p) => [p.id, p]));
-          const merged = [...PRODUCTS];
-          for (const p of parsed) {
-            if (!catalogMap.has(p.id)) {
-              merged.unshift(p);
-            }
-          }
-          setProducts(merged);
-          localStorage.setItem("esa_cam_products", JSON.stringify(merged));
-        }
-      } else {
-        setProducts(PRODUCTS);
-      }
+      // Purge old 3.5MB toxic localStorage cache that causes browser freezing and stale data
+      localStorage.removeItem("esa_cam_products");
+
       const savedCart = localStorage.getItem("esa_cam_cart");
       if (savedCart) setCart(JSON.parse(savedCart));
       const savedWishlist = localStorage.getItem("esa_cam_wishlist");
@@ -525,8 +487,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // ignore
     }
-
-    fetchProducts();
 
     // Fetch latest shipping settings from database API in background
     fetch("/api/shipping-settings")
@@ -879,9 +839,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         }
         return p;
       });
-      try {
-        localStorage.setItem("esa_cam_products", JSON.stringify(updated));
-      } catch {}
       return updated;
     });
 
@@ -910,7 +867,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           toast.success(`Product "${target.name}" updated in database!`);
         }
       } catch {
-        toast.info(`Product "${target.name}" updated locally.`);
+        toast.info(`Product "${target.name}" updated.`);
       }
     }
   };
@@ -920,11 +877,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setProducts((prev) => {
       const target = prev.find((p) => p.id === id);
       if (target) deletedName = target.name;
-      const updated = prev.filter((p) => p.id !== id);
-      try {
-        localStorage.setItem("esa_cam_products", JSON.stringify(updated));
-      } catch {}
-      return updated;
+      return prev.filter((p) => p.id !== id);
     });
 
     try {
@@ -944,11 +897,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const resetProducts = async () => {
     setProducts(PRODUCTS);
-    try {
-      localStorage.setItem("esa_cam_products", JSON.stringify(PRODUCTS));
-    } catch {
-      // ignore
-    }
     toast.success("Products catalog restored to factory defaults");
   };
 
