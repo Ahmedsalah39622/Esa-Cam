@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 export function DealBento() {
-  const { formatPrice, addToCart, setIsCartOpen } = useStore();
+  const { formatPrice, addToCart, setIsCartOpen, homepageContent } = useStore();
+  const hotline = homepageContent?.footer?.hotline || "+20 1092298665";
 
   const fx3 = PRODUCTS.find((p) => p.id === "esa-637" || p.id === "sony-fx3");
   const fujiUsed = PRODUCTS.find((p) => p.id === "fujifilm-x-t5-used");
@@ -131,7 +132,7 @@ export function DealBento() {
                   +10% Extra Credit on Sony & Canon
                 </span>
                 <a
-                  href="tel:+20227363456"
+                  href={`tel:${hotline.replace(/[^0-9+]/g, "")}`}
                   className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
                 >
                   <span>Book Evaluation</span>

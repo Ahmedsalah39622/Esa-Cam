@@ -9,7 +9,8 @@ import { ShoppingBag, Menu, X, Search, PhoneCall, Heart, User, ShieldCheck, LogO
 import { Button } from "@/components/ui/button";
 
 export function MobileNav() {
-  const { cartItemCount, setIsCartOpen, setSelectedCategory, wishlist } = useStore();
+  const { cartItemCount, setIsCartOpen, setSelectedCategory, wishlist, homepageContent } = useStore();
+  const hotline = homepageContent?.footer?.hotline || "+20 1092298665";
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [mobileSearch, setMobileSearch] = useState("");
@@ -182,13 +183,15 @@ export function MobileNav() {
           )}
 
           <div className="pt-3 border-t border-border flex flex-col gap-3">
-            <a
-              href="tel:+20227363456"
-              className="flex items-center gap-2 text-xs font-semibold text-foreground py-1"
-            >
-              <PhoneCall className="w-4 h-4 text-primary" />
-              <span>Call Cairo Flagship: +20 (02) 2736-CAM</span>
-            </a>
+            {hotline && (
+              <a
+                href={`tel:${hotline.replace(/[^0-9+]/g, "")}`}
+                className="flex items-center gap-2 text-xs font-semibold text-foreground py-1"
+              >
+                <PhoneCall className="w-4 h-4 text-primary" />
+                <span>Call Hotline: {hotline}</span>
+              </a>
+            )}
             <Button
               onClick={() => {
                 setIsOpen(false);

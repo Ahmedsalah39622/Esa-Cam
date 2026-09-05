@@ -52,7 +52,8 @@ interface ClientOrder {
 
 export default function TrackOrdersPage() {
   const { user, logout, isAdmin } = useAuth();
-  const { formatPrice } = useStore();
+  const { formatPrice, homepageContent } = useStore();
+  const hotline = homepageContent?.footer?.hotline || "+20 1092298665";
 
   const [orders, setOrders] = useState<ClientOrder[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<ClientOrder | null>(null);
@@ -392,11 +393,11 @@ export default function TrackOrdersPage() {
                 </div>
 
                 <a
-                  href="tel:+20227363456"
+                  href={`tel:${hotline.replace(/[^0-9+]/g, "")}`}
                   className="px-4 py-2 rounded-xl bg-[#18181B] hover:bg-secondary border border-[#27272A] text-[#FFE600] font-bold flex items-center gap-1.5 transition-colors shrink-0"
                 >
                   <Phone className="w-3.5 h-3.5" />
-                  <span>Call Dispatch Courier</span>
+                  <span>Call Dispatch Courier ({hotline})</span>
                 </a>
               </div>
             </div>

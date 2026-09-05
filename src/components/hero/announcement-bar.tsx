@@ -3,9 +3,18 @@
 import React from "react";
 import { useStore, Currency } from "@/context/store-context";
 import { PhoneCall, Globe, Sparkles } from "lucide-react";
+import Link from "next/link";
 
 export function AnnouncementBar() {
-  const { currency, setCurrency } = useStore();
+  const { currency, setCurrency, homepageContent } = useStore();
+
+  const hotline = homepageContent?.footer?.hotline || "+20 1092298665";
+  const whatsappNumber = homepageContent?.footer?.whatsappNumber;
+  const announcement = homepageContent?.announcement || {
+    announcementText: "OFFICIAL AUTHORIZED CINEMA & OPTICS DISTRIBUTOR",
+    courierText: "VIP White-Glove Courier across Egypt",
+    courierLink: "/store",
+  };
 
   return (
     <aside aria-label="Announcement" className="w-full bg-foreground text-background text-xs py-2 px-4 border-b border-border/20 z-40 transition-colors">
@@ -16,28 +25,44 @@ export function AnnouncementBar() {
             <Sparkles className="w-2.5 h-2.5 text-amber-400" /> ESA PRO
           </span>
           <p className="text-[11px] sm:text-xs truncate font-medium">
-            Authorized Cinema & Photography Dealer • Free Insured Delivery on orders over $500 • 2-Year Warranty
+            {announcement.announcementText || "OFFICIAL AUTHORIZED CINEMA & OPTICS DISTRIBUTOR"}
           </p>
         </div>
 
         {/* Right tools: Currency Selector, Hotline & Trade-In */}
         <div className="flex items-center gap-4 text-[11px] shrink-0 ml-auto">
-          <a
-            href="tel:+20227363456"
-            className="hidden md:flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity font-mono"
-          >
-            <PhoneCall className="w-3 h-3" />
-            <span>+20 (02) 2736-CAM</span>
-          </a>
+          {hotline && (
+            <a
+              href={`tel:${hotline.replace(/[^0-9+]/g, "")}`}
+              className="hidden md:flex items-center gap-1.5 opacity-90 hover:opacity-100 hover:text-amber-400 transition-all font-mono"
+            >
+              <PhoneCall className="w-3 h-3 text-amber-400" />
+              <span>{hotline}</span>
+            </a>
+          )}
+
+          {whatsappNumber && (
+            <>
+              <span className="hidden md:inline-block opacity-30">|</span>
+              <a
+                href={`https://wa.me/${whatsappNumber.replace(/[^0-9]/g, "")}`}
+                target="_blank"
+                rel="noreferrer"
+                className="hidden sm:flex items-center gap-1 text-emerald-400 font-bold hover:underline"
+              >
+                <span>WhatsApp</span>
+              </a>
+            </>
+          )}
 
           <span className="hidden md:inline-block opacity-30">|</span>
 
-          <a
-            href="#rig-builder"
+          <Link
+            href={announcement.courierLink || "/store"}
             className="hover:underline opacity-80 hover:opacity-100 transition-opacity"
           >
-            Rig Builder
-          </a>
+            {announcement.courierText || "Store Catalog"}
+          </Link>
 
           <span className="opacity-30">|</span>
 

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { cn } from "@/lib/utils";
 import { PhoneCall } from "lucide-react";
+import { useStore } from "@/context/store-context";
 
 function AccordionItemFAQs(props: React.ComponentProps<typeof AccordionItem>) {
   return (
@@ -32,21 +33,23 @@ function AccordionContentFAQs(props: React.ComponentProps<typeof AccordionConten
 }
 
 export function FAQs() {
+  const { homepageContent } = useStore();
+  const hotline = homepageContent?.footer?.hotline || "+20 1092298665";
+
   return (
     <section id="faqs" className="w-full py-16 md:py-24 border-b border-border bg-background">
       <div className="mx-auto grid max-w-7xl gap-8 px-6 md:grid-cols-12 md:gap-12">
         {/* Left Column (5 Cols) */}
         <div className="md:col-span-5 flex flex-col justify-between space-y-6">
           <div className="space-y-4">
-            <Badge variant="secondary" className="uppercase font-mono text-[10px] tracking-wider">
-              Filmmaker & Creator FAQ
+            <Badge variant="secondary" className="uppercase font-mono text-[10px] tracking-wider mb-2 bg-primary/10 text-primary border border-primary/20">
+              Clear Answers
             </Badge>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-tight">
-              Frequently Asked <br />
-              <span className="text-muted-foreground">Equipment Questions</span>
+            <h2 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
+              Frequently Asked Questions
             </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-md">
-              Everything you need to know about authorized warranties, camera serial verification, insured courier shipping, and our trade-in desk.
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+              Everything you need to know about official warranties, serial number verification, dispatch across Egypt, and custom optical calibration.
             </p>
           </div>
 
@@ -59,8 +62,8 @@ export function FAQs() {
               Our on-set camera engineers and optical specialists are available to verify compatibility for your upcoming shoot.
             </p>
             <Button size="sm" className="rounded-xl text-xs font-semibold w-full mt-1" asChild>
-              <a href="tel:+20227363456">
-                <span>Call Cine Hotline (+20 2 2736-CAM)</span>
+              <a href={`tel:${hotline.replace(/[^0-9+]/g, "")}`}>
+                <span>Call Cine Hotline ({hotline})</span>
               </a>
             </Button>
           </div>

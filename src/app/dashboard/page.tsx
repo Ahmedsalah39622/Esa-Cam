@@ -1241,7 +1241,7 @@ export default function DashboardPage() {
       <div>
         <div style="font-weight: 700; color: #000;">ESA CAM Optics Lab, Inc.</div>
         <div>24 Hassan Assem St, Zamalek, Cairo, Egypt</div>
-        <div style="margin-top: 2px;">Support: +20 (02) 2736-CAM • pro@esacam.com</div>
+        <div style="margin-top: 2px;">Support: ${homepageContent?.footer?.hotline || "+20 1092298665"} • ${homepageContent?.footer?.email || "pro@esacam.com"}</div>
       </div>
 
       <div class="stamp-circle">
