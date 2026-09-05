@@ -11,7 +11,6 @@ import {
   SlidersHorizontal,
   ChevronLeft,
   ChevronRight,
-  Eye,
   Camera,
 } from "lucide-react";
 import { PRODUCTS, Product } from "@/data/products";
@@ -20,7 +19,7 @@ import { DEFAULT_HOMEPAGE_CONTENT } from "@/data/homepage-content";
 const SLIDE_DURATION = 7000; // 7 seconds
 
 export function HeroShowcase() {
-  const { setQuickViewProduct, formatPrice, homepageContent, products } = useStore();
+  const { formatPrice, homepageContent, products } = useStore();
 
   const slides = homepageContent?.hero?.slides || DEFAULT_HOMEPAGE_CONTENT.hero.slides;
 
@@ -236,13 +235,13 @@ export function HeroShowcase() {
                     </span>
                   </div>
 
-                  <button
-                    onClick={() => setQuickViewProduct(currentProduct)}
+                  <Link
+                    href={`/store/${currentProduct.id}`}
                     className="px-4 py-2.5 rounded-xl bg-white hover:bg-[#FFE600] text-black font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all hover:scale-105 shadow-md cursor-pointer"
                   >
-                    <Eye className="w-3.5 h-3.5" />
-                    <span>Quick View</span>
-                  </button>
+                    <span>View Product</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
                 </div>
               </motion.div>
             </AnimatePresence>

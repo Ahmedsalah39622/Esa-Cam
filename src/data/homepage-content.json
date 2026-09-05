@@ -7,98 +7,162 @@
   "hero": {
     "slides": [
       {
-        "id": "slide-1",
-        "productId": "esa-637",
-        "badge": "FLAGSHIP CINEMA SYSTEM",
-        "tagline": "AT THE HEART OF THE IMAGE",
-        "headline": "READY. ACTION.",
-        "subheadline": "8K 60P INTERNAL RAW",
-        "description": "Engineered for relentless creators. Uncompressed 12-bit N-RAW in-camera recording with full-frame stacked CMOS imaging power.",
-        "image": "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1920&q=85",
-        "primaryCtaText": "Explore Cinema Store",
+        "id": "slide-1788381620889",
+        "productId": "gear-1788419805731",
+        "badge": "INSTA360 X6",
+        "tagline": "NEXT-GEN 360° CAMERA",
+        "headline": "CAPTURE EVERYTHING.",
+        "subheadline": "8K 360° IMAGING",
+        "description": "Capture immersive 360° footage with 8K video, a 1-inch imaging system, advanced AI processing, and powerful low-light performance.",
+        "image": "https://petapixel.com/assets/uploads/2026/08/Insta360-Wants-Its-Flagship-X6-to-be-Way-More-Than-a-360-Degree-Camera.jpg",
+        "primaryCtaText": "Explore Store",
+        "primaryCtaLink": "/store",
+        "secondaryCtaText": "Buy Now",
+        "secondaryCtaLink": "/store/gear-1788419805731",
+        "specs": [
+          {
+            "label": "Resolution",
+            "value": "8K 50fps"
+          },
+          {
+            "label": "Sensor",
+            "value": "1-Inch Dual Sensors"
+          },
+          {
+            "label": "Dynamic Range",
+            "value": "14.5 Stops"
+          },
+          {
+            "label": "Autofocus",
+            "value": "120MP 360°"
+          }
+        ]
+      },
+      {
+        "id": "slide-1788370198749",
+        "productId": "esa-5705",
+        "badge": "Sony 240GB CFexpress 4.0 Type A TOUGH Memory Card",
+        "tagline": "SONY CFEXPRESS",
+        "headline": "HIGH-SPEED STORAGE",
+        "subheadline": "240GB PROFESSIONAL RECORDING",
+        "description": "Built for professional creators, delivering high-speed performance and reliable storage for demanding photo and video workflows.",
+        "image": "https://www.cined.com/content/uploads/2023/06/SonyTOUGH960GB_Featured.jpg",
+        "primaryCtaText": "Explore Store",
+        "primaryCtaLink": "/store",
+        "secondaryCtaText": "Buy Now",
+        "secondaryCtaLink": "/store/esa-5705",
+        "specs": [
+          {
+            "label": "Capacity",
+            "value": "240GB"
+          },
+          {
+            "label": "Interface",
+            "value": "CFexpress"
+          },
+          {
+            "label": "Performance",
+            "value": "High-Speed Data Transfer"
+          },
+          {
+            "label": "Use",
+            "value": "4K / Professional Video"
+          }
+        ]
+      },
+      {
+        "id": "slide-1788370971908",
+        "productId": "esa-5735",
+        "badge": "Canon PowerShot G7 X Mark III",
+        "tagline": "POCKET-SIZED. POWERFUL",
+        "headline": " VLOGGING, UNLEASHED",
+        "subheadline": "4K VIDEO • 20.1MP • FLIP-UP LCD",
+        "description": "Compact performance built for creators, with high-quality 4K video, fast autofocus, and a versatile flip-up screen for effortless vlogging",
+        "image": "https://cdn.mos.cms.futurecdn.net/8Ske4gJKFo7skzbg9X3sHP.jpg",
+        "primaryCtaText": "Explore Store",
         "primaryCtaLink": "/store",
         "secondaryCtaText": "Build Master Rig",
         "secondaryCtaLink": "/store",
         "specs": [
           {
             "label": "Resolution",
-            "value": "8.3K / 60p RAW"
+            "value": "20.1MP"
+          },
+          {
+            "label": "Video",
+            "value": "4K UHD"
+          },
+          {
+            "label": "Lens",
+            "value": "24–100mm Equivalent"
+          },
+          {
+            "label": "Display",
+            "value": "3.0\" Tilting Touchscreen"
+          }
+        ]
+      },
+      {
+        "id": "slide-1788371416003",
+        "productId": "icam-51277",
+        "badge": "DJI Osmo Pocket 4 Gimbal Camera",
+        "tagline": "POCKET-SIZED CINEMA",
+        "headline": "STABILITY. REIMAGINED",
+        "subheadline": "4K HDR • 3-AXIS GIMBAL",
+        "description": "Capture smooth, cinematic footage anywhere with a compact stabilized camera built for creators on the move",
+        "image": "https://jp.pronews.com/wp-content/uploads/2026/04/260413_DJI_OsmoPocket4_topIemdWMRL.jpg",
+        "primaryCtaText": "Explore Store",
+        "primaryCtaLink": "/store",
+        "secondaryCtaText": "Buy Now",
+        "secondaryCtaLink": "/store/icam-51277",
+        "specs": [
+          {
+            "label": "Video ",
+            "value": "4K"
+          },
+          {
+            "label": "Stabilization ",
+            "value": "3-Axis Gimbal"
+          },
+          {
+            "label": "Design ",
+            "value": "Pocket-Sized"
+          },
+          {
+            "label": "Use ",
+            "value": "Vlogging / Travel / Cinema"
+          }
+        ]
+      },
+      {
+        "id": "slide-1788371840170",
+        "productId": "icam-14703",
+        "badge": "DJI RS 3 Gimbal Stabilizer Combo",
+        "tagline": "NEXT-GEN CINEMA SYSTEM",
+        "headline": "CINEMA UNLEASHED.",
+        "subheadline": "8K INTERNAL PRO RECORDING",
+        "description": "Engineered for relentless creators with uncompressed dynamic range and active cooling.",
+        "image": "https://i.ytimg.com/vi/nCFe2RoQxv0/maxresdefault.jpg",
+        "primaryCtaText": "Explore Store",
+        "primaryCtaLink": "/store",
+        "secondaryCtaText": "Buy Now",
+        "secondaryCtaLink": "/store/icam-14703",
+        "specs": [
+          {
+            "label": "Resolution",
+            "value": "8.3K Full-Frame"
           },
           {
             "label": "Sensor",
-            "value": "45.7MP Stacked"
+            "value": "Stacked CMOS"
           },
           {
-            "label": "Stabilization",
-            "value": "6.0-Stop VR"
+            "label": "Dynamic Range",
+            "value": "15+ Stops"
           },
           {
             "label": "Autofocus",
-            "value": "Deep Learning AF"
-          }
-        ]
-      },
-      {
-        "id": "slide-2",
-        "productId": "esa-5746",
-        "badge": "PRO CINEMA LINE",
-        "tagline": "PRECISION MASTER GLASS",
-        "headline": "PURE SENSOR",
-        "subheadline": "DUAL BASE ISO 800 / 12800",
-        "description": "Uncompromised dynamic range with active fan-cooled endurance for endless high-frame-rate commercial and narrative productions.",
-        "image": "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?auto=format&fit=crop&w=1920&q=85",
-        "primaryCtaText": "Shop Cinema Bodies",
-        "primaryCtaLink": "/store",
-        "secondaryCtaText": "View Prime Optics",
-        "secondaryCtaLink": "/store",
-        "specs": [
-          {
-            "label": "Frame Rate",
-            "value": "4K 120fps All-I"
-          },
-          {
-            "label": "Color",
-            "value": "16-Bit S-Cinetone"
-          },
-          {
-            "label": "Mount",
-            "value": "Universal Cinema"
-          },
-          {
-            "label": "Warranty",
-            "value": "2 Years Official"
-          }
-        ]
-      },
-      {
-        "id": "slide-3",
-        "productId": "esa-5745",
-        "badge": "OPTICAL BENCHMARK",
-        "tagline": "LEGENDARY RESOLVING POWER",
-        "headline": "LIGHT MASTERED.",
-        "subheadline": "ULTRA-FAST F/1.2 OPTICS",
-        "description": "Defying diffraction with groundbreaking large-diameter mount geometry. Edge-to-edge sharpness with organic cinema bokeh.",
-        "image": "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=1920&q=85",
-        "primaryCtaText": "Browse Master Lenses",
-        "primaryCtaLink": "/store",
-        "secondaryCtaText": "Request Studio Quote",
-        "secondaryCtaLink": "/dashboard",
-        "specs": [
-          {
-            "label": "Aperture",
-            "value": "Ultra-Fast f/1.2"
-          },
-          {
-            "label": "Coating",
-            "value": "Nano AR II & Meso"
-          },
-          {
-            "label": "Motors",
-            "value": "Dual Linear Drive"
-          },
-          {
-            "label": "Build",
-            "value": "Magnesium Sealed"
+            "value": "LiDAR AF"
           }
         ]
       }
@@ -122,11 +186,11 @@
     "iso": "ISO 800 / Dual Base",
     "shutterAngle": "180.0° (1/120s)",
     "colorProfile": "12-Bit N-Log • Rec.2020",
-    "featuredProductId": "esa-637",
+    "featuredProductId": "dji-mavic-3-pro-cine",
     "gearRole": "Cinema Camera Core",
-    "gearName": "Sony FX3 Cinema Line Full-Frame",
+    "gearName": "DJI Mavic 3 Pro Cine Premium Drone Combo",
     "gearSetting": "4K 120p • Active Fan Cooling",
-    "gearPrice": 3899
+    "gearPrice": 4799
   },
   "stylesCollage": {
     "badge": "AUTHENTIC VISUAL CRAFT",
@@ -159,15 +223,13 @@
   },
   "footer": {
     "tagline": "Official Authorized Cinema & Optics Distributor in Egypt and the Middle East.",
-    "hotline": "+20 (02) 2736-CAM",
-    "email": "pro@esacam.com",
-    "address": "24 Hassan Assem St, Zamalek, Cairo, Egypt",
+    "hotline": "+20 1092298665",
+    "email": "",
+    "address": "5 شارع رشدى, متفرع من شارع محمد فريد , وسط البلد",
     "copyright": "ESA CAM Optics Lab • All rights reserved.",
-    "instagramUrl": "https://instagram.com/esacam.store",
-    "youtubeUrl": "https://youtube.com/@esacam",
-    "tiktokUrl": "https://tiktok.com/@esacam.store",
-    "facebookUrl": "https://facebook.com/esacam.store",
-    "twitterUrl": "https://x.com/esacam_store",
-    "whatsappNumber": "+201023456789"
+    "whatsappNumber": "+20 1092298665",
+    "instagramUrl": "https://www.instagram.com/esa_cam_store/",
+    "facebookUrl": "https://www.facebook.com/p/%D8%B9%D9%8A%D8%B3%D9%89-%D9%83%D8%A7%D9%85-%D8%B3%D8%AA%D9%88%D8%B1-Esa-Cam-Store-100088036521538/",
+    "tiktokUrl": "https://www.tiktok.com/@esa.cam1"
   }
 }

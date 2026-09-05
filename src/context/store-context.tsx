@@ -621,6 +621,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const handleSetQuickViewProduct = (product: Product | null) => {
+    if (product?.id && typeof window !== "undefined") {
+      window.location.href = `/store/${product.id}`;
+      return;
+    }
+    setQuickViewProduct(null);
+  };
+
   const isInWishlist = (productId: string) => wishlist.includes(productId);
 
   const formatPrice = (amountInUSD: number): string => {
@@ -998,7 +1006,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         rigItems,
         setCurrency: setCurrencyHandler,
         setIsCartOpen,
-        setQuickViewProduct,
+        setQuickViewProduct: handleSetQuickViewProduct,
         setSearchQuery,
         setSelectedCategory,
         addToCart,

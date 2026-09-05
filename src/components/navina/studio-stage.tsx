@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useStore } from "@/context/store-context";
 import {
-  Eye,
   ArrowRight,
   Video,
   Aperture,
@@ -41,7 +40,7 @@ interface SceneProject {
 }
 
 export function StudioStage() {
-  const { setQuickViewProduct, addToCart, formatPrice, homepageContent } = useStore();
+  const { addToCart, formatPrice, homepageContent } = useStore();
 
   const customStage = homepageContent?.studioStage;
 
@@ -403,13 +402,13 @@ export function StudioStage() {
                           </span>
                         )}
                         {prod && (
-                          <button
-                            onClick={() => setQuickViewProduct(prod)}
-                            className="p-2 bg-[#27272A] hover:bg-[#FFE600] text-white hover:text-black rounded-sm transition-colors cursor-pointer"
-                            title="Quick View Specs"
+                          <Link
+                            href={`/store/${prod.id}`}
+                            className="p-2 bg-[#27272A] hover:bg-[#FFE600] text-white hover:text-black rounded-sm transition-colors cursor-pointer inline-flex items-center justify-center"
+                            title="View Product"
                           >
-                            <Eye className="w-3.5 h-3.5" />
-                          </button>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </Link>
                         )}
                       </div>
                     </div>

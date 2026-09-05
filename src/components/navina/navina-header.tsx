@@ -22,6 +22,7 @@ import {
   Zap,
   Mic,
   SlidersHorizontal,
+  Smartphone,
 } from "lucide-react";
 
 interface SubItem {
@@ -477,14 +478,24 @@ export function NavinaHeader() {
 
                     <div className="space-y-1 text-xs">
                       {isAdmin && (
-                        <Link
-                          href="/dashboard"
-                          onClick={() => setIsUserMenuOpen(false)}
-                          className="flex items-center gap-2 p-2 rounded-lg text-[#FFE600] font-bold hover:bg-[#FFE600]/10 transition-colors"
-                        >
-                          <ShieldCheck className="w-3.5 h-3.5" />
-                          <span>Admin HQ Dashboard</span>
-                        </Link>
+                        <>
+                          <Link
+                            href="/dashboard"
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="flex items-center gap-2 p-2 rounded-lg text-[#FFE600] font-bold hover:bg-[#FFE600]/10 transition-colors"
+                          >
+                            <ShieldCheck className="w-3.5 h-3.5" />
+                            <span>Admin HQ Dashboard</span>
+                          </Link>
+                          <Link
+                            href="/admin-app"
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="flex items-center gap-2 p-2 rounded-lg text-emerald-400 font-bold hover:bg-emerald-500/10 transition-colors"
+                          >
+                            <Smartphone className="w-3.5 h-3.5" />
+                            <span>تطبيق إدارة الطلبات 📱</span>
+                          </Link>
+                        </>
                       )}
                       <Link
                         href="/store"
@@ -650,13 +661,23 @@ export function NavinaHeader() {
                 </div>
                 <div className="flex items-center gap-2 pt-1">
                   {isAdmin && (
-                    <Link
-                      href="/dashboard"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="flex-1 text-center py-2 px-3 bg-[#FFE600] text-black font-bold text-xs uppercase rounded-sm hover:bg-[#FFD000]"
-                    >
-                      HQ Dashboard
-                    </Link>
+                    <>
+                      <Link
+                        href="/dashboard"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="flex-1 text-center py-2 px-3 bg-[#FFE600] text-black font-bold text-xs uppercase rounded-sm hover:bg-[#FFD000]"
+                      >
+                        HQ Dashboard
+                      </Link>
+                      <Link
+                        href="/admin-app"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="flex-1 text-center py-2 px-3 bg-emerald-500 text-black font-bold text-xs uppercase rounded-sm hover:bg-emerald-400 flex items-center justify-center gap-1"
+                      >
+                        <Smartphone className="w-3.5 h-3.5" />
+                        Orders App
+                      </Link>
+                    </>
                   )}
                   <button
                     onClick={() => {

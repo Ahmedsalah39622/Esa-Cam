@@ -25,7 +25,6 @@ export function DesktopNav() {
     wishlist,
     setIsCartOpen,
     formatPrice,
-    setQuickViewProduct,
     setSelectedCategory,
     products,
   } = useStore();
@@ -137,10 +136,10 @@ export function DesktopNav() {
               </div>
               <div className="py-1">
                 {searchResults.map((product) => (
-                  <div
+                  <Link
                     key={product.id}
+                    href={`/store/${product.id}`}
                     onClick={() => {
-                      setQuickViewProduct(product);
                       setIsSearchOpen(false);
                       setSearchQuery("");
                     }}
@@ -167,7 +166,7 @@ export function DesktopNav() {
                         {formatPrice(product.price)}
                       </span>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>

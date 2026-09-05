@@ -12,8 +12,12 @@ import {
   CheckCircle2,
   ArrowLeft,
   Lock,
-  MessageCircle,
   Tag,
+  PackageCheck,
+  Printer,
+  Copy,
+  Check,
+  ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -50,7 +54,6 @@ export default function CheckoutPage() {
     clearCart,
     shippingSettings,
     calculateShippingFee,
-    homepageContent,
   } = useStore();
 
   const [paymentMethod, setPaymentMethod] = useState<"card" | "cod" | "installments" | "wire">("cod");
@@ -58,6 +61,7 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [placedOrderData, setPlacedOrderData] = useState<PlacedOrderInfo | null>(null);
+  const [copiedRef, setCopiedRef] = useState(false);
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -226,70 +230,153 @@ export default function CheckoutPage() {
   };
 
   if (isSubmitted && placedOrderData) {
-    const whatsappMsg = encodeURIComponent(
-      `Hello ESA CAM! I just placed Order #${placedOrderData.order_number} for total ${formatPrice(placedOrderData.total_amount)}. My Name: ${placedOrderData.customer_name}, Phone: ${placedOrderData.customer_phone}. Please confirm my delivery!`
-    );
+    const copyOrderRef = () => {
+      if (typeof navigator !== "undefined") {
+        navigator.clipboard.writeText(placedOrderData.order_number);
+        setCopiedRef(true);
+        toast.success("Order reference copied to clipboard!");
+        setTimeout(() => setCopiedRef(false), 2500);
+      }
+    };
 
     return (
-      <div className="min-h-screen bg-background text-foreground py-16 px-6">
-        <div className="max-w-xl mx-auto bg-card border border-border rounded-3xl p-8 sm:p-10 text-center shadow-2xl space-y-6">
-          <div className="w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center">
-            <CheckCircle2 className="w-10 h-10" />
+      <div className="min-h-screen bg-[#09090b] text-neutral-100 py-12 px-4 sm:px-6 flex items-center justify-center">
+        <div className="w-full max-w-xl bg-[#121214] border border-neutral-800 rounded-3xl p-6 sm:p-10 shadow-2xl space-y-6 relative overflow-hidden">
+          {/* Subtle Top Accent Glow */}
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-[#FFE600] to-emerald-500" />
+
+          {/* Success Check Icon Badge */}
+          <div className="relative mx-auto w-20 h-20 flex items-center justify-center">
+            <div className="absolute inset-0 rounded-full bg-emerald-500/15 animate-ping opacity-75" />
+            <div className="relative w-20 h-20 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+              <CheckCircle2 className="w-10 h-10" />
+            </div>
           </div>
 
-          <div>
-            <span className="text-xs font-mono font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-              Order Confirmed &amp; Logged in Admin HQ
-            </span>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground mt-1">
+          {/* Titles */}
+          <div className="text-center space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-mono font-bold uppercase tracking-wider">
+              <PackageCheck className="w-3.5 h-3.5" />
+              <span>Order Confirmed &amp; Logged</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
               Thank You for Your Order!
             </h1>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-2 font-mono">
-              Order Reference: <strong className="text-foreground text-base">{placedOrderData.order_number}</strong>
+            <p className="text-xs sm:text-sm text-neutral-400 max-w-md mx-auto">
+              Your equipment order has been successfully placed. Our logistics team in Cairo is preparing your shipment for safe insured dispatch.
             </p>
           </div>
 
-          <div className="bg-secondary/40 rounded-2xl p-5 text-left text-xs space-y-2.5">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Recipient Name:</span>
-              <span className="font-semibold text-foreground">{placedOrderData.customer_name}</span>
+          {/* Order Reference Box */}
+          <div className="bg-[#18181b] border border-neutral-800 rounded-2xl p-4 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[10px] uppercase font-mono tracking-wider text-neutral-400">
+                Official Order Reference
+              </p>
+              <p className="font-mono text-base sm:text-lg font-black text-[#FFE600] mt-0.5">
+                #{placedOrderData.order_number}
+              </p>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Mobile Contact:</span>
-              <span className="font-semibold text-foreground font-mono">{placedOrderData.customer_phone}</span>
+            <button
+              onClick={copyOrderRef}
+              className="flex items-center gap-1.5 py-2 px-3.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-bold transition border border-neutral-700 cursor-pointer"
+            >
+              {copiedRef ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                  <span className="text-emerald-400">Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>Copy</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Delivery & Assurance Highlights */}
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className="bg-[#18181b] border border-neutral-800/80 p-3.5 rounded-2xl flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-[#FFE600]/10 border border-[#FFE600]/20 flex items-center justify-center shrink-0 text-[#FFE600]">
+                <Truck className="w-4 h-4" />
+              </div>
+              <div className="text-left">
+                <p className="text-[11px] font-bold text-white leading-tight">24-48h Delivery</p>
+                <p className="text-[10px] text-neutral-400">Insured express courier</p>
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Delivery Destination:</span>
-              <span className="font-semibold text-foreground">{placedOrderData.shipping_address}, {placedOrderData.city}</span>
-            </div>
-            <div className="flex justify-between border-t border-border pt-2">
-              <span className="text-muted-foreground">Total Order Amount:</span>
-              <span className="font-mono font-black text-sm text-foreground">{formatPrice(placedOrderData.total_amount)}</span>
+
+            <div className="bg-[#18181b] border border-neutral-800/80 p-3.5 rounded-2xl flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0 text-emerald-400">
+                <ShieldCheck className="w-4 h-4" />
+              </div>
+              <div className="text-left">
+                <p className="text-[11px] font-bold text-white leading-tight">Official Warranty</p>
+                <p className="text-[10px] text-neutral-400">Authorized center guarantee</p>
+              </div>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 pt-2">
-            {(() => {
-              const waRaw = homepageContent?.footer?.whatsappNumber || "201022736456";
-              const waClean = waRaw.replace(/[^0-9]/g, "") || "201022736456";
-              return (
-                <a
-                  href={`https://wa.me/${waClean}?text=${whatsappMsg}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex-1 h-12 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-md"
-                >
-                  <MessageCircle className="w-4 h-4" />
-                  <span>Confirm on WhatsApp</span>
-                </a>
-              );
-            })()}
+          {/* Order Details Breakdown */}
+          <div className="bg-[#18181b] border border-neutral-800 rounded-2xl p-5 text-xs space-y-3">
+            <div className="flex justify-between items-center pb-2 border-b border-neutral-800">
+              <span className="text-neutral-400">Recipient Name</span>
+              <span className="font-bold text-white">{placedOrderData.customer_name}</span>
+            </div>
+            <div className="flex justify-between items-center pb-2 border-b border-neutral-800">
+              <span className="text-neutral-400">Contact Number</span>
+              <span className="font-mono font-bold text-white">{placedOrderData.customer_phone}</span>
+            </div>
+            <div className="flex justify-between items-center pb-2 border-b border-neutral-800">
+              <span className="text-neutral-400">Destination</span>
+              <span className="font-medium text-neutral-200 text-right max-w-[240px] truncate">
+                {placedOrderData.shipping_address}, {placedOrderData.city}
+              </span>
+            </div>
+            <div className="flex justify-between items-center pb-2 border-b border-neutral-800">
+              <span className="text-neutral-400">Payment Method</span>
+              <span className="font-bold text-emerald-400">Cash on Delivery (عند الاستلام)</span>
+            </div>
+            <div className="flex justify-between items-baseline pt-1">
+              <span className="text-sm font-bold text-white">Total Amount Due</span>
+              <span className="font-mono text-xl font-black text-[#FFE600]">
+                {formatPrice(placedOrderData.total_amount)}
+              </span>
+            </div>
+          </div>
 
-            <Button asChild variant="outline" className="flex-1 h-12 rounded-xl font-bold text-xs">
-              <Link href="/">
-                <span>Back to Store</span>
+          {/* Action Buttons (WhatsApp Confirmation Removed) */}
+          <div className="space-y-2.5 pt-2">
+            <Button
+              asChild
+              className="w-full h-12 rounded-2xl bg-[#FFE600] hover:bg-[#ffe600]/90 text-black font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-[#FFE600]/10 transition cursor-pointer"
+            >
+              <Link href={`/track-orders?order=${placedOrderData.order_number}`}>
+                <span>Track Order Live</span>
+                <ArrowRight className="w-4 h-4" />
               </Link>
             </Button>
+
+            <div className="grid grid-cols-2 gap-2.5">
+              <Button
+                asChild
+                variant="outline"
+                className="h-11 rounded-xl bg-[#18181b] hover:bg-neutral-800 text-neutral-300 hover:text-white border-neutral-800 text-xs font-bold"
+              >
+                <Link href="/store">
+                  <span>Continue Shopping</span>
+                </Link>
+              </Button>
+
+              <button
+                onClick={() => window.print()}
+                className="h-11 rounded-xl bg-[#18181b] hover:bg-neutral-800 text-neutral-300 hover:text-white border border-neutral-800 text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print Invoice</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

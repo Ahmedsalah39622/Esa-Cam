@@ -14,11 +14,12 @@ import {
   Wrench,
   Camera,
 } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 export function Hero() {
-  const { formatPrice, setQuickViewProduct, addToCart } = useStore();
+  const { formatPrice, addToCart } = useStore();
   const [activeHighlightIndex, setActiveHighlightIndex] = useState(0);
 
   const currentHero = HERO_HIGHLIGHTS[activeHighlightIndex];
@@ -199,13 +200,15 @@ export function Hero() {
                       </Button>
 
                       <Button
-                        onClick={() => setQuickViewProduct(matchedProduct)}
+                        asChild
                         variant="outline"
                         className="h-10 px-3 rounded-xl text-xs font-medium cursor-pointer"
                         title="View Full Spec Sheet"
                       >
-                        <Eye className="w-3.5 h-3.5 mr-1" />
-                        <span>Specs</span>
+                        <Link href={`/store/${matchedProduct.id}`}>
+                          <Eye className="w-3.5 h-3.5 mr-1" />
+                          <span>Specs</span>
+                        </Link>
                       </Button>
                     </>
                   )}

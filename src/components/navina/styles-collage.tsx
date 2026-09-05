@@ -8,7 +8,7 @@ import { Star, ArrowRight } from "lucide-react";
 import { PRODUCTS } from "@/data/products";
 
 export function StylesCollage() {
-  const { setQuickViewProduct, formatPrice, homepageContent } = useStore();
+  const { formatPrice, homepageContent } = useStore();
   const primeLensKit = PRODUCTS.find((p) => p.id === "sony-24-70-gm2") || PRODUCTS[0];
 
   const collage = homepageContent?.stylesCollage || {
@@ -79,12 +79,12 @@ export function StylesCollage() {
                 <span className="font-black text-xs text-[#FFE600]">
                   {formatPrice(collage.lensPrice)}
                 </span>
-                <button
-                  onClick={() => setQuickViewProduct(primeLensKit)}
+                <Link
+                  href={`/store/${primeLensKit.id}`}
                   className="text-[10px] font-bold text-white underline hover:text-[#FFE600] cursor-pointer uppercase"
                 >
                   Inspect
-                </button>
+                </Link>
               </div>
             </div>
           </div>

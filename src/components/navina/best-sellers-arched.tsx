@@ -8,7 +8,7 @@ import { ArrowRight, ChevronLeft, ChevronRight, Star } from "lucide-react";
 import { PRODUCTS, Product } from "@/data/products";
 
 export function BestSellersArched() {
-  const { setQuickViewProduct, formatPrice, homepageContent, products } = useStore();
+  const { formatPrice, homepageContent, products } = useStore();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const bestSellers = homepageContent?.bestSellers || {
@@ -95,10 +95,10 @@ export function BestSellersArched() {
           className="flex items-stretch gap-3 sm:gap-6 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory py-3"
         >
           {flagshipEditions.map((product) => (
-            <div
+            <Link
               key={product.id}
+              href={`/store/${product.id}`}
               className="w-[calc(50vw-24px)] min-w-[155px] sm:w-[280px] md:w-[320px] shrink-0 snap-start flex flex-col justify-between space-y-3 sm:space-y-4 group cursor-pointer border border-[#E4E4E7] hover:border-[#000000] hover:shadow-xl p-3 sm:p-5 transition-all duration-300 bg-white"
-              onClick={() => setQuickViewProduct(product)}
             >
               {/* Product Image Stage */}
               <div className="relative w-full aspect-square bg-[#FAFAFA] flex items-center justify-center p-4 overflow-hidden border border-[#F4F4F5]">
@@ -140,16 +140,10 @@ export function BestSellersArched() {
               </div>
 
               {/* Action Button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setQuickViewProduct(product);
-                }}
-                className="w-full py-3.5 px-4 bg-black text-white hover:bg-[#FFE600] hover:text-black transition-all text-xs font-black tracking-widest uppercase text-center cursor-pointer shadow-xs"
-              >
-                CHOOSE OPTIONS
-              </button>
-            </div>
+              <span className="w-full py-3.5 px-4 bg-black text-white group-hover:bg-[#FFE600] group-hover:text-black transition-all text-xs font-black tracking-widest uppercase text-center cursor-pointer shadow-xs block">
+                VIEW PRODUCT
+              </span>
+            </Link>
           ))}
         </div>
       </div>
