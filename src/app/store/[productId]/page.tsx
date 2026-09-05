@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -20,6 +20,7 @@ import {
   ArrowLeft,
   Share2,
   ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,13 +39,30 @@ export default function ProductDetailPage() {
     isInWishlist,
   } = useStore();
 
+  const fallbackImage =
+    "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=800&q=80";
+
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<"specs" | "features" | "box">("specs");
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+
+  useEffect(() => {
+    setSelectedImageIndex(0);
+  }, [productId]);
 
   const product = useMemo(
     () => products.find((p) => p.id === productId),
     [products, productId]
   );
+
+  const galleryImages = useMemo(() => {
+    if (product?.images && Array.isArray(product.images) && product.images.length > 0) {
+      return product.images;
+    }
+    return [product?.image || fallbackImage];
+  }, [product, fallbackImage]);
+
+  const activeImage = galleryImages[selectedImageIndex] || galleryImages[0] || fallbackImage;
 
   const relatedProducts = useMemo(() => {
     if (!product) return [];
@@ -79,8 +97,6 @@ export default function ProductDetailPage() {
   }
 
   const isWished = isInWishlist(product.id);
-  const fallbackImage =
-    "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=800&q=80";
 
   const handleAddToCart = () => {
     addToCart(product, quantity);
@@ -125,18 +141,20 @@ export default function ProductDetailPage() {
       {/* Main Product Section */}
       <div className="mx-auto max-w-7xl px-6 py-8 md:py-12 flex-1 w-full">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-          {/* Left: Product Image */}
+          {/* Left: Product Image & Multi-Angle Gallery */}
           <div className="space-y-4">
-            <div className="relative aspect-square w-full rounded-3xl overflow-hidden bg-secondary/30 border border-border">
+            <div className="group relative aspect-square w-full rounded-3xl overflow-hidden bg-white dark:bg-[#121214] border border-border shadow-xs">
               <Image
-                src={product.image || fallbackImage}
-                alt={product.name}
+                key={activeImage}
+                src={activeImage}
+                alt={`${product.name} - view ${selectedImageIndex + 1}`}
                 fill
                 unoptimized
-                className="object-contain p-6 sm:p-10"
+                priority
+                className="object-contain p-6 sm:p-10 transition-all duration-300"
               />
               {product.badge && (
-                <div className="absolute top-4 left-4">
+                <div className="absolute top-4 left-4 z-10">
                   <Badge
                     variant="default"
                     className="text-[10px] font-bold shadow-sm px-2.5 py-1 border border-amber-400/20"
@@ -146,7 +164,7 @@ export default function ProductDetailPage() {
                 </div>
               )}
               {product.originalPrice && (
-                <div className="absolute top-4 right-4">
+                <div className="absolute top-4 right-4 z-10">
                   <Badge
                     variant="secondary"
                     className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-400/10 border border-amber-400/25 backdrop-blur-sm px-2 py-1"
@@ -161,7 +179,76 @@ export default function ProductDetailPage() {
                   </Badge>
                 </div>
               )}
+
+              {/* Prev / Next Arrows for cycling gallery */}
+              {galleryImages.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setSelectedImageIndex((prev) =>
+                        prev > 0 ? prev - 1 : galleryImages.length - 1
+                      );
+                    }}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-black/80 text-white backdrop-blur-xs flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 cursor-pointer shadow-md z-10"
+                    aria-label="Previous view"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setSelectedImageIndex((prev) =>
+                        prev < galleryImages.length - 1 ? prev + 1 : 0
+                      );
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-black/80 text-white backdrop-blur-xs flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 cursor-pointer shadow-md z-10"
+                    aria-label="Next view"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                  <div className="absolute bottom-3 right-3 bg-black/70 text-white text-[10px] font-mono font-bold px-2 py-0.5 rounded-md backdrop-blur-xs z-10">
+                    {selectedImageIndex + 1} / {galleryImages.length}
+                  </div>
+                </>
+              )}
             </div>
+
+            {/* Gallery Thumbnails Strip (matching user's screenshot with highlighted border) */}
+            {galleryImages.length > 1 && (
+              <div className="flex items-center gap-2.5 overflow-x-auto pb-2 pt-1 no-scrollbar">
+                {galleryImages.map((img, idx) => {
+                  const isSelected = idx === selectedImageIndex;
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setSelectedImageIndex(idx)}
+                      onMouseEnter={() => setSelectedImageIndex(idx)}
+                      className={`relative w-18 h-18 sm:w-20 sm:h-20 rounded-xl bg-white dark:bg-[#18181b] overflow-hidden shrink-0 transition-all p-1.5 cursor-pointer ${
+                        isSelected
+                          ? "ring-2 ring-red-500 border-red-500 shadow-md scale-105"
+                          : "border border-neutral-300 dark:border-neutral-700 hover:border-neutral-400 opacity-70 hover:opacity-100"
+                      }`}
+                      aria-label={`View angle ${idx + 1}`}
+                    >
+                      <img
+                        src={img}
+                        alt={`${product.name} - thumbnail ${idx + 1}`}
+                        className="w-full h-full object-contain"
+                        loading="lazy"
+                        onError={(e) => {
+                          const t = e.currentTarget;
+                          t.src = fallbackImage;
+                        }}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
             {/* Trust Highlights (below image) */}
             <div className="bg-card border border-border rounded-2xl p-5 space-y-3">

@@ -419,6 +419,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     category: Product["category"];
     image_url?: string;
     image?: string;
+    images?: string[];
+    images_json?: string | object | null;
     badge?: string | null;
     stock_status?: Product["stockStatus"];
     rating?: number | string;
@@ -432,25 +434,51 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const res = await fetch("/api/products");
       const data = await res.json();
       if (data.success && Array.isArray(data.data) && data.data.length > 0) {
-        const serverMapped: Product[] = (data.data as DbProductRow[]).map((row) => ({
-          id: row.id,
-          name: row.name,
-          brand: row.brand,
-          price: Number(row.price),
-          originalPrice: row.original_price ? Number(row.original_price) : undefined,
-          category: row.category,
-          image: row.image_url || row.image || "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=800&q=80",
-          badge: row.badge || undefined,
-          stockStatus: row.stock_status || "in-stock",
-          rating: Number(row.rating || 5.0),
-          reviewsCount: Number(row.reviews_count || 0),
-          shortDescription: row.short_description || "Professional cinema gear.",
-          specs: row.specs_json
-            ? (typeof row.specs_json === "string" ? JSON.parse(row.specs_json) : row.specs_json)
-            : [{ label: "Brand", value: row.brand }],
-          features: ["Official 2-Year Warranty", "Factory Sealed & Calibrated"],
-          inTheBox: [row.name, "Accessories", "User Documentation"],
-        }));
+        const serverMapped: Product[] = (data.data as DbProductRow[]).map((row) => {
+          let images: string[] = [];
+          if (Array.isArray(row.images) && row.images.length > 0) {
+            images = row.images;
+          } else if (row.images_json) {
+            try {
+              images =
+                typeof row.images_json === "string"
+                  ? JSON.parse(row.images_json)
+                  : (row.images_json as string[]);
+            } catch {
+              images = [];
+            }
+          }
+          const mainImg =
+            row.image_url ||
+            row.image ||
+            "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=800&q=80";
+          if (images.length === 0 && mainImg) {
+            images = [mainImg];
+          }
+
+          return {
+            id: row.id,
+            name: row.name,
+            brand: row.brand,
+            price: Number(row.price),
+            originalPrice: row.original_price ? Number(row.original_price) : undefined,
+            category: row.category,
+            image: mainImg,
+            images,
+            badge: row.badge || undefined,
+            stockStatus: row.stock_status || "in-stock",
+            rating: Number(row.rating || 5.0),
+            reviewsCount: Number(row.reviews_count || 0),
+            shortDescription: row.short_description || "Professional cinema gear.",
+            specs: row.specs_json
+              ? typeof row.specs_json === "string"
+                ? JSON.parse(row.specs_json)
+                : row.specs_json
+              : [{ label: "Brand", value: row.brand }],
+            features: ["Official 2-Year Warranty", "Factory Sealed & Calibrated"],
+            inTheBox: [row.name, "Accessories", "User Documentation"],
+          };
+        });
 
         setProducts(serverMapped);
       }

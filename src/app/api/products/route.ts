@@ -20,6 +20,8 @@ interface ProductItem {
   reviews_count: number;
   short_description: string | null;
   specs_json?: string | null;
+  images_json?: string | null;
+  images?: string[];
   created_at?: string;
 }
 
@@ -43,6 +45,8 @@ function loadInitialProducts(): ProductItem[] {
           reviews_count: Number(p.reviewsCount || 0),
           short_description: p.shortDescription || null,
           specs_json: JSON.stringify(p.specs || []),
+          images_json: JSON.stringify(p.images || [p.image]),
+          images: p.images || [p.image],
         }));
       }
     }
@@ -179,6 +183,16 @@ export async function GET() {
             } else {
               r.image_url = "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=800&q=80";
             }
+          }
+          if (r.images_json) {
+            try {
+              r.images = typeof r.images_json === "string" ? JSON.parse(r.images_json) : r.images_json;
+            } catch {
+              r.images = [r.image_url];
+            }
+          } else {
+            const memoryItem = memoryProducts.find((p) => p.id === r.id);
+            r.images = memoryItem?.images || [r.image_url];
           }
           return r;
         });
