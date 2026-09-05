@@ -491,6 +491,7 @@ export default function DashboardPage() {
     badge: "New Arrival",
     mount: "Sony E",
     image: "",
+    additionalImages: [] as string[],
   });
 
   const compressImageFile = (file: File): Promise<string> => {
@@ -562,6 +563,7 @@ export default function DashboardPage() {
     badge: string;
     mount: string;
     image: string;
+    additionalImages: string[];
   } | null>(null);
 
   const handleEditProductImageFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -592,6 +594,10 @@ export default function DashboardPage() {
         : Math.round(item.originalPrice * rate)
       : 0;
 
+    const productImages = (item as Product & { images?: string[] }).images || (item.image ? [item.image] : []);
+    const primaryImg = productImages[0] || item.image || "";
+    const extraImgs = productImages.slice(1);
+
     setEditProduct({
       id: item.id,
       name: item.name,
@@ -603,9 +609,10 @@ export default function DashboardPage() {
       shortDescription: item.shortDescription || "",
       badge: item.badge || "",
       mount: (item as Product & { mount?: string }).mount || "",
-      image: item.image || "",
+      image: primaryImg,
+      additionalImages: extraImgs,
     });
-    setEditProductImageType(item.image?.startsWith("data:") ? "upload" : "url");
+    setEditProductImageType(primaryImg?.startsWith("data:") ? "upload" : "url");
     setIsEditProductOpen(true);
   };
 
@@ -621,13 +628,20 @@ export default function DashboardPage() {
       editProduct.image?.trim() ||
       "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1000&q=80";
 
+    const allImages = [
+      productImage,
+      ...editProduct.additionalImages.map((s) => s.trim()).filter(Boolean),
+    ];
+    const cleanImages = Array.from(new Set(allImages));
+
     await updateProduct(editProduct.id, {
       name: editProduct.name,
       brand: editProduct.brand,
       category: editProduct.category,
       price: basePrice,
       originalPrice: baseOriginalPrice,
-      image: productImage,
+      image: cleanImages[0] || productImage,
+      images: cleanImages,
       badge: editProduct.badge || undefined,
       stockStatus: editProduct.stockCount > 0 ? "in-stock" : "pre-order",
       shortDescription: editProduct.shortDescription || "High performance cinema photography equipment.",
@@ -645,7 +659,8 @@ export default function DashboardPage() {
               category: editProduct.category,
               price: basePrice,
               originalPrice: baseOriginalPrice,
-              image: productImage,
+              image: cleanImages[0] || productImage,
+              images: cleanImages,
               badge: editProduct.badge || undefined,
               stockCount: editProduct.stockCount,
               stockStatus: editProduct.stockCount > 0 ? "in-stock" : "pre-order",
@@ -1277,6 +1292,12 @@ export default function DashboardPage() {
       newProduct.image?.trim() ||
       "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1000&q=80";
 
+    const allImages = [
+      productImage,
+      ...newProduct.additionalImages.map((s) => s.trim()).filter(Boolean),
+    ];
+    const cleanImages = Array.from(new Set(allImages));
+
     const created: Product = {
       id: `gear-${Date.now()}`,
       name: newProduct.name,
@@ -1286,7 +1307,8 @@ export default function DashboardPage() {
       originalPrice: baseOriginalPrice,
       rating: 5.0,
       reviewsCount: 0,
-      image: productImage,
+      image: cleanImages[0] || productImage,
+      images: cleanImages,
       badge: newProduct.badge,
       isNew: true,
       stockStatus: newProduct.stockCount > 0 ? "in-stock" : "pre-order",
@@ -1313,6 +1335,7 @@ export default function DashboardPage() {
       badge: "New Arrival",
       mount: "Sony E",
       image: "",
+      additionalImages: [],
     });
   };
 
@@ -6650,6 +6673,115 @@ export default function DashboardPage() {
                     </button>
                   </div>
                 )}
+
+                {/* Additional Gallery Photos / Multi-Angle Image URLs */}
+                <div className="space-y-2 pt-2.5 border-t border-border/70">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <ImageIcon className="w-3.5 h-3.5 text-amber-500" />
+                      <span className="font-semibold text-foreground text-xs">
+                        Additional Photo URLs / صور إضافية للمعرض
+                      </span>
+                      {newProduct.additionalImages && newProduct.additionalImages.length > 0 && (
+                        <span className="px-1.5 py-0.5 rounded-full bg-amber-500/10 text-amber-500 font-mono text-[10px] font-bold">
+                          {newProduct.additionalImages.length}
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setNewProduct((prev) => ({
+                          ...prev,
+                          additionalImages: [...(prev.additionalImages || []), ""],
+                        }))
+                      }
+                      className="text-[11px] font-bold text-amber-500 hover:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Image URL / إضافة رابط</span>
+                    </button>
+                  </div>
+
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">
+                    أضف روابط صور إضافية لعرض زوايا مختلفة للمنتج (الجهة الخلفية، الشاشة، المنافذ، الإكسسوارات) في صفحة المتجر.
+                  </p>
+
+                  {newProduct.additionalImages && newProduct.additionalImages.length > 0 ? (
+                    <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                      {newProduct.additionalImages.map((url, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center gap-2 bg-secondary/30 p-1.5 rounded-xl border border-border/60"
+                        >
+                          <div className="w-9 h-9 rounded-lg bg-secondary border border-border shrink-0 overflow-hidden flex items-center justify-center">
+                            {url ? (
+                              <img
+                                src={url}
+                                alt={`Angle ${idx + 2}`}
+                                className="w-full h-full object-contain"
+                                onError={(e) => {
+                                  (e.currentTarget as HTMLElement).style.display = "none";
+                                }}
+                              />
+                            ) : (
+                              <ImageIcon className="w-4 h-4 text-muted-foreground" />
+                            )}
+                          </div>
+                          <div className="flex-1 flex items-center gap-1.5">
+                            <span className="text-[10px] font-mono text-muted-foreground font-semibold shrink-0">
+                              #{idx + 2}
+                            </span>
+                            <input
+                              type="url"
+                              placeholder={`https://... (Angle #${idx + 2} - back, side, ports)`}
+                              value={url}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setNewProduct((prev) => {
+                                  const list = [...(prev.additionalImages || [])];
+                                  list[idx] = val;
+                                  return { ...prev, additionalImages: list };
+                                });
+                              }}
+                              className="w-full px-2.5 py-1.5 rounded-lg border border-border bg-background/50 text-foreground font-mono text-xs"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setNewProduct((prev) => {
+                                const list = [...(prev.additionalImages || [])];
+                                list.splice(idx, 1);
+                                return { ...prev, additionalImages: list };
+                              });
+                            }}
+                            className="p-1.5 text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer shrink-0"
+                            title="Remove this URL"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-2.5 rounded-xl border border-dashed border-border/80 bg-secondary/10 flex items-center justify-between text-muted-foreground text-[11px]">
+                      <span>No additional angle photos added yet.</span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setNewProduct((prev) => ({
+                            ...prev,
+                            additionalImages: [""],
+                          }))
+                        }
+                        className="text-amber-500 hover:underline font-bold cursor-pointer"
+                      >
+                        + Add photo link
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>
@@ -6881,6 +7013,125 @@ export default function DashboardPage() {
                     </button>
                   </div>
                 )}
+
+                {/* Additional Gallery Photos / Multi-Angle Image URLs */}
+                <div className="space-y-2 pt-2.5 border-t border-border/70">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <ImageIcon className="w-3.5 h-3.5 text-blue-500" />
+                      <span className="font-semibold text-foreground text-xs">
+                        Additional Photo URLs / صور إضافية للمعرض
+                      </span>
+                      {editProduct.additionalImages && editProduct.additionalImages.length > 0 && (
+                        <span className="px-1.5 py-0.5 rounded-full bg-blue-500/10 text-blue-500 font-mono text-[10px] font-bold">
+                          {editProduct.additionalImages.length}
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setEditProduct((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                additionalImages: [...(prev.additionalImages || []), ""],
+                              }
+                            : null
+                        )
+                      }
+                      className="text-[11px] font-bold text-blue-500 hover:text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Add Image URL / إضافة رابط</span>
+                    </button>
+                  </div>
+
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">
+                    أضف روابط صور إضافية لعرض زوايا مختلفة للمنتج (الجهة الخلفية، الشاشة، المنافذ، الإكسسوارات) في صفحة المتجر.
+                  </p>
+
+                  {editProduct.additionalImages && editProduct.additionalImages.length > 0 ? (
+                    <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                      {editProduct.additionalImages.map((url, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center gap-2 bg-secondary/30 p-1.5 rounded-xl border border-border/60"
+                        >
+                          <div className="w-9 h-9 rounded-lg bg-secondary border border-border shrink-0 overflow-hidden flex items-center justify-center">
+                            {url ? (
+                              <img
+                                src={url}
+                                alt={`Angle ${idx + 2}`}
+                                className="w-full h-full object-contain"
+                                onError={(e) => {
+                                  (e.currentTarget as HTMLElement).style.display = "none";
+                                }}
+                              />
+                            ) : (
+                              <ImageIcon className="w-4 h-4 text-muted-foreground" />
+                            )}
+                          </div>
+                          <div className="flex-1 flex items-center gap-1.5">
+                            <span className="text-[10px] font-mono text-muted-foreground font-semibold shrink-0">
+                              #{idx + 2}
+                            </span>
+                            <input
+                              type="url"
+                              placeholder={`https://... (Angle #${idx + 2} - back, side, ports)`}
+                              value={url}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setEditProduct((prev) => {
+                                  if (!prev) return null;
+                                  const list = [...(prev.additionalImages || [])];
+                                  list[idx] = val;
+                                  return { ...prev, additionalImages: list };
+                                });
+                              }}
+                              className="w-full px-2.5 py-1.5 rounded-lg border border-border bg-background/50 text-foreground font-mono text-xs"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditProduct((prev) => {
+                                if (!prev) return null;
+                                const list = [...(prev.additionalImages || [])];
+                                list.splice(idx, 1);
+                                return { ...prev, additionalImages: list };
+                              });
+                            }}
+                            className="p-1.5 text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer shrink-0"
+                            title="Remove this URL"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-2.5 rounded-xl border border-dashed border-border/80 bg-secondary/10 flex items-center justify-between text-muted-foreground text-[11px]">
+                      <span>No additional angle photos added yet.</span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setEditProduct((prev) =>
+                            prev
+                              ? {
+                                  ...prev,
+                                  additionalImages: [""],
+                                }
+                              : null
+                          )
+                        }
+                        className="text-blue-500 hover:underline font-bold cursor-pointer"
+                      >
+                        + Add photo link
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>

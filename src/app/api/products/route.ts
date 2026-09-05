@@ -94,6 +94,7 @@ function saveProductsToDisk(productsList: ProductItem[]) {
         rating: Number(p.rating || 5.0),
         reviewsCount: Number(p.reviews_count || 0),
         image: p.image_url,
+        images: p.images || (p.images_json ? (() => { try { return JSON.parse(p.images_json); } catch { return [p.image_url]; } })() : [p.image_url]),
         badge: p.badge || undefined,
         stockStatus: p.stock_status || "in-stock",
         stockCount: 5,
@@ -244,6 +245,8 @@ export async function POST(req: NextRequest) {
       category,
       imageUrl,
       image,
+      images,
+      imagesJson,
       badge,
       stockStatus,
       stock_status,
@@ -271,6 +274,11 @@ export async function POST(req: NextRequest) {
       short_description ||
       "High performance cinema photography equipment.";
     const cleanSpecs = specsJson || specs || [{ label: "Brand", value: brand }];
+    const cleanImages = Array.isArray(images) && images.length > 0
+      ? images.map((s: unknown) => String(s).trim()).filter(Boolean)
+      : imagesJson
+      ? (() => { try { return JSON.parse(imagesJson); } catch { return [cleanImageUrl]; } })()
+      : [cleanImageUrl];
 
     const newProdItem: ProductItem = {
       id: productId,
@@ -279,13 +287,15 @@ export async function POST(req: NextRequest) {
       price: Number(price),
       original_price: originalPrice ? Number(originalPrice) : null,
       category: String(category),
-      image_url: cleanImageUrl,
+      image_url: cleanImages[0] || cleanImageUrl,
       badge: badge ? String(badge) : null,
       stock_status: cleanStockStatus,
       rating: 5.0,
       reviews_count: 0,
       short_description: cleanShortDesc,
       specs_json: typeof cleanSpecs === "string" ? cleanSpecs : JSON.stringify(cleanSpecs),
+      images_json: JSON.stringify(cleanImages),
+      images: cleanImages,
       created_at: new Date().toISOString(),
     };
 
@@ -302,8 +312,8 @@ export async function POST(req: NextRequest) {
       try {
         await ensureProductsTable();
         await query(
-          `INSERT INTO products (id, name, brand, price, original_price, category, image_url, badge, stock_status, short_description, specs_json)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `INSERT INTO products (id, name, brand, price, original_price, category, image_url, badge, stock_status, short_description, specs_json, images_json)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
            ON DUPLICATE KEY UPDATE 
              name=VALUES(name), 
              brand=VALUES(brand), 
@@ -314,7 +324,8 @@ export async function POST(req: NextRequest) {
              badge=VALUES(badge), 
              stock_status=VALUES(stock_status), 
              short_description=VALUES(short_description), 
-             specs_json=VALUES(specs_json)`,
+             specs_json=VALUES(specs_json),
+             images_json=VALUES(images_json)`,
           [
             productId,
             name,
@@ -322,11 +333,12 @@ export async function POST(req: NextRequest) {
             Number(price),
             originalPrice ? Number(originalPrice) : null,
             category,
-            cleanImageUrl,
+            cleanImages[0] || cleanImageUrl,
             badge || null,
             cleanStockStatus,
             cleanShortDesc,
             typeof cleanSpecs === "string" ? cleanSpecs : JSON.stringify(cleanSpecs),
+            JSON.stringify(cleanImages),
           ]
         );
       } catch (dbErr) {
@@ -359,6 +371,8 @@ export async function PATCH(req: NextRequest) {
       originalPrice,
       category,
       imageUrl,
+      images,
+      imagesJson,
       badge,
       stockStatus,
       shortDescription,
@@ -368,6 +382,12 @@ export async function PATCH(req: NextRequest) {
     if (!id) {
       return NextResponse.json({ success: false, message: "Product ID is required" }, { status: 400 });
     }
+
+    const resolvedImages = Array.isArray(images)
+      ? images.map((s: unknown) => String(s).trim()).filter(Boolean)
+      : imagesJson
+      ? (() => { try { return JSON.parse(imagesJson); } catch { return undefined; } })()
+      : undefined;
 
     // Update in-memory cache
     memoryProducts = memoryProducts.map((p) => {
@@ -384,6 +404,11 @@ export async function PATCH(req: NextRequest) {
           ...(stockStatus !== undefined && { stock_status: stockStatus }),
           ...(shortDescription !== undefined && { short_description: shortDescription }),
           ...(specsJson !== undefined && { specs_json: typeof specsJson === "string" ? specsJson : JSON.stringify(specsJson) }),
+          ...(resolvedImages !== undefined && {
+            images: resolvedImages,
+            images_json: JSON.stringify(resolvedImages),
+            ...(resolvedImages.length > 0 && !imageUrl && { image_url: resolvedImages[0] }),
+          }),
         };
       }
       return p;
@@ -407,7 +432,8 @@ export async function PATCH(req: NextRequest) {
             badge = COALESCE(?, badge),
             stock_status = COALESCE(?, stock_status),
             short_description = COALESCE(?, short_description),
-            specs_json = COALESCE(?, specs_json)
+            specs_json = COALESCE(?, specs_json),
+            images_json = COALESCE(?, images_json)
           WHERE id = ?`,
           [
             name || null,
@@ -415,11 +441,12 @@ export async function PATCH(req: NextRequest) {
             price !== undefined ? Number(price) : null,
             originalPrice !== undefined ? Number(originalPrice) : null,
             category || null,
-            imageUrl || null,
+            imageUrl || (resolvedImages && resolvedImages.length > 0 ? resolvedImages[0] : null),
             badge !== undefined ? badge : null,
             stockStatus || null,
             shortDescription || null,
             specsJson ? (typeof specsJson === "string" ? specsJson : JSON.stringify(specsJson)) : null,
+            resolvedImages ? JSON.stringify(resolvedImages) : null,
             id,
           ]
         );
