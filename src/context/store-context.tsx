@@ -947,13 +947,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (totalUSD <= 0) return 0;
 
     // Check free shipping threshold
-    if (shippingSettings.enableFreeShipping && totalUSD >= shippingSettings.freeShippingThresholdUSD) {
+    if (
+      shippingSettings.enableFreeShipping &&
+      (shippingSettings.freeShippingThresholdUSD <= 0 || totalUSD >= shippingSettings.freeShippingThresholdUSD)
+    ) {
       const expressCost = (isExpress && shippingSettings.enableExpressShipping) ? shippingSettings.expressSurchargeUSD : 0;
       const codCost = (paymentMethod === "cod" && shippingSettings.codHandlingFeeUSD > 0) ? shippingSettings.codHandlingFeeUSD : 0;
       return expressCost + codCost;
     }
 
-    let baseCost = shippingSettings.flatRateUSD;
+    let baseCost = shippingSettings.flatRateUSD || 0;
     if (shippingSettings.calculationMode === "city" && cityKey) {
       const cleanKey = cityKey.toLowerCase().trim();
       const matchedCity = shippingSettings.cityRates.find(
@@ -964,7 +967,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           cleanKey.includes(c.cityNameEn.toLowerCase())
       );
       if (matchedCity && matchedCity.isActive) {
-        baseCost = matchedCity.rateUSD;
+        baseCost = matchedCity.rateUSD || 0;
       }
     }
 

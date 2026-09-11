@@ -350,8 +350,8 @@ export default function LoginPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Button asChild size="sm" className="flex-1 rounded-xl text-xs font-bold bg-[#FFE600] text-black hover:bg-[#FFD000]">
-                    <Link href={user?.role !== "customer" ? "/dashboard" : "/track-orders"}>
-                      {user?.role !== "customer" ? "Open Admin Dashboard →" : "Open Orders Tracking Hub →"}
+                    <Link href={user?.role !== "customer" ? "/dashboard" : "/store"}>
+                      {user?.role !== "customer" ? "Open Admin Dashboard →" : "Continue Shopping (تصفح المتجر) →"}
                     </Link>
                   </Button>
                   <Button

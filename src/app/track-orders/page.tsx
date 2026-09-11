@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
 
 import { useStore } from "@/context/store-context";
@@ -51,9 +52,17 @@ interface ClientOrder {
 }
 
 export default function TrackOrdersPage() {
-  const { user, logout, isAdmin } = useAuth();
+  const router = useRouter();
+  const { user, logout, isAdmin, isLoading } = useAuth();
   const { formatPrice, homepageContent } = useStore();
   const hotline = homepageContent?.footer?.hotline || "+20 1092298665";
+
+  // Block customer access to order tracking entirely
+  useEffect(() => {
+    if (!isLoading && !isAdmin) {
+      router.replace("/store");
+    }
+  }, [isLoading, isAdmin, router]);
 
   const [orders, setOrders] = useState<ClientOrder[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<ClientOrder | null>(null);
@@ -170,6 +179,15 @@ export default function TrackOrdersPage() {
   };
 
   const activeStage = selectedOrder ? getStageNumber(selectedOrder.status) : 1;
+
+  if (isLoading || !isAdmin) {
+    return (
+      <div className="min-h-screen bg-[#09090B] text-white flex flex-col items-center justify-center p-6 text-center space-y-3 font-sans">
+        <div className="w-8 h-8 rounded-full border-2 border-[#FFE600] border-t-transparent animate-spin" />
+        <p className="text-xs text-[#A1A1AA] font-mono">Redirecting to Storefront...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#09090B] text-[#EDEDED] font-sans selection:bg-[#FFE600] selection:text-black">

@@ -254,11 +254,6 @@ export function Footer() {
             <Link href="/terms-and-conditions" className="hover:text-white transition-colors">
               Terms
             </Link>
-
-            <span>·</span>
-            <Link href="/dashboard" className="text-[#FFE600] hover:underline font-bold">
-              HQ Dashboard
-            </Link>
           </div>
         </div>
       </div>

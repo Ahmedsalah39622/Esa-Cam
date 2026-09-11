@@ -247,9 +247,9 @@ export function NavinaHeader() {
 
       {/* Main Nikon-Style Header Bar */}
       <div className="w-full max-w-[1720px] mx-auto px-4 sm:px-8 lg:px-12 xl:px-16">
-        <div className="flex items-center justify-between h-20 gap-4 xl:gap-8">
+        <div className="flex items-center justify-between h-16 sm:h-20 gap-2 sm:gap-4 xl:gap-8 flex-nowrap">
           {/* Left: Hamburger (Mobile) + Brand Logo */}
-          <div className="flex items-center gap-4 sm:gap-6 mr-6 lg:mr-10 xl:mr-14 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-6 mr-2 sm:mr-6 lg:mr-10 xl:mr-14 shrink-0">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="lg:hidden text-white hover:text-[#FFE600] transition-colors p-1 cursor-pointer"
@@ -434,7 +434,7 @@ export function NavinaHeader() {
           </nav>
 
           {/* Right: Search, Login / Account Dropdown, & Cart Button */}
-          <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 shrink-0 flex-nowrap">
             <Link
               href="/store"
               className="hidden sm:flex items-center justify-center w-10 h-10 rounded-full hover:bg-[#27272A] text-[#A1A1AA] hover:text-white transition-colors"
@@ -445,10 +445,10 @@ export function NavinaHeader() {
 
             {/* Login / User Account Menu */}
             {isAuthenticated ? (
-              <div className="relative" ref={userMenuRef}>
+              <div className="relative shrink-0" ref={userMenuRef}>
                 <button
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-sm border transition-colors cursor-pointer text-xs font-bold font-sans ${
+                  className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-sm border transition-colors cursor-pointer text-xs font-bold font-sans shrink-0 ${
                     isAdmin
                       ? "border-[#FFE600]/40 bg-[#FFE600]/10 text-[#FFE600] hover:bg-[#FFE600]/20"
                       : "border-[#27272A] bg-[#18181B] text-white hover:border-[#FFE600]/40"
@@ -522,7 +522,7 @@ export function NavinaHeader() {
             ) : (
               <Link
                 href="/login"
-                className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-white hover:text-[#FFE600] px-3 py-2 rounded-sm hover:bg-[#18181B] border border-transparent hover:border-[#27272A] transition-all font-sans"
+                className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-white hover:text-[#FFE600] px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-sm hover:bg-[#18181B] border border-transparent hover:border-[#27272A] transition-all font-sans shrink-0"
                 title="Sign In / Admin Access"
               >
                 <User className="w-3.5 h-3.5 text-[#FFE600]" />
@@ -533,12 +533,12 @@ export function NavinaHeader() {
             {/* Cart Button */}
             <button
               onClick={() => setIsCartOpen(true)}
-              className="inline-flex items-center gap-2.5 bg-[#FFE600] hover:bg-[#FFD000] text-black px-4 sm:px-5 py-2.5 rounded-sm text-xs font-black tracking-widest uppercase transition-all duration-200 hover:scale-105 cursor-pointer shadow-md font-sans"
+              className="inline-flex items-center gap-1.5 sm:gap-2.5 bg-[#FFE600] hover:bg-[#FFD000] text-black px-3 sm:px-5 py-1.5 sm:py-2.5 rounded-sm text-[11px] sm:text-xs font-black tracking-wider sm:tracking-widest uppercase transition-all duration-200 hover:scale-105 cursor-pointer shadow-md font-sans shrink-0"
             >
-              <ShoppingBag className="w-4 h-4" />
+              <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span>CART</span>
               {cartItemCount > 0 && (
-                <span className="bg-black text-[#FFE600] text-[10px] font-mono font-black px-1.5 py-0.5 rounded-sm">
+                <span className="bg-black text-[#FFE600] text-[9px] sm:text-[10px] font-mono font-black px-1.5 py-0.5 rounded-sm">
                   {cartItemCount}
                 </span>
               )}

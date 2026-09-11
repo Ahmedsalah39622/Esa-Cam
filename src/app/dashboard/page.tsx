@@ -1581,11 +1581,8 @@ export default function DashboardPage() {
             <span className="font-black text-base tracking-widest uppercase">CAM HQ</span>
           </Link>
           <div className="flex items-center gap-2">
-            <Button asChild variant="outline" size="sm" className="rounded-xl text-xs border-[#27272A] bg-[#18181B] text-white">
-              <Link href="/track-orders">Order Tracking Hub 📦</Link>
-            </Button>
-            <Button asChild variant="ghost" size="sm" className="rounded-xl text-xs text-[#A1A1AA]">
-              <Link href="/">Storefront</Link>
+            <Button asChild variant="ghost" size="sm" className="rounded-xl text-xs text-[#A1A1AA] hover:text-white">
+              <Link href="/store">Storefront (المتجر)</Link>
             </Button>
           </div>
         </header>
@@ -1598,21 +1595,21 @@ export default function DashboardPage() {
             <div className="space-y-2">
               <h2 className="text-2xl font-black text-white">Admin Operations Portal</h2>
               <p className="text-xs text-[#A1A1AA] leading-relaxed">
-                You are logged in as a <strong>VIP Client / Customer</strong> ({user?.name || "Client"}). The Operations Command Center is reserved for authorized ESACAM staff.
+                لوحة التحكم مخصصة فقط للمسؤولين وموظفي الإدارة المصرح لهم. تم تقييد الوصول لحماية البيانات.
               </p>
             </div>
 
             <div className="space-y-2.5 pt-2">
               <Button asChild className="w-full h-11 rounded-2xl text-xs font-black gap-2 cursor-pointer bg-[#FFE600] text-black hover:bg-[#FFD000] shadow-md">
-                <Link href="/track-orders">
-                  <Package className="w-4 h-4" />
-                  <span>Go to Live Order Tracking &amp; Fleet Hub (تتبع طلباتك)</span>
+                <Link href="/store">
+                  <ShoppingBag className="w-4 h-4" />
+                  <span>العودة للمتجر (Back to Store)</span>
                 </Link>
               </Button>
               <Button asChild variant="outline" className="w-full border-[#27272A] bg-[#18181B] text-white text-xs rounded-2xl h-10">
-                <Link href="/login">
+                <Link href="/login?redirect=/dashboard">
                   <ShieldCheck className="w-4 h-4 text-[#FFE600]" />
-                  <span>Switch to Staff / Admin Account</span>
+                  <span>تسجيل الدخول كمسؤول (Staff Login)</span>
                 </Link>
               </Button>
             </div>

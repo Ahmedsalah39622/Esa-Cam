@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useStore } from "@/context/store-context";
+import { useSearchParams } from "next/navigation";
+import { useStore, CURRENCIES } from "@/context/store-context";
 import {
   ShoppingBag,
   ShieldCheck,
@@ -18,6 +19,7 @@ import {
   Copy,
   Check,
   ArrowRight,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -41,12 +43,12 @@ interface PlacedOrderInfo {
   shipping_address: string;
   city: string;
   total_amount: number;
+  payment_method?: string;
 }
 
-export default function CheckoutPage() {
+function CheckoutContent() {
+  const searchParams = useSearchParams();
   const {
-
-
     cart,
     cartTotalUSD,
     cartItemCount,
@@ -54,12 +56,14 @@ export default function CheckoutPage() {
     clearCart,
     shippingSettings,
     calculateShippingFee,
+    currency,
   } = useStore();
 
   const [paymentMethod, setPaymentMethod] = useState<"card" | "cod" | "installments" | "wire">("cod");
   const [isExpressDelivery, setIsExpressDelivery] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isVerifyingStripe, setIsVerifyingStripe] = useState(false);
   const [placedOrderData, setPlacedOrderData] = useState<PlacedOrderInfo | null>(null);
   const [copiedRef, setCopiedRef] = useState(false);
 
@@ -73,6 +77,156 @@ export default function CheckoutPage() {
     city: "Cairo",
     notes: "",
   });
+
+  const verifiedSessionRef = useRef<string | null>(null);
+
+  // Check for Paymob, Kashier or Stripe Checkout return params
+  useEffect(() => {
+    const gateway = searchParams.get("gateway");
+    const paymobOrderId = searchParams.get("order_id");
+    const paymobSuccess = searchParams.get("success");
+
+    // Paymob return flow
+    if ((gateway === "paymob" || paymobSuccess !== null) && paymobOrderId) {
+      if (verifiedSessionRef.current === `paymob-${paymobOrderId}`) return;
+      verifiedSessionRef.current = `paymob-${paymobOrderId}`;
+
+      if (paymobSuccess === "true") {
+        setIsVerifyingStripe(true);
+        fetch(
+          `/api/checkout/paymob/verify?order_id=${encodeURIComponent(paymobOrderId)}&success=true&${searchParams.toString()}`
+        )
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success && data.paid) {
+              setPlacedOrderData(data.order);
+              setIsSubmitted(true);
+              clearCart();
+              if (typeof window !== "undefined") {
+                window.history.replaceState({}, "", window.location.pathname);
+              }
+              toast.success("Payment Received & Confirmed!", {
+                id: `paymob-success-${data.order?.order_number || paymobOrderId}`,
+                description: `Order #${data.order.order_number} has been verified and confirmed via Paymob.`,
+              });
+            } else {
+              toast.error(data.message || "Paymob payment verification failed.");
+            }
+          })
+          .catch((err) => {
+            console.error("Paymob verification error:", err);
+            toast.error("An error occurred while verifying your payment.");
+          })
+          .finally(() => {
+            setIsVerifyingStripe(false);
+          });
+      } else {
+        if (typeof window !== "undefined") {
+          window.history.replaceState({}, "", window.location.pathname);
+        }
+        toast.info("Paymob payment was not completed. Your cart is preserved, feel free to try again.");
+      }
+      return;
+    }
+
+    const kashierOrderId = searchParams.get("kashier_order_id") || searchParams.get("merchantOrderId");
+    const kashierStatus = searchParams.get("paymentStatus") || searchParams.get("status");
+
+    // Kashier return flow
+    if ((gateway === "kashier" || kashierStatus) && kashierOrderId) {
+      if (verifiedSessionRef.current === `kashier-${kashierOrderId}`) return;
+      verifiedSessionRef.current = `kashier-${kashierOrderId}`;
+
+      if (kashierStatus?.toUpperCase() === "SUCCESS") {
+        setIsVerifyingStripe(true);
+        fetch(
+          `/api/checkout/kashier/verify?order_id=${encodeURIComponent(kashierOrderId)}&paymentStatus=SUCCESS`
+        )
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success && data.paid) {
+              setPlacedOrderData(data.order);
+              setIsSubmitted(true);
+              clearCart();
+              if (typeof window !== "undefined") {
+                window.history.replaceState({}, "", window.location.pathname);
+              }
+              toast.success("Payment Received & Confirmed!", {
+                id: `kashier-success-${data.order?.order_number || kashierOrderId}`,
+                description: `Order #${data.order.order_number} has been verified and confirmed via Kashier.`,
+              });
+            } else {
+              toast.error(data.message || "Kashier payment verification failed.");
+            }
+          })
+          .catch((err) => {
+            console.error("Kashier verification error:", err);
+            toast.error("An error occurred while verifying your payment.");
+          })
+          .finally(() => {
+            setIsVerifyingStripe(false);
+          });
+      } else {
+        if (typeof window !== "undefined") {
+          window.history.replaceState({}, "", window.location.pathname);
+        }
+        toast.info("Kashier payment was not completed. Your cart is preserved, feel free to try again.");
+      }
+      return;
+    }
+
+    // Stripe return flow
+    const sessionId = searchParams.get("session_id");
+    const orderId = searchParams.get("order_id");
+    const paymentStatus = searchParams.get("payment");
+
+    if (sessionId && paymentStatus === "success") {
+      if (verifiedSessionRef.current === sessionId) {
+        return;
+      }
+      verifiedSessionRef.current = sessionId;
+
+      setIsVerifyingStripe(true);
+      fetch(
+        `/api/checkout/stripe/verify?session_id=${encodeURIComponent(sessionId)}&order_id=${encodeURIComponent(orderId || "")}`
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.paid) {
+            setPlacedOrderData(data.order);
+            setIsSubmitted(true);
+            clearCart();
+            if (typeof window !== "undefined") {
+              window.history.replaceState({}, "", window.location.pathname);
+            }
+            toast.success("Payment Received & Confirmed!", {
+              id: `stripe-success-${data.order?.order_number || sessionId}`,
+              description: `Order #${data.order.order_number} has been verified and confirmed via Stripe.`,
+            });
+          } else {
+            toast.error(data.message || "Payment verification failed.", {
+              id: `stripe-fail-${sessionId}`,
+            });
+          }
+        })
+        .catch((err) => {
+          console.error("Payment verification error:", err);
+          toast.error("An error occurred while verifying your payment.");
+        })
+        .finally(() => {
+          setIsVerifyingStripe(false);
+        });
+    } else if (paymentStatus === "canceled") {
+      if (verifiedSessionRef.current === "canceled") {
+        return;
+      }
+      verifiedSessionRef.current = "canceled";
+      if (typeof window !== "undefined") {
+        window.history.replaceState({}, "", window.location.pathname);
+      }
+      toast.info("Payment was canceled. Your cart is preserved, feel free to try again.");
+    }
+  }, [searchParams, clearCart]);
 
   // Promo Code Engine
   const [promoInput, setPromoInput] = useState("");
@@ -172,6 +326,69 @@ export default function CheckoutPage() {
 
     setIsSubmitting(true);
 
+    // Flow 1: Paymob Online Payment (Cards, Meeza, Wallets, ValU)
+    if (paymentMethod === "card") {
+      try {
+        const rate = CURRENCIES[currency]?.rate || 1;
+        const activeCurrency = (currency || "EGP").toLowerCase();
+
+        const paymobPayload = {
+          customerName: `${formData.firstName} ${formData.lastName}`.trim(),
+          customerPhone: formData.phone,
+          customerEmail: formData.email,
+          city: formData.city,
+          shippingAddress: `${formData.address}${formData.company ? ` (${formData.company})` : ""}`,
+          notes: `${formData.notes || ""}${appliedCoupon ? ` [Promo Code: ${appliedCoupon.code} (-${appliedCoupon.discount_percent}%)]` : ""}`,
+          currency: activeCurrency,
+          items: cart.map((item) => ({
+            id: item.product.id,
+            name: item.product.name,
+            brand: item.product.brand,
+            price: Math.round(item.product.price * rate),
+            quantity: item.quantity,
+            image: item.product.image,
+          })),
+          appliedCoupon,
+          shippingCost: 0,
+          finalTotalUSD,
+          finalTotalEGP: Math.round(finalTotalUSD * rate),
+        };
+
+        const res = await fetch("/api/checkout/paymob", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(paymobPayload),
+        });
+
+        const data = await res.json();
+
+        if (data.success && data.url) {
+          if (appliedCoupon) {
+            try {
+              await fetch("/api/coupons", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code: appliedCoupon.code, increment_usage: true }),
+              });
+            } catch {}
+          }
+          toast.loading("Redirecting to Paymob secure checkout...");
+          window.location.href = data.url;
+          return;
+        } else {
+          toast.error(data.message || "Failed to initialize Paymob payment session.");
+          setIsSubmitting(false);
+          return;
+        }
+      } catch (err) {
+        console.error("Paymob checkout error:", err);
+        toast.error("Failed to connect to Paymob payment gateway.");
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
+    // Flow 2: Cash on Delivery (COD)
     try {
       const orderPayload = {
         customerName: `${formData.firstName} ${formData.lastName}`.trim(),
@@ -228,6 +445,16 @@ export default function CheckoutPage() {
       setIsSubmitting(false);
     }
   };
+
+  if (isVerifyingStripe) {
+    return (
+      <div className="min-h-screen bg-[#09090b] text-neutral-100 py-12 px-4 flex flex-col items-center justify-center space-y-4">
+        <div className="w-14 h-14 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
+        <h2 className="text-xl font-bold text-white">Verifying Secure Payment...</h2>
+        <p className="text-xs text-neutral-400">Please wait while we confirm your transaction and register your order.</p>
+      </div>
+    );
+  }
 
   if (isSubmitted && placedOrderData) {
     const copyOrderRef = () => {
@@ -336,7 +563,11 @@ export default function CheckoutPage() {
             </div>
             <div className="flex justify-between items-center pb-2 border-b border-neutral-800">
               <span className="text-neutral-400">Payment Method</span>
-              <span className="font-bold text-emerald-400">Cash on Delivery (عند الاستلام)</span>
+              <span className="font-bold text-emerald-400">
+                {placedOrderData.payment_method === "card_stripe" || placedOrderData.payment_method === "card"
+                  ? "Stripe Online Card Payment (مدفوع إلكترونياً عبر Stripe)"
+                  : "Cash on Delivery (عند الاستلام)"}
+              </span>
             </div>
             <div className="flex justify-between items-baseline pt-1">
               <span className="text-sm font-bold text-white">Total Amount Due</span>
@@ -346,37 +577,26 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-          {/* Action Buttons (WhatsApp Confirmation Removed) */}
+          {/* Action Buttons */}
           <div className="space-y-2.5 pt-2">
             <Button
               asChild
               className="w-full h-12 rounded-2xl bg-[#FFE600] hover:bg-[#ffe600]/90 text-black font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-[#FFE600]/10 transition cursor-pointer"
             >
-              <Link href={`/track-orders?order=${placedOrderData.order_number}`}>
-                <span>Track Order Live</span>
+              <Link href="/store">
+                <ShoppingBag className="w-4 h-4" />
+                <span>Continue Shopping (العودة للمتجر)</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </Button>
 
-            <div className="grid grid-cols-2 gap-2.5">
-              <Button
-                asChild
-                variant="outline"
-                className="h-11 rounded-xl bg-[#18181b] hover:bg-neutral-800 text-neutral-300 hover:text-white border-neutral-800 text-xs font-bold"
-              >
-                <Link href="/store">
-                  <span>Continue Shopping</span>
-                </Link>
-              </Button>
-
-              <button
-                onClick={() => window.print()}
-                className="h-11 rounded-xl bg-[#18181b] hover:bg-neutral-800 text-neutral-300 hover:text-white border border-neutral-800 text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                <span>Print Invoice</span>
-              </button>
-            </div>
+            <button
+              onClick={() => window.print()}
+              className="w-full h-11 rounded-xl bg-[#18181b] hover:bg-neutral-800 text-neutral-300 hover:text-white border border-neutral-800 text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>Print Official Invoice Receipt (طباعة الفاتورة)</span>
+            </button>
           </div>
         </div>
       </div>
@@ -575,9 +795,14 @@ export default function CheckoutPage() {
                     <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-mono font-bold">2</span>
                     Payment Method
                   </h2>
+                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-mono">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                    <span>256-Bit SSL Encrypted</span>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  {/* Option 1: Cash on Delivery */}
                   <label
                     onClick={() => setPaymentMethod("cod")}
                     className={`p-4 rounded-2xl border flex items-start gap-3 cursor-pointer transition-all ${
@@ -601,26 +826,50 @@ export default function CheckoutPage() {
                     </div>
                   </label>
 
+                  {/* Option 2: Paymob Online Card & Wallets */}
                   <label
                     onClick={() => setPaymentMethod("card")}
-                    className={`p-4 rounded-2xl border flex items-start gap-3 cursor-pointer transition-all ${
+                    className={`p-4 rounded-2xl border flex items-start gap-3 cursor-pointer transition-all relative overflow-hidden ${
                       paymentMethod === "card"
-                        ? "border-primary bg-primary/5 ring-1 ring-primary"
+                        ? "border-[#0070BA] bg-[#0070BA]/5 ring-1 ring-[#0070BA]"
                         : "border-border bg-secondary/20 hover:bg-secondary/40"
                     }`}
                   >
+                    <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-md bg-[#0070BA]/15 border border-[#0070BA]/30 text-[#0070BA] text-[10px] font-mono font-black uppercase">
+                      Paymob • باي موب
+                    </div>
                     <input
                       type="radio"
                       name="payment"
                       checked={paymentMethod === "card"}
                       onChange={() => setPaymentMethod("card")}
-                      className="mt-0.5"
+                      className="mt-0.5 text-[#0070BA] focus:ring-[#0070BA]"
                     />
-                    <div>
+                    <div className="pr-12">
                       <p className="font-bold text-foreground flex items-center gap-1.5">
-                        <CreditCard className="w-4 h-4 text-primary" /> Credit / Debit Card / Instapay
+                        <CreditCard className="w-4 h-4 text-[#0070BA]" /> Electronic Payment (باي موب - الدفع الإلكتروني)
                       </p>
-                      <p className="text-[11px] text-muted-foreground mt-1">Visa, Mastercard, Meeza &amp; Instapay Transfer</p>
+                      <p className="text-[11px] text-muted-foreground mt-1">
+                        Visa, Mastercard, كروت ميزة، محافظ الموبايل (فودافون كاش)، وتقسيط
+                      </p>
+                      <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                        <span className="px-1.5 py-0.5 rounded text-[9px] bg-secondary border border-border font-semibold text-foreground">
+                          Visa / Mastercard
+                        </span>
+                        <span className="px-1.5 py-0.5 rounded text-[9px] bg-secondary border border-border font-semibold text-foreground">
+                          Meeza ميزة
+                        </span>
+                        <span className="px-1.5 py-0.5 rounded text-[9px] bg-secondary border border-border font-semibold text-foreground">
+                          Vodafone Cash &amp; Wallets
+                        </span>
+                        <span className="px-1.5 py-0.5 rounded text-[9px] bg-secondary border border-border font-semibold text-foreground">
+                          Installments تقسيط
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5 mt-2 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                        <Lock className="w-3 h-3" />
+                        <span>بوابة دفع إلكترونية معتمدة من البنك المركزي 100%</span>
+                      </div>
                     </div>
                   </label>
                 </div>
@@ -752,9 +1001,23 @@ export default function CheckoutPage() {
                   type="submit"
                   disabled={isSubmitting}
                   size="lg"
-                  className="w-full h-12 rounded-xl font-bold text-xs shadow-lg cursor-pointer"
+                  className="w-full h-12 rounded-xl font-bold text-xs shadow-lg cursor-pointer transition-all"
                 >
-                  {isSubmitting ? "Processing Order..." : `Confirm & Place Order (${formatPrice(finalTotalUSD)})`}
+                  {isSubmitting ? (
+                    paymentMethod === "card" ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" /> Connecting to Paymob...
+                      </span>
+                    ) : (
+                      <span className="flex items-center justify-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" /> Processing Order...
+                      </span>
+                    )
+                  ) : paymentMethod === "card" ? (
+                    `Proceed to Paymob Payment (${formatPrice(finalTotalUSD)}) 💳`
+                  ) : (
+                    `Confirm & Place Order (${formatPrice(finalTotalUSD)})`
+                  )}
                 </Button>
               </div>
             </div>
@@ -762,5 +1025,20 @@ export default function CheckoutPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background flex flex-col items-center justify-center space-y-3">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-xs text-muted-foreground font-mono">Loading Secure Checkout...</p>
+        </div>
+      }
+    >
+      <CheckoutContent />
+    </Suspense>
   );
 }
