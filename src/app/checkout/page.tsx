@@ -484,7 +484,15 @@ function CheckoutContent() {
           <div className="text-center space-y-2">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-mono font-bold uppercase tracking-wider">
               <PackageCheck className="w-3.5 h-3.5" />
-              <span>Order Confirmed &amp; Logged</span>
+              <span>
+                {placedOrderData.payment_method === "paymob"
+                  ? "Paid & Verified via Paymob (تم الدفع والتأكيد إلكترونياً)"
+                  : placedOrderData.payment_method === "kashier"
+                  ? "Paid & Verified via Kashier (تم الدفع والتأكيد عبر كاشير)"
+                  : placedOrderData.payment_method === "card" || placedOrderData.payment_method === "card_stripe" || placedOrderData.payment_method === "stripe"
+                  ? "Paid & Verified Online (تم الدفع والتأكيد إلكترونياً)"
+                  : "Order Confirmed & Logged"}
+              </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
               Thank You for Your Order!
@@ -563,14 +571,38 @@ function CheckoutContent() {
             </div>
             <div className="flex justify-between items-center pb-2 border-b border-neutral-800">
               <span className="text-neutral-400">Payment Method</span>
+              <span className="font-bold text-emerald-400 text-right">
+                {placedOrderData.payment_method === "paymob"
+                  ? "Paymob Online Payment (مدفوع إلكترونياً عبر باي موب)"
+                  : placedOrderData.payment_method === "kashier"
+                  ? "Kashier Online Payment (مدفوع إلكترونياً عبر كاشير)"
+                  : placedOrderData.payment_method === "card_stripe" || placedOrderData.payment_method === "card" || placedOrderData.payment_method === "stripe"
+                  ? "Online Card Payment (مدفوع إلكترونياً بالبطاقة)"
+                  : "Cash on Delivery (الدفع عند الاستلام)"}
+              </span>
+            </div>
+            <div className="flex justify-between items-center pb-2 border-b border-neutral-800">
+              <span className="text-neutral-400">Payment Status</span>
               <span className="font-bold text-emerald-400">
-                {placedOrderData.payment_method === "card_stripe" || placedOrderData.payment_method === "card"
-                  ? "Stripe Online Card Payment (مدفوع إلكترونياً عبر Stripe)"
-                  : "Cash on Delivery (عند الاستلام)"}
+                {placedOrderData.payment_method === "paymob" ||
+                placedOrderData.payment_method === "kashier" ||
+                placedOrderData.payment_method === "card" ||
+                placedOrderData.payment_method === "card_stripe" ||
+                placedOrderData.payment_method === "stripe"
+                  ? "Paid in Full ✓ (تم استلام الدفعة بنجاح)"
+                  : "Pending on Delivery (مستحق عند الاستلام)"}
               </span>
             </div>
             <div className="flex justify-between items-baseline pt-1">
-              <span className="text-sm font-bold text-white">Total Amount Due</span>
+              <span className="text-sm font-bold text-white">
+                {placedOrderData.payment_method === "paymob" ||
+                placedOrderData.payment_method === "kashier" ||
+                placedOrderData.payment_method === "card" ||
+                placedOrderData.payment_method === "card_stripe" ||
+                placedOrderData.payment_method === "stripe"
+                  ? "Total Amount Paid (المبلغ المدفوع)"
+                  : "Total Amount Due (المبلغ المستحق)"}
+              </span>
               <span className="font-mono text-xl font-black text-[#FFE600]">
                 {formatPrice(placedOrderData.total_amount)}
               </span>

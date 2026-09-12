@@ -2,13 +2,16 @@
   "name": "paddle-mobile-web-payments-starter",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@12.3.4",
   "scripts": {
     "dev": "next dev --turbopack",
     "dev:webpack": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "hostinger:install": "npm install -g pnpm@12.3.4 && pnpm install --frozen-lockfile",
+    "hostinger:build": "npm install -g pnpm@12.3.4 && pnpm install --frozen-lockfile && pnpm build"
   },
   "dependencies": {
     "@paddle/paddle-js": "^1.4.1",

@@ -620,22 +620,26 @@ function StoreContent() {
                       key={product.id}
                       className="group bg-card border border-border rounded-3xl p-5 flex flex-col sm:flex-row gap-5 items-start sm:items-center justify-between hover:border-foreground/30 hover:shadow-lg transition-all"
                     >
-                      <div className="relative w-full sm:w-40 h-40 rounded-2xl overflow-hidden bg-secondary shrink-0 border border-border">
+                      <Link
+                        href={`/store/${product.id}`}
+                        className="relative w-full sm:w-40 h-40 rounded-2xl overflow-hidden bg-secondary shrink-0 border border-border block cursor-pointer group/img"
+                        aria-label={`View ${product.name}`}
+                      >
                         <Image
                           src={product.image || "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=800&q=80"}
                           alt={product.name}
                           fill
                           unoptimized
-                          className="object-cover group-hover:scale-105 transition-transform"
+                          className="object-cover group-hover/img:scale-105 transition-transform"
                         />
                         {product.badge && (
-                          <div className="absolute top-2 left-2">
+                          <div className="absolute top-2 left-2 pointer-events-none">
                             <Badge variant="default" className="text-[10px] font-bold">
                               {product.badge}
                             </Badge>
                           </div>
                         )}
-                      </div>
+                      </Link>
 
                       <div className="flex-1 min-w-0 space-y-2">
                         <div className="flex items-center justify-between">

@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
       shippingAddress,
       notes,
       items,
-      appliedCoupon,
+      appliedCoupon: _appliedCoupon,
       finalTotalUSD = 0,
       finalTotalEGP = 0,
     } = body;
@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
         city,
         address: shippingAddress,
       },
-      items: items.map((item: any) => ({
+      items: items.map((item: { name: string; price: number; quantity: number; brand?: string }) => ({
         name: item.name,
         price: item.price,
         quantity: item.quantity,

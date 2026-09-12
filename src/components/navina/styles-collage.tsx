@@ -57,14 +57,18 @@ export function StylesCollage() {
 
           {/* Floating Lens Badge Card */}
           <div className="absolute top-6 right-0 z-20 flex items-center gap-3 bg-black text-white p-3 border border-[#27272A] max-w-[270px] shadow-2xl">
-            <div className="relative w-12 h-12 bg-[#18181B] border border-[#27272A] shrink-0">
+            <Link
+              href={`/store/${primeLensKit.id}`}
+              className="relative w-12 h-12 bg-[#18181B] border border-[#27272A] shrink-0 block hover:border-[#FFE600] transition-colors cursor-pointer"
+              aria-label={`View ${collage.lensName}`}
+            >
               <Image
                 src={collage.lensImage}
                 alt={collage.lensName}
                 fill
                 className="object-contain p-1"
               />
-            </div>
+            </Link>
 
             <div className="space-y-0.5 min-w-0">
               <h4 className="font-black text-xs uppercase tracking-wide text-white truncate">

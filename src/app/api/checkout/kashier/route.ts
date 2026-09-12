@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
       shippingAddress,
       notes,
       items,
-      appliedCoupon,
+      appliedCoupon: _appliedCoupon,
       finalTotalUSD = 0,
       finalTotalEGP = 0,
     } = body;

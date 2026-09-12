@@ -64,7 +64,7 @@ export async function createPaymobIntention({
     cleanPhone = `+20${cleanPhone}`;
   }
 
-  const payload: Record<string, any> = {
+  const payload: Record<string, unknown> = {
     amount: amountCents,
     currency,
     payment_methods: [integrationId],
@@ -130,11 +130,11 @@ export async function createPaymobIntention({
       intentionId: data.id,
       checkoutUrl,
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Paymob connection exception:", error);
     return {
       success: false,
-      message: error?.message || "Error communicating with Paymob gateway",
+      message: error instanceof Error ? error.message : "Error communicating with Paymob gateway",
     };
   }
 }

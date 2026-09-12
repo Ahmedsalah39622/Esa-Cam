@@ -5,10 +5,25 @@ import { verifyPaymobHmac } from "@/lib/paymob";
 
 export const dynamic = "force-dynamic";
 
+interface OrderRow {
+  id: string;
+  order_number: string;
+  customer_name: string;
+  customer_phone: string;
+  customer_email: string | null;
+  city: string;
+  shipping_address: string;
+  notes: string | null;
+  payment_method: string;
+  total_amount: number | string;
+  items_json: string | unknown;
+  status: string;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const type = body.type; // e.g. "TRANSACTION"
+    const _type = body.type; // e.g. "TRANSACTION" (reserved for future use)
     const obj = body.obj;
 
     if (!obj) {
@@ -32,7 +47,7 @@ export async function POST(req: NextRequest) {
     if (isSuccess && specialReference) {
       const pool = getDbPool();
       if (pool) {
-        const rows = await query<any>(
+        const rows = await query<OrderRow>(
           "SELECT * FROM orders WHERE order_number = ? OR id = ? LIMIT 1",
           [specialReference, specialReference]
         );
@@ -110,8 +125,9 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Paymob webhook error:", error);
-    return NextResponse.json({ success: false, message: error?.message }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Paymob webhook error";
+    return NextResponse.json({ success: false, message }, { status: 500 });
   }
 }

@@ -142,7 +142,11 @@ export function Hero() {
               </div>
 
               {/* Product Visual & Overlays */}
-              <div className="relative my-4 aspect-4/3 w-full rounded-2xl overflow-hidden bg-secondary/60 border border-border/80 group">
+              <Link
+                href={matchedProduct ? `/store/${matchedProduct.id}` : "/store"}
+                className="relative my-4 aspect-4/3 w-full rounded-2xl overflow-hidden bg-secondary/60 border border-border/80 group block cursor-pointer"
+                aria-label={`View ${currentHero.name}`}
+              >
                 <Image
                   src={currentHero.image}
                   alt={currentHero.name}
@@ -160,7 +164,7 @@ export function Hero() {
                 <div className="absolute bottom-3 right-3 bg-black/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-amber-400/30 text-amber-300 text-xs font-mono font-bold shadow-md">
                   {formatPrice(currentHero.price)}
                 </div>
-              </div>
+              </Link>
 
               {/* Camera Specifications HUD */}
               <div className="space-y-3">

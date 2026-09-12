@@ -756,7 +756,14 @@ export default function DashboardPage() {
             })),
             totalUSD: Number(o.total_amount) || 0,
             paymentMethod: o.payment_method === "cod" ? "COD" : "Card",
-            paymentStatus: o.status === "delivered" ? "Paid" : "Pending",
+            paymentStatus:
+              o.payment_method === "paymob" ||
+              o.payment_method === "kashier" ||
+              o.payment_method === "card" ||
+              o.status === "confirmed" ||
+              o.status === "delivered"
+                ? "Paid"
+                : "Pending",
             status:
               o.status === "new"
                 ? "Processing"
@@ -1194,7 +1201,7 @@ export default function DashboardPage() {
         <div><strong>Destination:</strong> ${order.city || "Cairo, Egypt"}</div>
         <div><strong>Courier:</strong> ${order.courier || "Fragile-Cine White Glove Express"}</div>
         <div><strong>AWB Tracking:</strong> ${order.trackingNumber || `AWB-${order.id}`}</div>
-        <div><strong>Payment:</strong> Cash on Delivery / Bank Transfer (COD)</div>
+        <div><strong>Payment:</strong> ${order.paymentStatus === "Paid" || order.paymentMethod === "Card" ? "Paymob Online Payment (Paid in Full • مدفوع إلكترونياً)" : "Cash on Delivery (الدفع عند الاستلام)"}</div>
       </div>
     </div>
 

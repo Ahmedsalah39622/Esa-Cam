@@ -199,7 +199,11 @@ export function HeroShowcase() {
                 </div>
 
                 {/* Product Thumbnail with Crisp White Studio Container */}
-                <div className="relative w-full aspect-[4/3] bg-white rounded-2xl overflow-hidden shadow-inner flex items-center justify-center p-3 transition-transform duration-500 group-hover/card:scale-[1.02]">
+                <Link
+                  href={`/store/${currentProduct.id}`}
+                  className="relative w-full aspect-[4/3] bg-white rounded-2xl overflow-hidden shadow-inner flex items-center justify-center p-3 transition-transform duration-500 group-hover/card:scale-[1.02] block cursor-pointer"
+                  aria-label={`View ${currentProduct.name}`}
+                >
                   <Image
                     src={currentProduct.image || "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=800&q=80"}
                     alt={currentProduct.name}
@@ -211,7 +215,7 @@ export function HeroShowcase() {
                     }}
                     className="object-contain p-2"
                   />
-                </div>
+                </Link>
 
                 {/* Product Info & Pricing */}
                 <div className="space-y-1">

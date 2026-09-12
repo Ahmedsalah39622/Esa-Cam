@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
 
     const targetCurrency = (currency || "egp").toLowerCase();
     const effectiveShippingCost = shippingCost !== undefined ? shippingCost : shippingCostUSD;
-    const effectiveTotal = finalTotal !== undefined ? finalTotal : finalTotalUSD;
+    const _effectiveTotal = finalTotal !== undefined ? finalTotal : finalTotalUSD;
 
     if (!customerName || !customerPhone || !shippingAddress || !city || !items?.length) {
       return NextResponse.json(

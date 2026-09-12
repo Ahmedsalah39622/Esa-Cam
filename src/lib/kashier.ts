@@ -30,7 +30,7 @@ export function verifyKashierCallbackSignature(
   queryParams: Record<string, string>,
   secret: string
 ): boolean {
-  const { signature, mode, ...rest } = queryParams;
+  const { signature, mode: _mode, ...rest } = queryParams;
   if (!signature) return false;
 
   const queryString = Object.keys(rest)

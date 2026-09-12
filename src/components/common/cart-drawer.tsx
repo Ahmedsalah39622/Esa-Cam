@@ -137,14 +137,19 @@ export function CartDrawer() {
             ) : (
               cart.map((item) => (
                 <div key={item.product.id} className="pt-4 first:pt-0 flex gap-4">
-                  <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-secondary shrink-0 border border-border">
+                  <Link
+                    href={`/store/${item.product.id}`}
+                    onClick={() => setIsCartOpen(false)}
+                    className="relative w-20 h-20 rounded-xl overflow-hidden bg-secondary shrink-0 border border-border block cursor-pointer hover:opacity-85 transition-opacity"
+                    aria-label={`View ${item.product.name}`}
+                  >
                     <Image
                       src={item.product.image}
                       alt={item.product.name}
                       fill
                       className="object-cover"
                     />
-                  </div>
+                  </Link>
 
                   <div className="flex-1 min-w-0 flex flex-col justify-between">
                     <div>

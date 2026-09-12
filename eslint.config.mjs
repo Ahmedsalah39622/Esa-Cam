@@ -14,6 +14,16 @@ const eslintConfig = [
   {
     rules: {
       "@next/next/no-img-element": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          varsIgnorePattern: "^_",
+          argsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+          destructuredArrayIgnorePattern: "^_",
+        },
+      ],
+      "react-hooks/exhaustive-deps": "warn",
     },
   },
 ];

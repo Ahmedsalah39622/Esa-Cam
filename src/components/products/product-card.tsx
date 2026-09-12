@@ -33,25 +33,30 @@ export function ProductCard({ product }: { product: Product }) {
     <div className="group relative rounded-2xl border border-border bg-card p-2.5 sm:p-4 flex flex-col justify-between hover:border-amber-400/40 hover:shadow-xl transition-all duration-300">
       {/* Top Image Container */}
       <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-secondary/40 border border-border/60">
-        <Image
-          src={imgSrc}
-          alt={product.name}
-          fill
-          unoptimized
-          onError={() => setImgSrc(fallbackImage)}
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-
+        <Link
+          href={`/store/${product.id}`}
+          className="absolute inset-0 block cursor-pointer z-0"
+          aria-label={`View ${product.name}`}
+        >
+          <Image
+            src={imgSrc}
+            alt={product.name}
+            fill
+            unoptimized
+            onError={() => setImgSrc(fallbackImage)}
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        </Link>
 
         {/* Badges on top left */}
-        <div className="absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 flex flex-col gap-1 z-10">
+        <div className="absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 flex flex-col gap-1 z-10 pointer-events-none">
           {product.badge && (
-            <Badge variant="default" className="text-[9px] sm:text-[10px] font-bold shadow-xs px-1.5 sm:px-2 py-0.5 border border-amber-400/20">
+            <Badge variant="default" className="text-[9px] sm:text-[10px] font-bold shadow-xs px-1.5 sm:px-2 py-0.5 border border-amber-400/20 pointer-events-auto">
               {product.badge}
             </Badge>
           )}
           {product.originalPrice && (
-            <Badge variant="secondary" className="text-[8px] sm:text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-400/10 border border-amber-400/25 backdrop-blur-xs px-1 sm:px-1.5 py-0.5">
+            <Badge variant="secondary" className="text-[8px] sm:text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-400/10 border border-amber-400/25 backdrop-blur-xs px-1 sm:px-1.5 py-0.5 pointer-events-auto">
               SAVE {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
             </Badge>
           )}
@@ -60,10 +65,11 @@ export function ProductCard({ product }: { product: Product }) {
         {/* Wishlist Button top right */}
         <button
           onClick={(e) => {
+            e.preventDefault();
             e.stopPropagation();
             toggleWishlist(product.id);
           }}
-          className={`absolute top-1.5 right-1.5 sm:top-2.5 sm:right-2.5 z-10 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center backdrop-blur-md transition-colors ${
+          className={`absolute top-1.5 right-1.5 sm:top-2.5 sm:right-2.5 z-20 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center backdrop-blur-md transition-colors cursor-pointer ${
             isWished
               ? "bg-rose-500/10 text-rose-500 border border-rose-500/30"
               : "bg-background/70 text-muted-foreground hover:text-foreground hover:bg-background"
@@ -77,12 +83,12 @@ export function ProductCard({ product }: { product: Product }) {
         {/* Quick View Hover Button (Center Overlay) */}
         <Link
           href={`/store/${product.id}`}
-          className="hidden sm:flex absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity items-center justify-center gap-2 p-4"
+          className="hidden sm:flex absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity items-center justify-center gap-2 p-4 z-10"
         >
           <Button
             variant="secondary"
             size="sm"
-            className="rounded-xl text-xs font-semibold shadow-lg backdrop-blur-md bg-card/95 text-foreground hover:bg-card cursor-pointer"
+            className="rounded-xl text-xs font-semibold shadow-lg backdrop-blur-md bg-card/95 text-foreground hover:bg-card cursor-pointer pointer-events-none"
           >
             <Eye className="w-3.5 h-3.5 mr-1.5" />
             View Product
