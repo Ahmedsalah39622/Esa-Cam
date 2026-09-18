@@ -1,11 +1,13 @@
 import Stripe from "stripe";
 
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY || "";
+export function getStripe(): Stripe {
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 
-if (!stripeSecretKey) {
-  console.warn("⚠️ STRIPE_SECRET_KEY is not defined in environment variables.");
+  if (!stripeSecretKey) {
+    throw new Error("Stripe is not configured. Set STRIPE_SECRET_KEY in the server environment.");
+  }
+
+  return new Stripe(stripeSecretKey, {
+    typescript: true,
+  });
 }
-
-export const stripe = new Stripe(stripeSecretKey, {
-  typescript: true,
-});

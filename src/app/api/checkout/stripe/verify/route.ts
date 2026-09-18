@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { query, getDbPool } from "@/lib/db";
 import { generateEpicReceiptHtml, sendOrderReceiptEmail } from "@/lib/email";
 
@@ -23,6 +23,7 @@ interface StoredOrder {
 
 export async function GET(req: NextRequest) {
   try {
+    const stripe = getStripe();
     const { searchParams } = new URL(req.url);
     const sessionId = searchParams.get("session_id");
     const orderId = searchParams.get("order_id");
