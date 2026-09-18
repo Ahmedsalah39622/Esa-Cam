@@ -29,6 +29,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { getProductImage } from "@/lib/product-image";
 
 function StoreContent() {
   const {
@@ -626,10 +627,9 @@ function StoreContent() {
                         aria-label={`View ${product.name}`}
                       >
                         <Image
-                          src={product.image || "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=800&q=80"}
+                          src={getProductImage(product.image, product.category)}
                           alt={product.name}
                           fill
-                          unoptimized
                           className="object-cover group-hover/img:scale-105 transition-transform"
                         />
                         {product.badge && (

@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { getProductImage } from "@/lib/product-image";
 import { Nav } from "@/components/hero/nav";
 import { Footer } from "@/components/footer/footer";
 import { useStore } from "@/context/store-context";
@@ -51,6 +52,7 @@ export default function ProductDetailPage() {
   const [dragOffsetX, setDragOffsetX] = useState(0);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const dragStartRef = useRef<{ x: number; y: number; panX: number; panY: number } | null>(null);
+  const dragDeltaXRef = useRef(0);
 
   const resetGalleryView = () => {
     setZoomLevel(1);
@@ -92,7 +94,10 @@ export default function ProductDetailPage() {
     return [product?.image || fallbackImage];
   }, [product, fallbackImage]);
 
-  const activeImage = galleryImages[selectedImageIndex] || galleryImages[0] || fallbackImage;
+  const activeImage = getProductImage(
+    galleryImages[selectedImageIndex] || galleryImages[0],
+    product?.category
+  );
 
   const relatedProducts = useMemo(() => {
     if (!product) return [];
@@ -153,6 +158,7 @@ export default function ProductDetailPage() {
       panX: pan.x,
       panY: pan.y,
     };
+    dragDeltaXRef.current = 0;
     event.currentTarget.setPointerCapture(event.pointerId);
   };
 
@@ -161,6 +167,7 @@ export default function ProductDetailPage() {
 
     const deltaX = event.clientX - dragStartRef.current.x;
     const deltaY = event.clientY - dragStartRef.current.y;
+    dragDeltaXRef.current = deltaX;
 
     if (zoomLevel > 1) {
       setPan({
@@ -176,8 +183,8 @@ export default function ProductDetailPage() {
   const handleGalleryPointerUp = () => {
     if (!dragStartRef.current) return;
 
-    if (zoomLevel <= 1 && Math.abs(dragOffsetX) > 60) {
-      if (dragOffsetX < 0) {
+    if (zoomLevel <= 1 && Math.abs(dragDeltaXRef.current) > 60) {
+      if (dragDeltaXRef.current < 0) {
         cycleImage("next");
       } else {
         cycleImage("prev");
@@ -191,6 +198,7 @@ export default function ProductDetailPage() {
     }
 
     dragStartRef.current = null;
+  dragDeltaXRef.current = 0;
   };
 
   const handleWheelZoom = (event: React.WheelEvent<HTMLDivElement>) => {
@@ -245,6 +253,7 @@ export default function ProductDetailPage() {
                 onPointerCancel={handleGalleryPointerUp}
                 onWheel={handleWheelZoom}
                 onDoubleClick={() => handleZoomChange(zoomLevel > 1 ? 1 : 2)}
+                style={{ touchAction: "pan-y" }}
               >
                 <div className="absolute inset-0 flex items-center justify-center">
                   <Image

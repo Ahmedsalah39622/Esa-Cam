@@ -8,6 +8,7 @@ import { useStore } from "@/context/store-context";
 import { Star, Eye, ShoppingCart, Heart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { getProductImage } from "@/lib/product-image";
 
 export function ProductCard({ product }: { product: Product }) {
   const {
@@ -18,16 +19,14 @@ export function ProductCard({ product }: { product: Product }) {
   } = useStore();
 
   const isWished = isInWishlist(product.id);
-  const fallbackImage = "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=800&q=80";
+  const fallbackImage = getProductImage(undefined, product.category);
   const [imgSrc, setImgSrc] = React.useState(
-    product.image && product.image.trim().length > 10 ? product.image : fallbackImage
+    getProductImage(product.image, product.category)
   );
 
   React.useEffect(() => {
-    if (product.image && product.image.trim().length > 10) {
-      setImgSrc(product.image);
-    }
-  }, [product.image]);
+    setImgSrc(getProductImage(product.image, product.category));
+  }, [product.image, product.category]);
 
   return (
     <div className="group relative rounded-2xl border border-border bg-card p-2.5 sm:p-4 flex flex-col justify-between hover:border-amber-400/40 hover:shadow-xl transition-all duration-300">
