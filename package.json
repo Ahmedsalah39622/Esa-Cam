@@ -10,8 +10,8 @@
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write .",
-    "hostinger:install": "npm install -g pnpm@11.3.0 && pnpm install --frozen-lockfile",
-    "hostinger:build": "npm install -g pnpm@11.3.0 && pnpm install --frozen-lockfile && pnpm build"
+    "hostinger:install": "npm install --prefix \"$HOME/.local\" pnpm@11.3.0 && pnpm install --frozen-lockfile",
+    "hostinger:build": "NEXT_TEST_WASM=1 RAYON_NUM_THREADS=1 UV_THREADPOOL_SIZE=1 NEXT_TELEMETRY_DISABLED=1 pnpm build"
   },
   "dependencies": {
     "@paddle/paddle-js": "^1.4.1",
@@ -42,7 +42,6 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-    "@next/swc-wasm-nodejs": "15.4.11",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^22",
     "@types/nodemailer": "^8.0.1",

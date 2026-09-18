@@ -1,18 +1,12 @@
 ﻿#!/bin/bash
 # Hostinger Node.js startup script
-# Installs the project-pinned pnpm via npm,
-# installs dependencies, builds the Next.js app, then starts it.
+# Uses the user-local project-pinned pnpm and starts the already-built app.
 
-# Always install the pinned version so a preinstalled pnpm version cannot override
-# the packageManager declaration in package.json.
-npm install -g pnpm@11.3.0
-pnpm --version
+export PATH="$HOME/.local/node_modules/.bin:$PATH"
 
-# Install dependencies
-pnpm install --frozen-lockfile
+if ! command -v pnpm >/dev/null 2>&1; then
+	npm install --prefix "$HOME/.local" pnpm@11.3.0
+fi
 
-# Build Next.js
-pnpm build
-
-# Start the server
+# Hostinger runs the build separately; startup only launches the production server.
 pnpm start
