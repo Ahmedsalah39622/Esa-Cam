@@ -42,7 +42,6 @@ export function ProductCard({ product }: { product: Product }) {
             src={imgSrc}
             alt={product.name}
             fill
-            unoptimized
             onError={() => setImgSrc(fallbackImage)}
             className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
