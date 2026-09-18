@@ -5,7 +5,7 @@
 
 # Always install the pinned version so a preinstalled pnpm version cannot override
 # the packageManager declaration in package.json.
-npm install -g pnpm@9.12.3
+npm install -g pnpm@11.3.0
 pnpm --version
 
 # Install dependencies
