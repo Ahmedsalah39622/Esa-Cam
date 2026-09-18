@@ -1,13 +1,12 @@
 ﻿#!/bin/bash
 # Hostinger Node.js startup script
-# Installs pnpm via npm (since Hostinger doesn't ship pnpm),
+# Installs the project-pinned pnpm via npm,
 # installs dependencies, builds the Next.js app, then starts it.
 
-# Install pnpm globally if not available
-if ! command -v pnpm &> /dev/null; then
-  echo "pnpm not found – installing via npm..."
-  npm install -g pnpm@12.3.4
-fi
+# Always install the pinned version so a preinstalled pnpm version cannot override
+# the packageManager declaration in package.json.
+npm install -g pnpm@9.12.3
+pnpm --version
 
 # Install dependencies
 pnpm install --frozen-lockfile

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -21,6 +21,8 @@ import {
   Share2,
   ChevronRight,
   ChevronLeft,
+  ZoomIn,
+  ZoomOut,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -45,10 +47,38 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<"specs" | "features" | "box">("specs");
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [dragOffsetX, setDragOffsetX] = useState(0);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const dragStartRef = useRef<{ x: number; y: number; panX: number; panY: number } | null>(null);
+
+  const resetGalleryView = () => {
+    setZoomLevel(1);
+    setDragOffsetX(0);
+    setPan({ x: 0, y: 0 });
+  };
+
+  const cycleImage = (direction: "prev" | "next") => {
+    setSelectedImageIndex((prev) =>
+      direction === "prev"
+        ? prev > 0
+          ? prev - 1
+          : galleryImages.length - 1
+        : prev < galleryImages.length - 1
+        ? prev + 1
+        : 0
+    );
+    resetGalleryView();
+  };
 
   useEffect(() => {
     setSelectedImageIndex(0);
+    resetGalleryView();
   }, [productId]);
+
+  useEffect(() => {
+    resetGalleryView();
+  }, [selectedImageIndex]);
 
   const product = useMemo(
     () => products.find((p) => p.id === productId),
@@ -107,6 +137,68 @@ export default function ProductDetailPage() {
     router.push("/cart");
   };
 
+  const handleZoomChange = (nextZoom: number) => {
+    const clampedZoom = Math.min(3, Math.max(1, Number(nextZoom.toFixed(2))));
+    setZoomLevel(clampedZoom);
+    if (clampedZoom <= 1) {
+      setPan({ x: 0, y: 0 });
+    }
+  };
+
+  const handleGalleryPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!event.currentTarget) return;
+    dragStartRef.current = {
+      x: event.clientX,
+      y: event.clientY,
+      panX: pan.x,
+      panY: pan.y,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const handleGalleryPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragStartRef.current) return;
+
+    const deltaX = event.clientX - dragStartRef.current.x;
+    const deltaY = event.clientY - dragStartRef.current.y;
+
+    if (zoomLevel > 1) {
+      setPan({
+        x: Math.max(Math.min(dragStartRef.current.panX + deltaX / 1.5, 120), -120),
+        y: Math.max(Math.min(dragStartRef.current.panY + deltaY / 1.5, 120), -120),
+      });
+      return;
+    }
+
+    setDragOffsetX(deltaX);
+  };
+
+  const handleGalleryPointerUp = () => {
+    if (!dragStartRef.current) return;
+
+    if (zoomLevel <= 1 && Math.abs(dragOffsetX) > 60) {
+      if (dragOffsetX < 0) {
+        cycleImage("next");
+      } else {
+        cycleImage("prev");
+      }
+    } else {
+      setDragOffsetX(0);
+    }
+
+    if (zoomLevel > 1) {
+      setPan({ x: 0, y: 0 });
+    }
+
+    dragStartRef.current = null;
+  };
+
+  const handleWheelZoom = (event: React.WheelEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const nextZoom = event.deltaY < 0 ? zoomLevel + 0.25 : zoomLevel - 0.25;
+    handleZoomChange(nextZoom);
+  };
+
   const handleShare = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
@@ -144,15 +236,61 @@ export default function ProductDetailPage() {
           {/* Left: Product Image & Multi-Angle Gallery */}
           <div className="space-y-4">
             <div className="group relative aspect-square w-full rounded-3xl overflow-hidden bg-white dark:bg-[#121214] border border-border shadow-xs">
-              <Image
-                key={activeImage}
-                src={activeImage}
-                alt={`${product.name} - view ${selectedImageIndex + 1}`}
-                fill
-                unoptimized
-                priority
-                className="object-contain p-6 sm:p-10 transition-all duration-300"
-              />
+              <div
+                className="relative h-full w-full cursor-grab active:cursor-grabbing overflow-hidden"
+                onPointerDown={handleGalleryPointerDown}
+                onPointerMove={handleGalleryPointerMove}
+                onPointerUp={handleGalleryPointerUp}
+                onPointerLeave={handleGalleryPointerUp}
+                onPointerCancel={handleGalleryPointerUp}
+                onWheel={handleWheelZoom}
+                onDoubleClick={() => handleZoomChange(zoomLevel > 1 ? 1 : 2)}
+              >
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Image
+                    key={activeImage}
+                    src={activeImage}
+                    alt={`${product.name} - view ${selectedImageIndex + 1}`}
+                    fill
+                    unoptimized
+                    priority
+                    className="object-contain p-6 sm:p-10 transition-transform duration-200 ease-out"
+                    style={{
+                      transform: `translate(${dragOffsetX + pan.x}px, ${pan.y}px) scale(${zoomLevel})`,
+                      cursor: zoomLevel > 1 ? "grab" : "grab",
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="absolute top-4 right-4 z-10 flex items-center gap-1.5 rounded-full border border-border bg-black/45 p-1 backdrop-blur-sm shadow-sm">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleZoomChange(zoomLevel - 0.25);
+                  }}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors cursor-pointer"
+                  aria-label="Zoom out"
+                >
+                  <ZoomOut className="h-4 w-4" />
+                </button>
+                <span className="min-w-10 text-center text-[10px] font-bold text-white font-mono">
+                  {zoomLevel.toFixed(1)}x
+                </span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleZoomChange(zoomLevel + 0.25);
+                  }}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors cursor-pointer"
+                  aria-label="Zoom in"
+                >
+                  <ZoomIn className="h-4 w-4" />
+                </button>
+              </div>
+
               {product.badge && (
                 <div className="absolute top-4 left-4 z-10">
                   <Badge
@@ -164,7 +302,7 @@ export default function ProductDetailPage() {
                 </div>
               )}
               {product.originalPrice && (
-                <div className="absolute top-4 right-4 z-10">
+                <div className="absolute top-4 right-4 z-10 translate-x-[-120px]">
                   <Badge
                     variant="secondary"
                     className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-400/10 border border-amber-400/25 backdrop-blur-sm px-2 py-1"
@@ -187,9 +325,7 @@ export default function ProductDetailPage() {
                     type="button"
                     onClick={(e) => {
                       e.preventDefault();
-                      setSelectedImageIndex((prev) =>
-                        prev > 0 ? prev - 1 : galleryImages.length - 1
-                      );
+                      cycleImage("prev");
                     }}
                     className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-black/80 text-white backdrop-blur-xs flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 cursor-pointer shadow-md z-10"
                     aria-label="Previous view"
@@ -200,9 +336,7 @@ export default function ProductDetailPage() {
                     type="button"
                     onClick={(e) => {
                       e.preventDefault();
-                      setSelectedImageIndex((prev) =>
-                        prev < galleryImages.length - 1 ? prev + 1 : 0
-                      );
+                      cycleImage("next");
                     }}
                     className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-black/80 text-white backdrop-blur-xs flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 cursor-pointer shadow-md z-10"
                     aria-label="Next view"
