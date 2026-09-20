@@ -108,11 +108,12 @@ export async function GET(req: NextRequest) {
       "SELECT id, name, email, role, is_active, phone, created_at FROM admins ORDER BY created_at ASC"
     );
 
-    if (rows.length === 0) {
+    const bootstrapPassword = process.env.ADMIN_BOOTSTRAP_PASSWORD;
+    if (rows.length === 0 && bootstrapPassword) {
       // Seed default master admin
       await query(
         "INSERT INTO admins (id, name, email, password_hash, role, is_active, phone) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        ["admin_master", "Ahmed Mahmoud", "admin@esacam.com", await hashPassword("admin123"), "super_admin", 1, "+20 100 892 3411"]
+        ["admin_master", "Ahmed Mahmoud", "admin@esacam.com", await hashPassword(bootstrapPassword), "super_admin", 1, "+20 100 892 3411"]
       );
       return NextResponse.json({ success: true, source: "database_seeded", data: memoryAdmins });
     }

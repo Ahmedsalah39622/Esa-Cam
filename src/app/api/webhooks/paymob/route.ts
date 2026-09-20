@@ -34,14 +34,10 @@ export async function POST(req: NextRequest) {
     const specialReference = obj.order?.merchant_order_id || obj.special_reference;
     const txnId = obj.id;
 
-    // Optional HMAC verification
+    // Reject forged payment notifications before changing an order.
     const hmacSecret = process.env.PAYMOB_HMAC;
-    if (hmacSecret && obj) {
-      // In Paymob webhooks, the hmac is calculated from obj properties
-      const isValid = verifyPaymobHmac(obj, hmacSecret);
-      if (!isValid) {
-        console.warn("⚠️ Paymob webhook HMAC verification mismatch, proceed with caution.");
-      }
+    if (!hmacSecret || !obj.hmac || !verifyPaymobHmac(obj, hmacSecret)) {
+      return NextResponse.json({ success: false, message: "Invalid webhook signature" }, { status: 401 });
     }
 
     if (isSuccess && specialReference) {

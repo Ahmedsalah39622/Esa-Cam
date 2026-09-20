@@ -46,10 +46,11 @@ export async function POST(req: NextRequest) {
       "SELECT * FROM admins WHERE (LOWER(email) = ? OR LOWER(name) = ?) AND is_active = 1 LIMIT 1",
       [trimmedIdentifier, trimmedIdentifier]
     );
-    if (rows.length === 0 && ["admin@esacam.com", "admin"].includes(trimmedIdentifier)) {
+    const bootstrapPassword = process.env.ADMIN_BOOTSTRAP_PASSWORD;
+    if (rows.length === 0 && bootstrapPassword && ["admin@esacam.com", "admin"].includes(trimmedIdentifier)) {
       await query(
         "INSERT INTO admins (id, name, email, password_hash, role, is_active) VALUES (?, ?, ?, ?, ?, ?)",
-        ["admin_master", "Ahmed Mahmoud", "admin@esacam.com", await hashPassword("admin123"), "super_admin", 1]
+        ["admin_master", "Ahmed Mahmoud", "admin@esacam.com", await hashPassword(bootstrapPassword), "super_admin", 1]
       );
     }
     const refreshedRows = rows.length === 0

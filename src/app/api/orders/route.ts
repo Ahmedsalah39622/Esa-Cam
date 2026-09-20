@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query, getDbPool } from "@/lib/db";
 import { generateEpicReceiptHtml, sendOrderReceiptEmail } from "@/lib/email";
+import { ADMIN_SESSION_COOKIE, verifyAdminSession } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -52,7 +53,12 @@ async function ensureOrdersTable() {
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const session = verifyAdminSession(req.cookies.get(ADMIN_SESSION_COOKIE)?.value);
+  if (!session) {
+    return NextResponse.json({ success: false, message: "Admin authentication required" }, { status: 401 });
+  }
+
   try {
     const pool = getDbPool();
     if (pool) {

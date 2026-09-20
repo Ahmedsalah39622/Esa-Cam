@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query, getDbPool } from "@/lib/db";
+import { hashPassword } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest) {
 
         await query(
           "INSERT INTO users (id, name, email, password_hash, role, is_active) VALUES (?, ?, ?, ?, ?, ?)",
-          [userId, name.trim(), trimmedEmail, password, assignedRole, 1]
+          [userId, name.trim(), trimmedEmail, await hashPassword(password), assignedRole, 1]
         );
       } catch (dbErr) {
         console.error("Database insert error, falling back to local session:", dbErr);

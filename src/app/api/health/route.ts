@@ -1,9 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getDbPool } from "@/lib/db";
+import { ADMIN_SESSION_COOKIE, verifyAdminSession } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  if (!verifyAdminSession(request.cookies.get(ADMIN_SESSION_COOKIE)?.value)) {
+    return NextResponse.json({ success: false, message: "Admin authentication required" }, { status: 401 });
+  }
+
   try {
     const status: {
       timestamp: string;

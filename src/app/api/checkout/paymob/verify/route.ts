@@ -45,17 +45,17 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Optional HMAC validation if present
+    // Payment success must be authenticated by Paymob, never trusted from a query flag alone.
     const hmacSecret = process.env.PAYMOB_HMAC;
-    if (hmacSecret && hmacParam) {
-      const queryObj: Record<string, string> = {};
-      searchParams.forEach((val, key) => {
-        queryObj[key] = val;
-      });
-      const isValidHmac = verifyPaymobHmac(queryObj, hmacSecret);
-      if (!isValidHmac) {
-        console.warn("⚠️ Paymob callback HMAC verification did not match, but success=true was received.");
-      }
+    if (!hmacSecret || !hmacParam) {
+      return NextResponse.json({ success: false, paid: false, message: "Payment verification signature is missing" }, { status: 400 });
+    }
+    const queryObj: Record<string, string> = {};
+    searchParams.forEach((val, key) => {
+      queryObj[key] = val;
+    });
+    if (!verifyPaymobHmac(queryObj, hmacSecret)) {
+      return NextResponse.json({ success: false, paid: false, message: "Invalid payment verification signature" }, { status: 400 });
     }
 
     const pool = getDbPool();

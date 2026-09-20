@@ -12,12 +12,11 @@ export async function POST(req: NextRequest) {
   let event;
 
   try {
-    if (webhookSecret && sig) {
-      const stripe = getStripe();
-      event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
-    } else {
-      event = JSON.parse(body);
+    if (!webhookSecret || !sig) {
+      return NextResponse.json({ error: "Webhook signature is required" }, { status: 401 });
     }
+    const stripe = getStripe();
+    event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown webhook error";
     console.error("Webhook signature verification failed:", message);

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query, getDbPool } from "@/lib/db";
 import { generateEpicReceiptHtml, sendOrderReceiptEmail } from "@/lib/email";
+import { verifyKashierCallbackSignature } from "@/lib/kashier";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +43,19 @@ export async function GET(req: NextRequest) {
         { success: false, paid: false, message: "Payment was not successful" },
         { status: 400 }
       );
+    }
+
+    const signature = searchParams.get("signature");
+    const secret = process.env.KASHIER_SECRET_KEY;
+    if (!secret || !signature) {
+      return NextResponse.json({ success: false, paid: false, message: "Payment verification signature is missing" }, { status: 400 });
+    }
+    const queryParams: Record<string, string> = {};
+    searchParams.forEach((value, key) => {
+      queryParams[key] = value;
+    });
+    if (!verifyKashierCallbackSignature(queryParams, secret)) {
+      return NextResponse.json({ success: false, paid: false, message: "Invalid payment verification signature" }, { status: 400 });
     }
 
     const pool = getDbPool();
