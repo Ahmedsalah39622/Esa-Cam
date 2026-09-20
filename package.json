@@ -2,7 +2,7 @@
   "name": "paddle-mobile-web-payments-starter",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@11.3.0",
+  "packageManager": "pnpm@12.4.2",
   "scripts": {
     "dev": "next dev --turbopack",
     "dev:webpack": "next dev",
@@ -10,7 +10,7 @@
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write .",
-    "hostinger:install": "npm install --prefix \"$HOME/.local\" pnpm@11.3.0 && pnpm install --frozen-lockfile",
+    "hostinger:install": "npm install --prefix \"$HOME/.local\" pnpm@12.4.2 && pnpm install --frozen-lockfile",
     "hostinger:build": "NEXT_TEST_WASM=1 RAYON_NUM_THREADS=1 UV_THREADPOOL_SIZE=1 NEXT_TELEMETRY_DISABLED=1 pnpm build"
   },
   "dependencies": {
