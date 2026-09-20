@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { Product, PRODUCTS } from "@/data/products";
 import {
   DEFAULT_HOMEPAGE_CONTENT,
@@ -429,7 +429,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     specs_json?: string | object | null;
   }
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       const res = await fetch("/api/products");
       const data = await res.json();
@@ -485,7 +485,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       console.warn("Could not fetch products from API:", err);
     }
-  };
+  }, []);
 
   // Load products, cart, wishlist, brands, & homepage content on client
   useEffect(() => {
@@ -549,7 +549,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       .catch((err) => {
         console.warn("Could not load homepage content from API:", err);
       });
-  }, []);
+  }, [fetchProducts]);
 
 
   useEffect(() => {

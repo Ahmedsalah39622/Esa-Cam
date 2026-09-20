@@ -22,7 +22,6 @@ import {
   Zap,
   Mic,
   SlidersHorizontal,
-  Smartphone,
 } from "lucide-react";
 
 interface SubItem {
