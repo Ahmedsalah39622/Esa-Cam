@@ -70,19 +70,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  // Load session from localStorage on client init
+  // The server cookie is the source of truth for admin access.
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("esa_cam_session");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setUser(parsed);
-      }
-    } catch {
-      // ignore
-    } finally {
-      setIsLoading(false);
-    }
+    localStorage.removeItem("esa_cam_session");
+    fetch("/api/auth/session", { cache: "no-store" })
+      .then(async (res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.user) setUser(data.user);
+      })
+      .finally(() => setIsLoading(false));
   }, []);
 
   const login = async (email: string, pass: string, redirectTo?: string): Promise<boolean> => {
@@ -107,7 +103,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           company: data.user.company || (userRole === "customer" ? "Independent DP / Client" : "ESA CAM Staff"),
         };
         setUser(session);
-        localStorage.setItem("esa_cam_session", JSON.stringify(session));
         
         const isUserAdmin = session.role !== "customer" && session.role !== "client";
         toast.success(`Welcome back, ${session.name}!`, {
@@ -122,37 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return true;
       }
     } catch (apiErr) {
-      console.error("API auth failed, trying local fallback:", apiErr);
-    }
-
-    // 2) Client fallback
-    if (trimmedIdentifier && pass.length >= 3) {
-      const isStaff = trimmedIdentifier.toLowerCase().includes("admin") || trimmedIdentifier.toLowerCase().includes("esacam") || trimmedIdentifier === "abdohussen";
-      const displayName = trimmedIdentifier.includes("@")
-        ? trimmedIdentifier.split("@")[0].charAt(0).toUpperCase() + trimmedIdentifier.split("@")[0].slice(1)
-        : trimmedIdentifier.charAt(0).toUpperCase() + trimmedIdentifier.slice(1);
-
-      const session: UserSession = {
-        id: `usr_${Date.now()}`,
-        name: displayName,
-        email: trimmedIdentifier.includes("@") ? trimmedIdentifier : `${trimmedIdentifier}@esacam.com`,
-        role: isStaff ? "super_admin" : "client",
-        company: isStaff ? "ESA CAM Headquarters" : "ESA CAM Member",
-      };
-      setUser(session);
-      localStorage.setItem("esa_cam_session", JSON.stringify(session));
-      
-      const isUserAdmin = session.role !== "customer" && session.role !== "client";
-      toast.success(`Welcome back, ${session.name}!`, {
-        description: isUserAdmin ? "Logged in with Admin privileges." : "Logged in successfully to ESA CAM.",
-      });
-
-      if (redirectTo) {
-        router.push(redirectTo);
-      } else {
-        router.push(isUserAdmin ? "/dashboard" : "/");
-      }
-      return true;
+      console.error("API auth failed:", apiErr);
     }
 
     toast.error("Invalid credentials", {
@@ -176,8 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return false;
     }
 
-    // Default role is client unless email contains admin
-    const assignedRole: UserRole = role || (trimmedEmail.toLowerCase().includes("admin") ? "super_admin" : "client");
+    const assignedRole: UserRole = role === "customer" ? "customer" : "client";
     const isUserAdmin = assignedRole !== "customer" && assignedRole !== "client";
 
     // 1) Try the backend /api/auth/register first
@@ -198,7 +162,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           company: data.user.company || (isUserAdmin ? "ESA CAM Staff" : "VIP Member"),
         };
         setUser(session);
-        localStorage.setItem("esa_cam_session", JSON.stringify(session));
         toast.success(`Welcome, ${session.name}!`, {
           description: isUserAdmin ? "Account created with Admin privileges." : "Account created successfully. Welcome to ESA CAM!",
         });
@@ -217,31 +180,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error("Register API failed, fallback to local:", apiErr);
     }
 
-    // 2) Client fallback
-    const session: UserSession = {
-      id: `usr_${Date.now()}`,
-      name: trimmedName,
-      email: trimmedEmail.includes("@") ? trimmedEmail : `${trimmedEmail}@esacam.com`,
-      role: assignedRole,
-      company: isUserAdmin ? "ESA CAM Staff" : "VIP Member",
-    };
-    setUser(session);
-    localStorage.setItem("esa_cam_session", JSON.stringify(session));
-    toast.success(`Welcome, ${session.name}!`, {
-      description: isUserAdmin ? "Account created with Admin privileges." : "Account created successfully. Welcome to ESA CAM!",
-    });
-    
-    if (redirectTo) {
-      router.push(redirectTo);
-    } else {
-      router.push(isUserAdmin ? "/dashboard" : "/");
-    }
-    return true;
+    toast.error("Registration is unavailable. Ask an administrator to create your account.");
+    return false;
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem("esa_cam_session");
+    void fetch("/api/auth/logout", { method: "POST" });
     toast.info("Logged out successfully");
     router.push("/");
   };
@@ -251,12 +196,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (user && (user.email.toLowerCase() === emailOrId.toLowerCase() || user.id === emailOrId)) {
       const updated: UserSession = { ...user, role: "super_admin" };
       setUser(updated);
-      localStorage.setItem("esa_cam_session", JSON.stringify(updated));
       toast.success(`Account "${user.name}" promoted to Admin! Dashboard unlocked.`);
     }
   };
 
-  const isAdmin = !!user && user.role !== "customer" && user.role !== "client";
+  const isAdmin = !!user && ["admin", "super_admin", "store_manager", "inventory_admin", "support_agent"].includes(user.role);
 
   return (
     <AuthContext.Provider

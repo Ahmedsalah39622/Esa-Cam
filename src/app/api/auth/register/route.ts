@@ -14,6 +14,13 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { name, email, password, role } = body;
 
+    if (role && role !== "client" && role !== "customer") {
+      return NextResponse.json(
+        { success: false, message: "Admin accounts can only be created by an authenticated administrator" },
+        { status: 403 }
+      );
+    }
+
     if (!name || !email || !password) {
       return NextResponse.json(
         { success: false, message: "Name, email, and password are required" },
@@ -23,14 +30,13 @@ export async function POST(req: NextRequest) {
 
     const trimmedEmail = email.trim().toLowerCase();
     const userId = `usr_${Date.now()}`;
-    // Default role is client unless explicitly created as admin or admin@esacam.com
-    const assignedRole = role || (trimmedEmail.includes("admin@esacam.com") ? "super_admin" : "client");
-    const isUserAdmin = assignedRole === "admin" || assignedRole === "super_admin" || assignedRole === "store_manager" || assignedRole === "inventory_admin";
+    const assignedRole = "client";
+    const isUserAdmin = false;
 
     const pool = getDbPool();
     if (pool) {
       try {
-        // Check if user already exists
+        // Registration is intentionally not an admin creation path.
         const existing = await query<AdminRow>(
           "SELECT id, name, email FROM admins WHERE email = ? LIMIT 1",
           [trimmedEmail]
@@ -43,9 +49,8 @@ export async function POST(req: NextRequest) {
           );
         }
 
-        // Insert new user
         await query(
-          "INSERT INTO admins (id, name, email, password_hash, role, is_active) VALUES (?, ?, ?, ?, ?, ?)",
+          "INSERT INTO users (id, name, email, password_hash, role, is_active) VALUES (?, ?, ?, ?, ?, ?)",
           [userId, name.trim(), trimmedEmail, password, assignedRole, 1]
         );
       } catch (dbErr) {

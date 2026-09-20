@@ -202,6 +202,15 @@ export default function DashboardPage() {
   const [adminStaffList, setAdminStaffList] = useState<AdminRecord[]>([]);
   const [rolesSubTab, setRolesSubTab] = useState<"admins" | "clients">("admins");
   const [isAddAdminOpen, setIsAddAdminOpen] = useState(false);
+  const [editingAdmin, setEditingAdmin] = useState<AdminRecord | null>(null);
+  const [editAdminForm, setEditAdminForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "store_manager" as AdminRecord["role"],
+    phone: "",
+    is_active: true,
+  });
   const [newAdminForm, setNewAdminForm] = useState({
     name: "",
     email: "",
@@ -3896,11 +3905,16 @@ export default function DashboardPage() {
                               onChange={async (e) => {
                                 const newRole = e.target.value as AdminRecord["role"];
                                 try {
-                                  await fetch("/api/admins", {
+                                  const response = await fetch("/api/admins", {
                                     method: "PATCH",
                                     headers: { "Content-Type": "application/json" },
                                     body: JSON.stringify({ id: adm.id, role: newRole }),
                                   });
+                                  const result = await response.json();
+                                  if (!response.ok || !result.success) {
+                                    toast.error(result.message || "Failed to update role");
+                                    return;
+                                  }
                                   setAdminStaffList(
                                     adminStaffList.map((a) => (a.id === adm.id ? { ...a, role: newRole } : a))
                                   );
@@ -3921,15 +3935,37 @@ export default function DashboardPage() {
                           {/* Quick Actions */}
                           <div className="flex items-center justify-between gap-2 pt-2 border-t border-border text-xs">
                             <button
+                              onClick={() => {
+                                setEditingAdmin(adm);
+                                setEditAdminForm({
+                                  name: adm.name,
+                                  email: adm.email,
+                                  password: "",
+                                  role: adm.role,
+                                  phone: adm.phone || "",
+                                  is_active: Boolean(adm.is_active),
+                                });
+                              }}
+                              className="px-3 py-1.5 rounded-xl font-bold text-foreground hover:bg-[#FFE600]/10 hover:text-[#A68B00] cursor-pointer inline-flex items-center gap-1.5"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                              Edit Admin
+                            </button>
+                            <button
                               onClick={async () => {
                                 if (adm.id === "admin_master") return;
                                 const newStatus = !adm.is_active;
                                 try {
-                                  await fetch("/api/admins", {
+                                  const response = await fetch("/api/admins", {
                                     method: "PATCH",
                                     headers: { "Content-Type": "application/json" },
                                     body: JSON.stringify({ id: adm.id, is_active: newStatus }),
                                   });
+                                  const result = await response.json();
+                                  if (!response.ok || !result.success) {
+                                    toast.error(result.message || "Failed to update status");
+                                    return;
+                                  }
                                   setAdminStaffList(
                                     adminStaffList.map((a) => (a.id === adm.id ? { ...a, is_active: newStatus ? 1 : 0 } : a))
                                   );
@@ -3953,7 +3989,12 @@ export default function DashboardPage() {
                                 onClick={async () => {
                                   if (!confirm(`Are you sure you want to remove ${adm.name}?`)) return;
                                   try {
-                                    await fetch(`/api/admins?id=${adm.id}`, { method: "DELETE" });
+                                    const response = await fetch(`/api/admins?id=${adm.id}`, { method: "DELETE" });
+                                    const result = await response.json();
+                                    if (!response.ok || !result.success) {
+                                      toast.error(result.message || "Failed to delete admin");
+                                      return;
+                                    }
                                     setAdminStaffList(adminStaffList.filter((a) => a.id !== adm.id));
                                     toast.success("Admin removed from staff list");
                                   } catch {
@@ -4275,6 +4316,145 @@ export default function DashboardPage() {
                         >
                           <Check className="w-4 h-4" />
                           <span>Create Admin Member</span>
+                        </Button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              )}
+
+              {editingAdmin && (
+                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
+                  <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 max-w-lg w-full space-y-6 shadow-2xl">
+                    <div className="flex items-center justify-between border-b border-border pb-4">
+                      <div>
+                        <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+                          <Pencil className="w-5 h-5 text-[#FFE600]" />
+                          Edit Administrator
+                        </h3>
+                        <p className="text-xs text-muted-foreground font-mono">Update account details and access credentials</p>
+                      </div>
+                      <button
+                        onClick={() => setEditingAdmin(null)}
+                        className="w-8 h-8 rounded-full bg-secondary text-muted-foreground hover:text-foreground flex items-center justify-center cursor-pointer"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <form
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        if (!editAdminForm.name.trim() || !editAdminForm.email.trim()) {
+                          toast.error("Name and email are required");
+                          return;
+                        }
+                        if (editAdminForm.password && editAdminForm.password.length < 8) {
+                          toast.error("New password must be at least 8 characters");
+                          return;
+                        }
+                        try {
+                          const res = await fetch("/api/admins", {
+                            method: "PATCH",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              id: editingAdmin.id,
+                              ...editAdminForm,
+                              password: editAdminForm.password || undefined,
+                              is_active: editingAdmin.id === "admin_master" ? true : editAdminForm.is_active,
+                            }),
+                          });
+                          const data = await res.json();
+                          if (!res.ok || !data.success) {
+                            toast.error(data.message || "Failed to update admin");
+                            return;
+                          }
+                          await fetchAdmins();
+                          setEditingAdmin(null);
+                          toast.success(`Admin account for ${editAdminForm.name} updated`);
+                        } catch {
+                          toast.error("Error updating admin account");
+                        }
+                      }}
+                      className="space-y-4 text-xs font-mono"
+                    >
+                      <div className="space-y-1">
+                        <label className="font-bold text-foreground block">Full Name *</label>
+                        <input
+                          required
+                          value={editAdminForm.name}
+                          onChange={(e) => setEditAdminForm({ ...editAdminForm, name: e.target.value })}
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-secondary/30 text-foreground font-sans"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="font-bold text-foreground block">Email / Username *</label>
+                          <input
+                            required
+                            type="email"
+                            value={editAdminForm.email}
+                            onChange={(e) => setEditAdminForm({ ...editAdminForm, email: e.target.value })}
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-secondary/30 text-foreground"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="font-bold text-foreground block">New Password</label>
+                          <input
+                            type="password"
+                            minLength={8}
+                            value={editAdminForm.password}
+                            onChange={(e) => setEditAdminForm({ ...editAdminForm, password: e.target.value })}
+                            placeholder="Leave blank to keep current"
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-secondary/30 text-foreground"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="font-bold text-foreground block">Mobile Phone</label>
+                          <input
+                            value={editAdminForm.phone}
+                            onChange={(e) => setEditAdminForm({ ...editAdminForm, phone: e.target.value })}
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-secondary/30 text-foreground"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="font-bold text-foreground block">Role</label>
+                          <select
+                            value={editAdminForm.role}
+                            disabled={editingAdmin.id === "admin_master"}
+                            onChange={(e) => setEditAdminForm({ ...editAdminForm, role: e.target.value as AdminRecord["role"] })}
+                            className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-foreground font-bold cursor-pointer disabled:opacity-50"
+                          >
+                            <option value="super_admin">Super Admin</option>
+                            <option value="store_manager">Store Manager</option>
+                            <option value="inventory_admin">Inventory Admin</option>
+                            <option value="support_agent">Support Agent</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <label className="flex items-center gap-2 text-foreground font-bold cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={editingAdmin.id === "admin_master" ? true : editAdminForm.is_active}
+                          disabled={editingAdmin.id === "admin_master"}
+                          onChange={(e) => setEditAdminForm({ ...editAdminForm, is_active: e.target.checked })}
+                          className="h-4 w-4 accent-[#FFE600]"
+                        />
+                        Account active
+                      </label>
+
+                      <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
+                        <Button type="button" variant="ghost" onClick={() => setEditingAdmin(null)} className="rounded-xl text-xs cursor-pointer">
+                          Cancel
+                        </Button>
+                        <Button type="submit" className="rounded-xl text-xs font-bold gap-2 cursor-pointer bg-[#FFE600] text-black hover:bg-[#FFD000] px-6 h-10">
+                          <Check className="w-4 h-4" />
+                          Save Changes
                         </Button>
                       </div>
                     </form>

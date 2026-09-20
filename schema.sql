@@ -15,8 +15,9 @@ CREATE TABLE IF NOT EXISTS admins (
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    role ENUM('super_admin', 'store_manager', 'inventory_manager') DEFAULT 'store_manager',
+    role VARCHAR(50) DEFAULT 'store_manager',
     is_active BOOLEAN DEFAULT TRUE,
+    phone VARCHAR(50) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
