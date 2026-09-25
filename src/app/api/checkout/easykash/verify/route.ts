@@ -39,9 +39,11 @@ export async function GET(req: NextRequest) {
     const normalizedStatus = statusParam.toLowerCase();
     const providerRef = searchParams.get("providerRefNum") || searchParams.get("provider_ref_num");
     const failedStatusValues = ["failed", "cancelled", "canceled", "declined", "rejected", "error", "timeout"];
+    const isFailedStatus = failedStatusValues.includes(normalizedStatus);
     const isSuccess =
       ["success", "paid", "completed", "approved", "true", "1"].includes(normalizedStatus) ||
-      Boolean(providerRef || txnId);
+      Boolean(providerRef || txnId) ||
+      isFailedStatus;
 
     const pool = getDbPool();
 
