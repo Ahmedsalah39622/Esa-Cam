@@ -216,7 +216,7 @@ export default function AdminMobileAppPage() {
 
   // Status counts
   const counts = useMemo(() => {
-    const c = { all: orders.length, new: 0, confirmed: 0, shipped: 0, delivered: 0, cancelled: 0 };
+    const c = { all: orders.length, new: 0, confirmed: 0, shipped: 0, delivered: 0, cancelled: 0, failed: 0 };
     orders.forEach((o) => {
       if (o.status in c) {
         c[o.status as keyof typeof c]++;
@@ -227,7 +227,7 @@ export default function AdminMobileAppPage() {
 
   // Revenue stats
   const totalRevenueEGP = useMemo(() => {
-    const validOrders = orders.filter((o) => o.status !== "cancelled");
+    const validOrders = orders.filter((o) => o.status !== "cancelled" && o.status !== "failed");
     const totalUSD = validOrders.reduce((acc, o) => acc + (Number(o.total_amount) || 0), 0);
     return Math.round(totalUSD * 50.5);
   }, [orders]);
@@ -401,6 +401,7 @@ export default function AdminMobileAppPage() {
             { id: "confirmed", label: "مؤكد", count: counts.confirmed },
             { id: "shipped", label: "قيد الشحن", count: counts.shipped },
             { id: "delivered", label: "تم التوصيل", count: counts.delivered },
+            { id: "failed", label: "فشل", count: counts.failed },
             { id: "cancelled", label: "ملغي", count: counts.cancelled },
           ].map((tab) => (
             <button

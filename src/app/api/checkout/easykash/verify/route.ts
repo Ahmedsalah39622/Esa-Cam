@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query, getDbPool } from "@/lib/db";
 import { generateEpicReceiptHtml, sendOrderReceiptEmail } from "@/lib/email";
-import { verifyPaymobHmac } from "@/lib/paymob";
+import { verifyEasyKashHmac } from "@/lib/easykash";
 
 export const dynamic = "force-dynamic";
 
@@ -24,41 +24,74 @@ interface StoredOrder {
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const orderId = searchParams.get("order_id");
-    const successParam = searchParams.get("success");
-    const txnId = searchParams.get("id");
-    const hmacParam = searchParams.get("hmac");
+    const orderId = searchParams.get("order_id") || searchParams.get("customerReference");
+    const statusParam = searchParams.get("status") || searchParams.get("success") || "";
+    const txnId = searchParams.get("id") || searchParams.get("payment_id") || searchParams.get("providerRefNum") || searchParams.get("transaction_id");
+    const hashParam = searchParams.get("hash") || searchParams.get("hmac");
 
     if (!orderId) {
       return NextResponse.json(
-        { success: false, message: "Missing order_id parameter" },
+        { success: false, message: "Missing order_id or customerReference parameter" },
         { status: 400 }
       );
     }
 
-    const isSuccess = successParam === "true";
+    const normalizedStatus = statusParam.toLowerCase();
+    const providerRef = searchParams.get("providerRefNum") || searchParams.get("provider_ref_num");
+    const failedStatusValues = ["failed", "cancelled", "canceled", "declined", "rejected", "error", "timeout"];
+    const isSuccess =
+      ["success", "paid", "completed", "approved", "true", "1"].includes(normalizedStatus) ||
+      Boolean(providerRef || txnId);
+
+    const pool = getDbPool();
 
     if (!isSuccess) {
+      if (pool) {
+        const rows = await query<StoredOrder>("SELECT * FROM orders WHERE id = ? OR order_number = ? LIMIT 1", [orderId, orderId]);
+        if (rows && rows.length > 0) {
+          const order = rows[0];
+          if (order.status !== "failed" && order.status !== "confirmed" && order.status !== "shipped" && order.status !== "delivered") {
+            await query("UPDATE orders SET status = 'failed' WHERE id = ?", [order.id]);
+          }
+          return NextResponse.json({
+            success: false,
+            paid: false,
+            failed: true,
+            status: "failed",
+            order: {
+              id: order.id,
+              order_number: order.order_number,
+              customer_name: order.customer_name,
+              customer_phone: order.customer_phone,
+              shipping_address: order.shipping_address,
+              city: order.city,
+              total_amount: Number(order.total_amount),
+              payment_method: "easykash",
+              status: "failed",
+            },
+            message: "EasyKash payment was not successful",
+          });
+        }
+      }
+
       return NextResponse.json(
-        { success: false, paid: false, message: "Paymob payment was not successful" },
+        { success: false, paid: false, failed: true, status: "failed", message: "EasyKash payment was not successful" },
         { status: 400 }
       );
     }
 
-    // Payment success must be authenticated by Paymob, never trusted from a query flag alone.
-    const hmacSecret = process.env.PAYMOB_HMAC;
-    if (!hmacSecret || !hmacParam) {
-      return NextResponse.json({ success: false, paid: false, message: "Payment verification signature is missing" }, { status: 400 });
-    }
+    const hmacSecret = process.env.EASYKASH_HMAC_SECRET;
     const queryObj: Record<string, string> = {};
     searchParams.forEach((val, key) => {
       queryObj[key] = val;
     });
-    if (!verifyPaymobHmac(queryObj, hmacSecret)) {
-      return NextResponse.json({ success: false, paid: false, message: "Invalid payment verification signature" }, { status: 400 });
+
+    if (hmacSecret && hashParam) {
+      if (!verifyEasyKashHmac(queryObj, hmacSecret)) {
+        return NextResponse.json({ success: false, paid: false, message: "Invalid payment verification signature" }, { status: 400 });
+      }
     }
 
-    const pool = getDbPool();
     let order: StoredOrder | null = null;
     let items = [];
 
@@ -89,12 +122,12 @@ export async function GET(req: NextRequest) {
               customerEmail: order.customer_email || "",
               shippingAddress: order.shipping_address,
               city: order.city,
-              paymentMethod: "Paymob Online Payment (مدفوع إلكترونياً)",
+              paymentMethod: "EasyKash Online Payment (مدفوع إلكترونياً)",
               totalAmount: Number(order.total_amount),
               items: items || [],
             });
           } catch (emailErr) {
-            console.error("Paymob verify email error:", emailErr);
+            console.error("EasyKash verify email error:", emailErr);
           }
 
           // Trigger webhook (ViaSocket / CRM)
@@ -107,7 +140,7 @@ export async function GET(req: NextRequest) {
                 customerEmail: order.customer_email || "",
                 shippingAddress: order.shipping_address,
                 city: order.city,
-                paymentMethod: "Paymob Online Payment",
+                paymentMethod: "EasyKash Online Payment",
                 totalAmount: Number(order.total_amount),
                 items: items || [],
               });
@@ -117,7 +150,7 @@ export async function GET(req: NextRequest) {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   event: "order.paid",
-                  paymentGateway: "paymob",
+                  paymentGateway: "easykash",
                   paymentStatus: "paid",
                   transactionId: txnId || null,
                   to: order.customer_email || process.env.ADMIN_EMAIL || "",
@@ -129,7 +162,7 @@ export async function GET(req: NextRequest) {
                   customerPhone: order.customer_phone,
                   city: order.city,
                   shippingAddress: order.shipping_address,
-                  paymentMethod: "Paymob Online Payment",
+                  paymentMethod: "EasyKash Online Payment",
                   totalAmount: Number(order.total_amount),
                   currency: "EGP",
                   items,
@@ -137,7 +170,7 @@ export async function GET(req: NextRequest) {
                 }),
               });
             } catch (whErr) {
-              console.error("Paymob webhook trigger error:", whErr);
+              console.error("EasyKash webhook trigger error:", whErr);
             }
           }
         }
@@ -162,13 +195,13 @@ export async function GET(req: NextRequest) {
         shipping_address: order.shipping_address,
         city: order.city,
         total_amount: Number(order.total_amount),
-        payment_method: "paymob",
+        payment_method: "easykash",
         status: order.status,
       },
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Error verifying Paymob payment";
-    console.error("Paymob verify error:", error);
+    const message = error instanceof Error ? error.message : "Error verifying EasyKash payment";
+    console.error("EasyKash verify error:", error);
     return NextResponse.json({ success: false, message }, { status: 500 });
   }
 }

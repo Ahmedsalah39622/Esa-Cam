@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query, getDbPool } from "@/lib/db";
-import { createPaymobIntention } from "@/lib/paymob";
+import { createEasyKashIntention, getRequestOrigin } from "@/lib/easykash";
 
 export const dynamic = "force-dynamic";
 
@@ -53,28 +53,24 @@ export async function POST(req: NextRequest) {
             city,
             shippingAddress,
             notes || null,
-            "paymob",
+            "easykash",
             Number(finalTotalUSD || 0),
             itemsJson,
             "new",
           ]
         );
-        console.log(`✅ Order #${orderNumber} saved to MySQL pending Paymob payment.`);
+        console.log(`✅ Order #${orderNumber} saved to MySQL pending EasyKash payment.`);
       } catch (dbErr) {
-        console.error("Database insert error before Paymob:", dbErr);
+        console.error("Database insert error before EasyKash:", dbErr);
       }
     }
 
-    const origin =
-      req.headers.get("origin") ||
-      process.env.NEXT_PUBLIC_SITE_URL ||
-      "http://localhost:3000";
-
-    const redirectionUrl = `${origin}/checkout?gateway=paymob&order_id=${orderId}`;
+    const origin = getRequestOrigin(req);
+    const redirectionUrl = `${origin}/checkout?gateway=easykash&order_id=${encodeURIComponent(orderId)}`;
     const amountInEGP = Math.round(Number(finalTotalEGP || 0));
 
-    const intentionResult = await createPaymobIntention({
-      amountInEGP,
+    const intentionResult = await createEasyKashIntention({
+      amount: amountInEGP,
       currency: "EGP",
       orderNumber,
       customer: {
@@ -85,12 +81,6 @@ export async function POST(req: NextRequest) {
         city,
         address: shippingAddress,
       },
-      items: items.map((item: { name: string; price: number; quantity: number; brand?: string }) => ({
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-        brand: item.brand,
-      })),
       redirectionUrl,
     });
 
@@ -98,7 +88,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: intentionResult.message || "Failed to create Paymob payment session",
+          message: intentionResult.message || "Failed to create EasyKash payment session",
         },
         { status: 500 }
       );
@@ -112,8 +102,8 @@ export async function POST(req: NextRequest) {
       amount: amountInEGP,
     });
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Failed to initiate Paymob checkout session";
-    console.error("Paymob checkout error:", error);
+    const message = error instanceof Error ? error.message : "Failed to initiate EasyKash checkout session";
+    console.error("EasyKash checkout error:", error);
     return NextResponse.json({ success: false, message }, { status: 500 });
   }
 }

@@ -382,7 +382,7 @@ export function OrderDetailsDrawer({
                 المنتجات المطلوبة ({order.items?.length || 0})
               </h4>
               <span className="text-xs text-neutral-400">
-                طريقة الدفع: {order.payment_method === "cod" ? "الدفع عند الاستلام (COD)" : order.payment_method === "paymob" ? "مدفوع إلكترونياً (باي موب - Paymob)" : order.payment_method}
+                طريقة الدفع: {order.payment_method === "cod" ? "الدفع عند الاستلام (COD)" : order.payment_method === "easykash" ? "مدفوع إلكترونياً (باي موب - EasyKash)" : order.payment_method}
               </span>
             </div>
 

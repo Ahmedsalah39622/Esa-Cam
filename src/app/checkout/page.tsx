@@ -80,21 +80,28 @@ function CheckoutContent() {
 
   const verifiedSessionRef = useRef<string | null>(null);
 
-  // Check for Paymob, Kashier or Stripe Checkout return params
+  // Check for EasyKash, Kashier or Stripe Checkout return params
   useEffect(() => {
     const gateway = searchParams.get("gateway");
-    const paymobOrderId = searchParams.get("order_id");
-    const paymobSuccess = searchParams.get("success");
+    const easykashOrderId = searchParams.get("order_id");
+    const easykashSuccess = searchParams.get("success");
 
-    // Paymob return flow
-    if ((gateway === "paymob" || paymobSuccess !== null) && paymobOrderId) {
-      if (verifiedSessionRef.current === `paymob-${paymobOrderId}`) return;
-      verifiedSessionRef.current = `paymob-${paymobOrderId}`;
+    // EasyKash return flow
+    if ((gateway === "easykash" || easykashSuccess !== null) && easykashOrderId) {
+      if (verifiedSessionRef.current === `easykash-${easykashOrderId}`) return;
+      verifiedSessionRef.current = `easykash-${easykashOrderId}`;
 
-      if (paymobSuccess === "true") {
+      const rawStatus = (searchParams.get("status") || searchParams.get("success") || "").toLowerCase();
+      const providerRefNum = searchParams.get("providerRefNum") || searchParams.get("provider_ref_num");
+      const paymentId = searchParams.get("payment_id") || searchParams.get("id") || searchParams.get("transaction_id");
+      const isSuccessStr =
+        ["success", "paid", "completed", "approved", "true", "1"].includes(rawStatus) ||
+        Boolean(providerRefNum || paymentId);
+
+      if (isSuccessStr) {
         setIsVerifyingStripe(true);
         fetch(
-          `/api/checkout/paymob/verify?order_id=${encodeURIComponent(paymobOrderId)}&success=true&${searchParams.toString()}`
+          `/api/checkout/easykash/verify?order_id=${encodeURIComponent(easykashOrderId)}&status=success&${searchParams.toString()}`
         )
           .then((res) => res.json())
           .then((data) => {
@@ -106,15 +113,15 @@ function CheckoutContent() {
                 window.history.replaceState({}, "", window.location.pathname);
               }
               toast.success("Payment Received & Confirmed!", {
-                id: `paymob-success-${data.order?.order_number || paymobOrderId}`,
-                description: `Order #${data.order.order_number} has been verified and confirmed via Paymob.`,
+                id: `easykash-success-${data.order?.order_number || easykashOrderId}`,
+                description: `Order #${data.order.order_number} has been verified and confirmed via EasyKash.`,
               });
             } else {
-              toast.error(data.message || "Paymob payment verification failed.");
+              toast.error(data.message || "EasyKash payment verification failed.");
             }
           })
           .catch((err) => {
-            console.error("Paymob verification error:", err);
+            console.error("EasyKash verification error:", err);
             toast.error("An error occurred while verifying your payment.");
           })
           .finally(() => {
@@ -124,7 +131,7 @@ function CheckoutContent() {
         if (typeof window !== "undefined") {
           window.history.replaceState({}, "", window.location.pathname);
         }
-        toast.info("Paymob payment was not completed. Your cart is preserved, feel free to try again.");
+        toast.info("EasyKash payment was not completed. Your cart is preserved, feel free to try again.");
       }
       return;
     }
@@ -326,13 +333,13 @@ function CheckoutContent() {
 
     setIsSubmitting(true);
 
-    // Flow 1: Paymob Online Payment (Cards, Meeza, Wallets, ValU)
+    // Flow 1: EasyKash Online Payment (Cards, Meeza, Wallets, ValU)
     if (paymentMethod === "card") {
       try {
         const rate = CURRENCIES[currency]?.rate || 1;
         const activeCurrency = (currency || "EGP").toLowerCase();
 
-        const paymobPayload = {
+        const easykashPayload = {
           customerName: `${formData.firstName} ${formData.lastName}`.trim(),
           customerPhone: formData.phone,
           customerEmail: formData.email,
@@ -354,10 +361,10 @@ function CheckoutContent() {
           finalTotalEGP: Math.round(finalTotalUSD * rate),
         };
 
-        const res = await fetch("/api/checkout/paymob", {
+        const res = await fetch("/api/checkout/easykash", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(paymobPayload),
+          body: JSON.stringify(easykashPayload),
         });
 
         const data = await res.json();
@@ -372,17 +379,17 @@ function CheckoutContent() {
               });
             } catch {}
           }
-          toast.loading("Redirecting to Paymob secure checkout...");
+          toast.loading("Redirecting to EasyKash secure checkout...");
           window.location.href = data.url;
           return;
         } else {
-          toast.error(data.message || "Failed to initialize Paymob payment session.");
+          toast.error(data.message || "Failed to initialize EasyKash payment session.");
           setIsSubmitting(false);
           return;
         }
       } catch (err) {
-        console.error("Paymob checkout error:", err);
-        toast.error("Failed to connect to Paymob payment gateway.");
+        console.error("EasyKash checkout error:", err);
+        toast.error("Failed to connect to EasyKash payment gateway.");
         setIsSubmitting(false);
         return;
       }
@@ -485,8 +492,8 @@ function CheckoutContent() {
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-mono font-bold uppercase tracking-wider">
               <PackageCheck className="w-3.5 h-3.5" />
               <span>
-                {placedOrderData.payment_method === "paymob"
-                  ? "Paid & Verified via Paymob (تم الدفع والتأكيد إلكترونياً)"
+                {placedOrderData.payment_method === "easykash"
+                  ? "Paid & Verified via EasyKash (تم الدفع والتأكيد إلكترونياً)"
                   : placedOrderData.payment_method === "kashier"
                   ? "Paid & Verified via Kashier (تم الدفع والتأكيد عبر كاشير)"
                   : placedOrderData.payment_method === "card" || placedOrderData.payment_method === "card_stripe" || placedOrderData.payment_method === "stripe"
@@ -572,8 +579,8 @@ function CheckoutContent() {
             <div className="flex justify-between items-center pb-2 border-b border-neutral-800">
               <span className="text-neutral-400">Payment Method</span>
               <span className="font-bold text-emerald-400 text-right">
-                {placedOrderData.payment_method === "paymob"
-                  ? "Paymob Online Payment (مدفوع إلكترونياً عبر باي موب)"
+                {placedOrderData.payment_method === "easykash"
+                  ? "EasyKash Online Payment (مدفوع إلكترونياً عبر باي موب)"
                   : placedOrderData.payment_method === "kashier"
                   ? "Kashier Online Payment (مدفوع إلكترونياً عبر كاشير)"
                   : placedOrderData.payment_method === "card_stripe" || placedOrderData.payment_method === "card" || placedOrderData.payment_method === "stripe"
@@ -584,7 +591,7 @@ function CheckoutContent() {
             <div className="flex justify-between items-center pb-2 border-b border-neutral-800">
               <span className="text-neutral-400">Payment Status</span>
               <span className="font-bold text-emerald-400">
-                {placedOrderData.payment_method === "paymob" ||
+                {placedOrderData.payment_method === "easykash" ||
                 placedOrderData.payment_method === "kashier" ||
                 placedOrderData.payment_method === "card" ||
                 placedOrderData.payment_method === "card_stripe" ||
@@ -595,7 +602,7 @@ function CheckoutContent() {
             </div>
             <div className="flex justify-between items-baseline pt-1">
               <span className="text-sm font-bold text-white">
-                {placedOrderData.payment_method === "paymob" ||
+                {placedOrderData.payment_method === "easykash" ||
                 placedOrderData.payment_method === "kashier" ||
                 placedOrderData.payment_method === "card" ||
                 placedOrderData.payment_method === "card_stripe" ||
@@ -858,7 +865,7 @@ function CheckoutContent() {
                     </div>
                   </label>
 
-                  {/* Option 2: Paymob Online Card & Wallets */}
+                  {/* Option 2: EasyKash Online Payment */}
                   <label
                     onClick={() => setPaymentMethod("card")}
                     className={`p-4 rounded-2xl border flex items-start gap-3 cursor-pointer transition-all relative overflow-hidden ${
@@ -868,7 +875,7 @@ function CheckoutContent() {
                     }`}
                   >
                     <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-md bg-[#0070BA]/15 border border-[#0070BA]/30 text-[#0070BA] text-[10px] font-mono font-black uppercase">
-                      Paymob • باي موب
+                      EasyKash • إيزي كاش
                     </div>
                     <input
                       type="radio"
@@ -879,7 +886,7 @@ function CheckoutContent() {
                     />
                     <div className="pr-12">
                       <p className="font-bold text-foreground flex items-center gap-1.5">
-                        <CreditCard className="w-4 h-4 text-[#0070BA]" /> Electronic Payment (باي موب - الدفع الإلكتروني)
+                        <CreditCard className="w-4 h-4 text-[#0070BA]" /> Electronic Payment (إيزي كاش - الدفع الإلكتروني)
                       </p>
                       <p className="text-[11px] text-muted-foreground mt-1">
                         Visa, Mastercard, كروت ميزة، محافظ الموبايل (فودافون كاش)، وتقسيط
@@ -892,7 +899,7 @@ function CheckoutContent() {
                           Meeza ميزة
                         </span>
                         <span className="px-1.5 py-0.5 rounded text-[9px] bg-secondary border border-border font-semibold text-foreground">
-                          Vodafone Cash &amp; Wallets
+                          Vodafone Cash & Wallets
                         </span>
                         <span className="px-1.5 py-0.5 rounded text-[9px] bg-secondary border border-border font-semibold text-foreground">
                           Installments تقسيط
@@ -1038,7 +1045,7 @@ function CheckoutContent() {
                   {isSubmitting ? (
                     paymentMethod === "card" ? (
                       <span className="flex items-center justify-center gap-2">
-                        <Loader2 className="w-4 h-4 animate-spin" /> Connecting to Paymob...
+                        <Loader2 className="w-4 h-4 animate-spin" /> Connecting to EasyKash...
                       </span>
                     ) : (
                       <span className="flex items-center justify-center gap-2">
@@ -1046,7 +1053,7 @@ function CheckoutContent() {
                       </span>
                     )
                   ) : paymentMethod === "card" ? (
-                    `Proceed to Paymob Payment (${formatPrice(finalTotalUSD)}) 💳`
+                    `Proceed to EasyKash Payment (${formatPrice(finalTotalUSD)}) 💳`
                   ) : (
                     `Confirm & Place Order (${formatPrice(finalTotalUSD)})`
                   )}

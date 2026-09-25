@@ -80,8 +80,8 @@ interface Order {
   items: { name: string; brand: string; qty: number; price: number }[];
   totalUSD: number;
   paymentMethod: "Card" | "COD" | "ValU (0%)" | "Studio Wire";
-  paymentStatus: "Paid" | "Pending" | "Authorized";
-  status: "Processing" | "Out for Delivery" | "Delivered" | "Cancelled";
+  paymentStatus: "Paid" | "Pending" | "Authorized" | "Failed";
+  status: "Processing" | "Out for Delivery" | "Delivered" | "Cancelled" | "Failed";
   city: string;
   date: string;
   trackingNumber: string;
@@ -766,16 +766,20 @@ export default function DashboardPage() {
             totalUSD: Number(o.total_amount) || 0,
             paymentMethod: o.payment_method === "cod" ? "COD" : "Card",
             paymentStatus:
-              o.payment_method === "paymob" ||
-              o.payment_method === "kashier" ||
-              o.payment_method === "card" ||
-              o.status === "confirmed" ||
-              o.status === "delivered"
+              o.status === "failed"
+                ? "Failed"
+                : o.payment_method === "easykash" ||
+                  o.payment_method === "kashier" ||
+                  o.payment_method === "card" ||
+                  o.status === "confirmed" ||
+                  o.status === "delivered"
                 ? "Paid"
                 : "Pending",
             status:
               o.status === "new"
                 ? "Processing"
+                : o.status === "failed"
+                ? "Failed"
                 : o.status === "shipped"
                 ? "Out for Delivery"
                 : o.status === "delivered"
@@ -1210,7 +1214,7 @@ export default function DashboardPage() {
         <div><strong>Destination:</strong> ${order.city || "Cairo, Egypt"}</div>
         <div><strong>Courier:</strong> ${order.courier || "Fragile-Cine White Glove Express"}</div>
         <div><strong>AWB Tracking:</strong> ${order.trackingNumber || `AWB-${order.id}`}</div>
-        <div><strong>Payment:</strong> ${order.paymentStatus === "Paid" || order.paymentMethod === "Card" ? "Paymob Online Payment (Paid in Full • مدفوع إلكترونياً)" : "Cash on Delivery (الدفع عند الاستلام)"}</div>
+        <div><strong>Payment:</strong> ${order.paymentStatus === "Paid" || order.paymentMethod === "Card" ? "EasyKash Online Payment (Paid in Full • مدفوع إلكترونياً)" : "Cash on Delivery (الدفع عند الاستلام)"}</div>
       </div>
     </div>
 

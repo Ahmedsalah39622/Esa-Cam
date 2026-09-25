@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query, getDbPool } from "@/lib/db";
 import { generateEpicReceiptHtml, sendOrderReceiptEmail } from "@/lib/email";
-import { verifyPaymobHmac } from "@/lib/paymob";
+import { verifyEasyKashHmac } from "@/lib/easykash";
 
 export const dynamic = "force-dynamic";
 
@@ -35,8 +35,8 @@ export async function POST(req: NextRequest) {
     const txnId = obj.id;
 
     // Reject forged payment notifications before changing an order.
-    const hmacSecret = process.env.PAYMOB_HMAC;
-    if (!hmacSecret || !obj.hmac || !verifyPaymobHmac(obj, hmacSecret)) {
+    const hmacSecret = process.env.EASYKASH_HMAC_SECRET;
+    if (!hmacSecret || !obj.hmac || !verifyEasyKashHmac(obj, hmacSecret)) {
       return NextResponse.json({ success: false, message: "Invalid webhook signature" }, { status: 401 });
     }
 
@@ -65,12 +65,12 @@ export async function POST(req: NextRequest) {
                 customerEmail: order.customer_email || "",
                 shippingAddress: order.shipping_address,
                 city: order.city,
-                paymentMethod: "Paymob Online Payment",
+                paymentMethod: "EasyKash Online Payment",
                 totalAmount: Number(order.total_amount),
                 items,
               });
             } catch (err) {
-              console.error("Paymob webhook email error:", err);
+              console.error("EasyKash webhook email error:", err);
             }
 
             const webhookUrl = process.env.ORDER_WEBHOOK_URL || process.env.VIASOCKET_WEBHOOK_URL;
@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
                   customerEmail: order.customer_email || "",
                   shippingAddress: order.shipping_address,
                   city: order.city,
-                  paymentMethod: "Paymob Online Payment",
+                  paymentMethod: "EasyKash Online Payment",
                   totalAmount: Number(order.total_amount),
                   items,
                 });
@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
                     event: "order.paid",
-                    paymentGateway: "paymob",
+                    paymentGateway: "easykash",
                     paymentStatus: "paid",
                     transactionId: txnId,
                     to: order.customer_email || process.env.ADMIN_EMAIL || "",
@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
                     customerPhone: order.customer_phone,
                     city: order.city,
                     shippingAddress: order.shipping_address,
-                    paymentMethod: "Paymob Online Payment",
+                    paymentMethod: "EasyKash Online Payment",
                     totalAmount: Number(order.total_amount),
                     currency: "EGP",
                     items,
@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
                   }),
                 });
               } catch (whErr) {
-                console.error("Paymob webhook trigger error:", whErr);
+                console.error("EasyKash webhook trigger error:", whErr);
               }
             }
           }
@@ -122,8 +122,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
-    console.error("Paymob webhook error:", error);
-    const message = error instanceof Error ? error.message : "Paymob webhook error";
+    console.error("EasyKash webhook error:", error);
+    const message = error instanceof Error ? error.message : "EasyKash webhook error";
     return NextResponse.json({ success: false, message }, { status: 500 });
   }
 }
