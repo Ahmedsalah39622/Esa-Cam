@@ -487,12 +487,12 @@ function CheckoutContent() {
             <div className="space-y-2">
               <p className="text-xs font-bold uppercase text-rose-600">EasyKash Payment</p>
               <h1 className="text-2xl font-black sm:text-3xl">
-                {isPaymentFailed ? "Payment not completed" : "Payment confirmation pending"}
+                {isPaymentFailed ? "Payment not completed" : "Payment status not confirmed"}
               </h1>
               <p className="text-sm leading-relaxed text-muted-foreground">
                 {isPaymentFailed
                   ? "EasyKash did not confirm the payment. No paid invoice was created, and your cart is still saved."
-                  : "We have not received EasyKash's signed payment confirmation yet. Your order is not marked as paid, and your cart is still saved."}
+                  : "We have not received a confirmed payment result from EasyKash. Your order is not marked as paid, and your cart is still saved."}
               </p>
             </div>
 
@@ -505,7 +505,7 @@ function CheckoutContent() {
 
             {!isPaymentFailed && (
               <p className="text-xs leading-relaxed text-muted-foreground">
-                If your bank shows a charge, please contact us with the order reference before retrying.
+                If you were charged, please follow up with EasyKash using this order reference before retrying.
               </p>
             )}
 
