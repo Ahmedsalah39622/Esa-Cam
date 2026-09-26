@@ -130,7 +130,7 @@ export function verifyEasyKashHmac(
   const hashValue = params.hmac || params.hash;
 
   if (!hashValue || !hmacSecret) {
-    return true;
+    return false;
   }
 
   const canonical = Object.entries(params)
@@ -141,5 +141,40 @@ export function verifyEasyKashHmac(
 
   const expected = crypto.createHmac("sha256", hmacSecret).update(canonical).digest("hex");
 
-  return expected === String(hashValue);
+  return safeCompareHex(expected, String(hashValue));
+}
+
+const CALLBACK_SIGNATURE_FIELDS = [
+  "ProductCode",
+  "Amount",
+  "ProductType",
+  "PaymentMethod",
+  "status",
+  "easykashRef",
+  "customerReference",
+] as const;
+
+export function verifyEasyKashCallbackSignature(
+  payload: Record<string, unknown>,
+  hmacSecret: string,
+): boolean {
+  const signature = payload.signatureHash;
+  if (typeof signature !== "string" || !hmacSecret) return false;
+
+  const values = CALLBACK_SIGNATURE_FIELDS.map((field) => payload[field]);
+  if (values.some((value) => typeof value !== "string" && typeof value !== "number")) {
+    return false;
+  }
+
+  const expected = crypto
+    .createHmac("sha512", hmacSecret)
+    .update(values.join(""))
+    .digest("hex");
+
+  return safeCompareHex(expected, signature);
+}
+
+function safeCompareHex(expected: string, received: string): boolean {
+  if (!/^[\da-f]+$/i.test(received) || expected.length !== received.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(expected, "hex"), Buffer.from(received, "hex"));
 }

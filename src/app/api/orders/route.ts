@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { query, getDbPool } from "@/lib/db";
+import { query, getDbPool, ensureOrderPaymentStatusColumn } from "@/lib/db";
 import { generateEpicReceiptHtml, sendOrderReceiptEmail } from "@/lib/email";
 import { ADMIN_SESSION_COOKIE, verifyAdminSession } from "@/lib/admin-auth";
 
@@ -42,12 +42,14 @@ async function ensureOrdersTable() {
         shipping_address TEXT NOT NULL,
         notes TEXT NULL,
         payment_method VARCHAR(50) DEFAULT 'cod',
+        payment_status ENUM('pending', 'paid', 'failed') NOT NULL DEFAULT 'pending',
         total_amount DECIMAL(12, 2) NOT NULL,
         items_json LONGTEXT NOT NULL,
         status VARCHAR(50) DEFAULT 'new',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
+    await ensureOrderPaymentStatusColumn();
   } catch (err) {
     console.warn("Orders table ensure warning:", err);
   }

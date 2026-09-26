@@ -36,7 +36,7 @@ export function Footer() {
   return (
     <footer
       id="footer"
-      className="relative w-full bg-[#000000] text-white overflow-hidden select-none border-t border-[#27272A] min-h-[500px] flex flex-col justify-between"
+      className="relative w-full bg-[#000000] text-white overflow-hidden select-none min-h-[500px] flex flex-col justify-between"
     >
       {/* Top Nikon Accent Bar */}
       <div className="w-full h-[4px] bg-[#FFE600]" />

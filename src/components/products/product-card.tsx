@@ -29,7 +29,7 @@ export function ProductCard({ product }: { product: Product }) {
   }, [product.image, product.category]);
 
   return (
-    <div className="group relative rounded-2xl border border-border bg-card p-2.5 sm:p-4 flex flex-col justify-between hover:border-amber-400/40 hover:shadow-xl transition-all duration-300">
+    <div className="group relative rounded-2xl border border-border bg-card p-2.5 sm:p-4 flex flex-col justify-between hover:-translate-y-1 hover:border-amber-400/40 hover:shadow-xl transition-all duration-300">
       {/* Top Image Container */}
       <div className="relative aspect-square w-full rounded-xl overflow-hidden bg-secondary/40 border border-border/60">
         <Link

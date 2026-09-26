@@ -11,6 +11,7 @@ import {
   Truck,
   CreditCard,
   CheckCircle2,
+  AlertTriangle,
   ArrowLeft,
   Lock,
   Tag,
@@ -46,6 +47,11 @@ interface PlacedOrderInfo {
   payment_method?: string;
 }
 
+interface PaymentIssueState {
+  kind: "failed" | "pending";
+  orderNumber?: string;
+}
+
 function CheckoutContent() {
   const searchParams = useSearchParams();
   const {
@@ -65,6 +71,7 @@ function CheckoutContent() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isVerifyingStripe, setIsVerifyingStripe] = useState(false);
   const [placedOrderData, setPlacedOrderData] = useState<PlacedOrderInfo | null>(null);
+  const [paymentIssue, setPaymentIssue] = useState<PaymentIssueState | null>(null);
   const [copiedRef, setCopiedRef] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -92,47 +99,51 @@ function CheckoutContent() {
       verifiedSessionRef.current = `easykash-${easykashOrderId}`;
 
       const rawStatus = (searchParams.get("status") || searchParams.get("success") || "").toLowerCase();
-      const providerRefNum = searchParams.get("providerRefNum") || searchParams.get("provider_ref_num");
-      const paymentId = searchParams.get("payment_id") || searchParams.get("id") || searchParams.get("transaction_id");
-      const isSuccessStr =
-        ["success", "paid", "completed", "approved", "true", "1"].includes(rawStatus) ||
-        Boolean(providerRefNum || paymentId);
+      const failedReturnStatuses = ["failed", "declined", "rejected", "cancelled", "canceled", "error", "expired"];
+      const returnedAsFailed = failedReturnStatuses.includes(rawStatus);
 
-      if (isSuccessStr) {
-        setIsVerifyingStripe(true);
-        fetch(
-          `/api/checkout/easykash/verify?order_id=${encodeURIComponent(easykashOrderId)}&status=success&${searchParams.toString()}`
-        )
-          .then((res) => res.json())
-          .then((data) => {
-            if (data.success && data.paid) {
-              setPlacedOrderData(data.order);
+      setIsVerifyingStripe(true);
+      void (async () => {
+        try {
+          let result: { success?: boolean; paid?: boolean; failed?: boolean; order?: PlacedOrderInfo; orderNumber?: string; message?: string } | null = null;
+          const maxAttempts = returnedAsFailed ? 1 : 8;
+
+          for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+            const response = await fetch(
+              `/api/checkout/easykash/verify?order_id=${encodeURIComponent(easykashOrderId)}`,
+              { cache: "no-store" },
+            );
+            result = await response.json();
+
+            if (result?.success && result.paid && result.order) {
+              setPlacedOrderData(result.order);
               setIsSubmitted(true);
               clearCart();
-              if (typeof window !== "undefined") {
-                window.history.replaceState({}, "", window.location.pathname);
-              }
+              window.history.replaceState({}, "", window.location.pathname);
               toast.success("Payment Received & Confirmed!", {
-                id: `easykash-success-${data.order?.order_number || easykashOrderId}`,
-                description: `Order #${data.order.order_number} has been verified and confirmed via EasyKash.`,
+                id: `easykash-success-${result.order.order_number}`,
+                description: `Order #${result.order.order_number} has been verified and confirmed via EasyKash.`,
               });
-            } else {
-              toast.error(data.message || "EasyKash payment verification failed.");
+              return;
             }
-          })
-          .catch((err) => {
-            console.error("EasyKash verification error:", err);
-            toast.error("An error occurred while verifying your payment.");
-          })
-          .finally(() => {
-            setIsVerifyingStripe(false);
-          });
-      } else {
-        if (typeof window !== "undefined") {
+
+            if (result?.failed || returnedAsFailed || attempt === maxAttempts - 1) break;
+            await new Promise((resolve) => window.setTimeout(resolve, 1500));
+          }
+
           window.history.replaceState({}, "", window.location.pathname);
+          setPaymentIssue({
+            kind: result?.failed || returnedAsFailed ? "failed" : "pending",
+            orderNumber: result?.orderNumber,
+          });
+        } catch (err) {
+          console.error("EasyKash verification error:", err);
+          window.history.replaceState({}, "", window.location.pathname);
+          setPaymentIssue({ kind: "pending" });
+        } finally {
+          setIsVerifyingStripe(false);
         }
-        toast.info("EasyKash payment was not completed. Your cart is preserved, feel free to try again.");
-      }
+      })();
       return;
     }
 
@@ -459,6 +470,75 @@ function CheckoutContent() {
         <div className="w-14 h-14 rounded-full border-4 border-emerald-500/20 border-t-emerald-500 animate-spin" />
         <h2 className="text-xl font-bold text-white">Verifying Secure Payment...</h2>
         <p className="text-xs text-neutral-400">Please wait while we confirm your transaction and register your order.</p>
+      </div>
+    );
+  }
+
+  if (paymentIssue) {
+    const isPaymentFailed = paymentIssue.kind === "failed";
+
+    return (
+      <div className="min-h-screen bg-background px-4 py-12 text-foreground sm:px-6">
+        <div className="mx-auto flex min-h-[70vh] max-w-xl items-center">
+          <div className="w-full space-y-6 rounded-2xl border border-border bg-card p-6 shadow-lg sm:p-9">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-rose-500/10 text-rose-600">
+              <AlertTriangle aria-hidden="true" className="h-7 w-7" />
+            </div>
+            <div className="space-y-2">
+              <p className="text-xs font-bold uppercase text-rose-600">EasyKash Payment</p>
+              <h1 className="text-2xl font-black sm:text-3xl">
+                {isPaymentFailed ? "Payment not completed" : "Payment confirmation pending"}
+              </h1>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                {isPaymentFailed
+                  ? "EasyKash did not confirm the payment. No paid invoice was created, and your cart is still saved."
+                  : "We have not received EasyKash's signed payment confirmation yet. Your order is not marked as paid, and your cart is still saved."}
+              </p>
+            </div>
+
+            {paymentIssue.orderNumber && (
+              <div className="rounded-lg border border-border bg-secondary/40 px-4 py-3 text-sm">
+                <span className="text-muted-foreground">Order reference: </span>
+                <span className="font-mono font-bold">{paymentIssue.orderNumber}</span>
+              </div>
+            )}
+
+            {!isPaymentFailed && (
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                If your bank shows a charge, please contact us with the order reference before retrying.
+              </p>
+            )}
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Button
+                onClick={() => {
+                  setPaymentMethod("card");
+                  setPaymentIssue(null);
+                }}
+                className="h-11 gap-2 bg-[#FFE600] font-bold text-black hover:bg-[#FFD000]"
+              >
+                <CreditCard aria-hidden="true" className="h-4 w-4" />
+                Try EasyKash again
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setPaymentMethod("cod");
+                  setPaymentIssue(null);
+                }}
+                className="h-11 gap-2"
+              >
+                <Truck aria-hidden="true" className="h-4 w-4" />
+                Continue with cash on delivery
+              </Button>
+            </div>
+
+            <Link href="/cart" className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground">
+              <ArrowLeft aria-hidden="true" className="h-4 w-4" />
+              Back to cart
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }

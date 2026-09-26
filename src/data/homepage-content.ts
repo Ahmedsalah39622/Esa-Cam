@@ -7,6 +7,7 @@ export interface HeroSlideContent {
   subheadline: string;
   description: string;
   image: string;
+  mobileImage?: string;
   primaryCtaText: string;
   primaryCtaLink: string;
   secondaryCtaText: string;
@@ -23,6 +24,8 @@ export interface HeaderAnnouncementContent {
   announcementText: string;
   courierText: string;
   courierLink: string;
+  enabled?: boolean;
+  scrollDuration?: number;
 }
 
 export interface BestSellersContent {
@@ -106,6 +109,8 @@ export const DEFAULT_HOMEPAGE_CONTENT: HomepageContentState = {
     announcementText: "OFFICIAL AUTHORIZED CINEMA & OPTICS DISTRIBUTOR",
     courierText: "VIP White-Glove Courier across Egypt",
     courierLink: "/store",
+    enabled: true,
+    scrollDuration: 45,
   },
   hero: {
     slides: [
@@ -223,14 +228,14 @@ export const DEFAULT_HOMEPAGE_CONTENT: HomepageContentState = {
     ctaLink: "/store",
   },
   editorial: {
-    headerTag: "Nikon & Cinema Engineering Masterclass • 6 Min Read",
-    title: "THE REVOLUTION OF LARGE-DIAMETER MOUNT OPTICS",
+    headerTag: "ESA CAM STORE • YOUR CREATIVE PARTNER IN EGYPT",
+    title: "MEET ESA CAM STORE",
     description:
-      "Discover how short 16mm flange geometry and giant 55mm inner diameter enable unprecedented corner-to-corner brightness, virtually zero distortion, and new frontiers in optical brilliance.",
+      "ESA CAM Store is a Cairo destination for cameras, lenses, lighting, audio and filmmaking gear. Visit us for help finding the right equipment, or shop online with delivery available across Egypt.",
     image:
       "https://images.unsplash.com/photo-1533563906091-fdfdffc3e3c4?auto=format&fit=crop&w=1200&q=85",
-    tags: ["8K Cinema", "Z-Mount Optics", "Color Science", "Anamorphic", "LiDAR AF"],
-    ctaText: "Read Complete Case Study",
+    tags: ["Pro Cameras", "Cinema Optics", "Lighting & Audio", "Cairo, Egypt"],
+    ctaText: "Explore ESA CAM Store",
     ctaLink: "/store",
   },
   footer: {

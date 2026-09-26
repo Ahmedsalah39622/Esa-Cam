@@ -79,13 +79,59 @@ interface Order {
   company?: string;
   items: { name: string; brand: string; qty: number; price: number }[];
   totalUSD: number;
-  paymentMethod: "Card" | "COD" | "ValU (0%)" | "Studio Wire";
-  paymentStatus: "Paid" | "Pending" | "Authorized" | "Failed";
+  paymentMethod: string;
+  paymentStatus: "Paid" | "Unpaid" | "Pending" | "Authorized" | "Failed";
   status: "Processing" | "Out for Delivery" | "Delivered" | "Cancelled" | "Failed";
   city: string;
   date: string;
   trackingNumber: string;
   courier?: string;
+}
+
+function normalizeOrderPaymentMethod(method?: string): string {
+  switch ((method || "").toLowerCase()) {
+    case "cod":
+      return "COD";
+    case "easykash":
+      return "EasyKash";
+    case "kashier":
+      return "Kashier";
+    case "stripe":
+    case "card":
+    case "card_stripe":
+      return "Stripe";
+    default:
+      return method || "Unknown";
+  }
+}
+
+function getOrderPaymentStatus(
+  paymentMethod: string,
+  orderStatus: string,
+  storedPaymentStatus?: string,
+): Order["paymentStatus"] {
+  const normalizedStatus = {
+    Processing: "new",
+    "Out for Delivery": "shipped",
+    Delivered: "delivered",
+    Cancelled: "cancelled",
+    Failed: "failed",
+  }[orderStatus] || orderStatus.toLowerCase();
+
+  const normalizedPaymentStatus = storedPaymentStatus?.toLowerCase();
+
+  if (paymentMethod === "COD") {
+    return normalizedPaymentStatus === "paid" || normalizedStatus === "delivered" ? "Paid" : "Unpaid";
+  }
+  if (paymentMethod === "EasyKash") {
+    if (normalizedPaymentStatus === "paid") return "Paid";
+    if (normalizedPaymentStatus === "failed") return "Failed";
+    return "Pending";
+  }
+  if (normalizedPaymentStatus === "paid") return "Paid";
+  if (normalizedPaymentStatus === "failed" || ["cancelled", "failed"].includes(normalizedStatus)) return "Failed";
+  if (["confirmed", "shipped", "delivered"].includes(normalizedStatus)) return "Paid";
+  return "Pending";
 }
 
 // Import Studios & Customers CRM Data
@@ -747,6 +793,7 @@ export default function DashboardPage() {
             items?: ApiOrderItem[];
             total_amount?: number;
             payment_method?: string;
+            payment_status?: string;
             status?: string;
             shipping_address?: string;
             city?: string;
@@ -764,17 +811,12 @@ export default function DashboardPage() {
               price: it.price || 0,
             })),
             totalUSD: Number(o.total_amount) || 0,
-            paymentMethod: o.payment_method === "cod" ? "COD" : "Card",
-            paymentStatus:
-              o.status === "failed"
-                ? "Failed"
-                : o.payment_method === "easykash" ||
-                  o.payment_method === "kashier" ||
-                  o.payment_method === "card" ||
-                  o.status === "confirmed" ||
-                  o.status === "delivered"
-                ? "Paid"
-                : "Pending",
+            paymentMethod: normalizeOrderPaymentMethod(o.payment_method),
+            paymentStatus: getOrderPaymentStatus(
+              normalizeOrderPaymentMethod(o.payment_method),
+              o.status || "new",
+              o.payment_status,
+            ),
             status:
               o.status === "new"
                 ? "Processing"
@@ -931,12 +973,26 @@ export default function DashboardPage() {
   const lowStockCount = inventory.filter((p) => ((p as Product & { stockCount?: number }).stockCount || 5) <= 3).length;
 
   const handleUpdateOrderStatus = async (orderId: string, newStatus: Order["status"]) => {
-    setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
-    );
+    setOrders((prev) => prev.map((order) => (
+      order.id === orderId
+        ? {
+            ...order,
+            status: newStatus,
+            paymentStatus: order.paymentMethod === "COD"
+              ? getOrderPaymentStatus(order.paymentMethod, newStatus)
+              : order.paymentStatus,
+          }
+        : order
+    )));
     toast.success(`Order ${orderId} updated to "${newStatus}"`);
     if (selectedOrder && selectedOrder.id === orderId) {
-      setSelectedOrder({ ...selectedOrder, status: newStatus });
+      setSelectedOrder({
+        ...selectedOrder,
+        status: newStatus,
+        paymentStatus: selectedOrder.paymentMethod === "COD"
+          ? getOrderPaymentStatus(selectedOrder.paymentMethod, newStatus)
+          : selectedOrder.paymentStatus,
+      });
     }
 
     try {
@@ -1214,7 +1270,8 @@ export default function DashboardPage() {
         <div><strong>Destination:</strong> ${order.city || "Cairo, Egypt"}</div>
         <div><strong>Courier:</strong> ${order.courier || "Fragile-Cine White Glove Express"}</div>
         <div><strong>AWB Tracking:</strong> ${order.trackingNumber || `AWB-${order.id}`}</div>
-        <div><strong>Payment:</strong> ${order.paymentStatus === "Paid" || order.paymentMethod === "Card" ? "EasyKash Online Payment (Paid in Full • مدفوع إلكترونياً)" : "Cash on Delivery (الدفع عند الاستلام)"}</div>
+        <div><strong>Payment method:</strong> ${order.paymentMethod === "COD" ? "Cash on Delivery (الدفع عند الاستلام)" : order.paymentMethod}</div>
+        <div><strong>Payment status:</strong> ${order.paymentStatus}</div>
       </div>
     </div>
 
@@ -1703,7 +1760,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Sidebar Nav Items */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6 no-scrollbar">
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6 sidebar-scrollbar">
           {navSections.map((section, idx) => (
             <div key={idx} className="space-y-1.5">
               <p className="px-3 text-[10px] font-mono font-bold uppercase tracking-wider text-muted-foreground">
@@ -2174,9 +2231,9 @@ export default function DashboardPage() {
                 <div className="bg-card border border-border rounded-3xl p-6 sm:p-8 shadow-xs space-y-6 animate-in fade-in">
                   <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
                     <div>
-                      <h4 className="text-base font-bold text-foreground">Hero Slider &amp; Flagship Showcase</h4>
+                      <h4 className="text-base font-bold text-foreground">Promotional Banner Carousel</h4>
                       <p className="text-xs text-muted-foreground font-mono">
-                        Add, delete, and customize hero slides, background camera visuals, 8K RAW chips, and featured catalog products
+                        Add, reorder, and publish desktop and mobile campaign banners with a direct shop link
                       </p>
                     </div>
 
@@ -2212,6 +2269,7 @@ export default function DashboardPage() {
                             subheadline: "8K INTERNAL PRO RECORDING",
                             description: "Engineered for relentless creators with uncompressed dynamic range and active cooling.",
                             image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1920&q=85",
+                            mobileImage: "",
                             primaryCtaText: "Explore Cinema Store",
                             primaryCtaLink: "/store",
                             secondaryCtaText: "Build Master Rig",
@@ -2258,160 +2316,57 @@ export default function DashboardPage() {
                   {/* Active Slide Form */}
                   {heroSlidesDraft[activeHeroSlideIdx] && (
                     <div className="space-y-6 text-xs">
-                      {/* Product Selector for Hero Slide */}
-                      <div className="p-4 rounded-2xl bg-secondary/25 border border-border space-y-3">
-                        <div className="flex items-center justify-between">
-                          <label className="font-bold text-foreground font-mono text-[11px] uppercase flex items-center gap-1.5">
-                            <Camera className="w-4 h-4 text-[#FFE600]" /> Featured Product for Slide {activeHeroSlideIdx + 1} (المنتج المرتبط بالسلايد)
-                          </label>
-                          <span className="text-[10px] text-muted-foreground font-mono">
-                            Auto-syncs Spotlight card &amp; Quick View
-                          </span>
-                        </div>
-
-                        <SearchableProductSelect
-                          products={products && products.length > 0 ? products : PRODUCTS}
-                          selectedProductId={heroSlidesDraft[activeHeroSlideIdx]?.productId || "esa-637"}
-                          onSelectProduct={(found) => {
-                            const updated = [...heroSlidesDraft];
-                            updated[activeHeroSlideIdx] = {
-                              ...updated[activeHeroSlideIdx],
-                              productId: found.id,
-                            };
-                            setHeroSlidesDraft(updated);
-                            toast.success(`Linked "${found.name}" to Slide ${activeHeroSlideIdx + 1}!`);
-                          }}
-                          label=""
-                          placeholder="ابحث بالاسم أو الماركة (e.g. Sony FX3, Canon R5, Sigma 24mm)..."
-                          formatPrice={formatPrice}
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                        <div className="space-y-1">
-                          <label className="font-semibold text-foreground block">Top Micro Badge</label>
-                          <input
-                            type="text"
-                            value={heroSlidesDraft[activeHeroSlideIdx].badge}
-                            onChange={(e) => {
-                              const updated = [...heroSlidesDraft];
-                              updated[activeHeroSlideIdx] = { ...updated[activeHeroSlideIdx], badge: e.target.value };
-                              setHeroSlidesDraft(updated);
-                            }}
-                            placeholder="FLAGSHIP CINEMA SYSTEM"
-                            className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-secondary/30 text-foreground font-mono"
-                          />
-                        </div>
-
-                        <div className="space-y-1">
-                          <label className="font-semibold text-foreground block">Tagline Slogan</label>
-                          <input
-                            type="text"
-                            value={heroSlidesDraft[activeHeroSlideIdx].tagline}
-                            onChange={(e) => {
-                              const updated = [...heroSlidesDraft];
-                              updated[activeHeroSlideIdx] = { ...updated[activeHeroSlideIdx], tagline: e.target.value };
-                              setHeroSlidesDraft(updated);
-                            }}
-                            placeholder="AT THE HEART OF THE IMAGE"
-                            className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-secondary/30 text-foreground font-mono"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                          <label className="font-semibold text-foreground block">Primary Large Headline</label>
-                          <input
-                            type="text"
-                            value={heroSlidesDraft[activeHeroSlideIdx].headline}
-                            onChange={(e) => {
-                              const updated = [...heroSlidesDraft];
-                              updated[activeHeroSlideIdx] = { ...updated[activeHeroSlideIdx], headline: e.target.value };
-                              setHeroSlidesDraft(updated);
-                            }}
-                            placeholder="READY. ACTION."
-                            className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-secondary/30 text-foreground font-sans font-black text-sm"
-                          />
-                        </div>
-
-                        <div className="space-y-1">
-                          <label className="font-semibold text-foreground block">Yellow Subheadline</label>
-                          <input
-                            type="text"
-                            value={heroSlidesDraft[activeHeroSlideIdx].subheadline}
-                            onChange={(e) => {
-                              const updated = [...heroSlidesDraft];
-                              updated[activeHeroSlideIdx] = { ...updated[activeHeroSlideIdx], subheadline: e.target.value };
-                              setHeroSlidesDraft(updated);
-                            }}
-                            placeholder="8K 60P INTERNAL RAW"
-                            className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-secondary/30 text-foreground font-mono font-bold"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        <label className="font-semibold text-foreground block">Paragraph Description</label>
-                        <textarea
-                          rows={3}
-                          value={heroSlidesDraft[activeHeroSlideIdx].description}
+                      <div className="max-w-xl space-y-1">
+                        <label className="font-semibold text-foreground block">Slide label (admin only)</label>
+                        <input
+                          type="text"
+                          value={heroSlidesDraft[activeHeroSlideIdx].badge}
                           onChange={(e) => {
                             const updated = [...heroSlidesDraft];
-                            updated[activeHeroSlideIdx] = { ...updated[activeHeroSlideIdx], description: e.target.value };
+                            updated[activeHeroSlideIdx] = { ...updated[activeHeroSlideIdx], badge: e.target.value };
                             setHeroSlidesDraft(updated);
                           }}
-                          placeholder="Engineered for relentless creators..."
+                          placeholder="Campaign name"
                           className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-secondary/30 text-foreground"
                         />
                       </div>
 
-                      {/* 4 Camera Specs Grid */}
-                      <div className="space-y-2">
-                        <label className="font-bold text-foreground block font-mono text-[11px] uppercase">
-                          4 Signature Technical Spec Chips
-                        </label>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                          {(heroSlidesDraft[activeHeroSlideIdx].specs || []).map((spec, sIdx) => (
-                            <div key={sIdx} className="p-3 bg-secondary/20 border border-border rounded-xl space-y-1.5">
-                              <input
-                                type="text"
-                                value={spec.label}
-                                onChange={(e) => {
-                                  const updated = [...heroSlidesDraft];
-                                  const specs = [...(updated[activeHeroSlideIdx].specs || [])];
-                                  specs[sIdx] = { ...specs[sIdx], label: e.target.value };
-                                  updated[activeHeroSlideIdx].specs = specs;
-                                  setHeroSlidesDraft(updated);
-                                }}
-                                placeholder="Spec Label"
-                                className="w-full px-2 py-1 text-[10px] font-mono uppercase bg-transparent border-b border-border text-muted-foreground focus:outline-hidden"
-                              />
-                              <input
-                                type="text"
-                                value={spec.value}
-                                onChange={(e) => {
-                                  const updated = [...heroSlidesDraft];
-                                  const specs = [...(updated[activeHeroSlideIdx].specs || [])];
-                                  specs[sIdx] = { ...specs[sIdx], value: e.target.value };
-                                  updated[activeHeroSlideIdx].specs = specs;
-                                  setHeroSlidesDraft(updated);
-                                }}
-                                placeholder="Spec Value"
-                                className="w-full px-2 py-1 text-xs font-mono font-bold bg-transparent text-foreground focus:outline-hidden"
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* CTA Buttons Config */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                      {/* Banner CTA Config */}
+                      <div className="max-w-xl pt-2">
                         <div className="p-4 bg-secondary/20 border border-border rounded-2xl space-y-2">
                           <span className="font-bold text-foreground font-mono text-[11px] block">
-                            Primary CTA Button (Yellow)
+                            Banner product and shop button
                           </span>
+                          <label className="block space-y-1">
+                            <span className="font-semibold text-foreground">Link this banner to a product</span>
+                            <select
+                              value={heroSlidesDraft[activeHeroSlideIdx].productId || ""}
+                              onChange={(e) => {
+                                const updated = [...heroSlidesDraft];
+                                updated[activeHeroSlideIdx] = {
+                                  ...updated[activeHeroSlideIdx],
+                                  productId: e.target.value || undefined,
+                                };
+                                setHeroSlidesDraft(updated);
+                              }}
+                              className="w-full px-3 py-2.5 rounded-xl border border-border bg-card text-foreground"
+                            >
+                              <option value="">No product selected</option>
+                              {heroSlidesDraft[activeHeroSlideIdx].productId && !products.some((product) => product.id === heroSlidesDraft[activeHeroSlideIdx].productId) && (
+                                <option value={heroSlidesDraft[activeHeroSlideIdx].productId}>
+                                  Unavailable product ({heroSlidesDraft[activeHeroSlideIdx].productId})
+                                </option>
+                              )}
+                              {products.map((product) => (
+                                <option key={product.id} value={product.id}>
+                                  {product.name} - {product.brand}
+                                </option>
+                              ))}
+                            </select>
+                            <span className="block text-[10px] text-muted-foreground">
+                              The banner and button will both open this product.
+                            </span>
+                          </label>
                           <input
                             type="text"
                             value={heroSlidesDraft[activeHeroSlideIdx].primaryCtaText || "Explore Cinema Store"}
@@ -2431,35 +2386,7 @@ export default function DashboardPage() {
                               updated[activeHeroSlideIdx] = { ...updated[activeHeroSlideIdx], primaryCtaLink: e.target.value };
                               setHeroSlidesDraft(updated);
                             }}
-                            placeholder="Destination Link (/store)"
-                            className="w-full px-3 py-2 rounded-xl border border-border bg-card text-foreground font-mono text-[11px]"
-                          />
-                        </div>
-
-                        <div className="p-4 bg-secondary/20 border border-border rounded-2xl space-y-2">
-                          <span className="font-bold text-foreground font-mono text-[11px] block">
-                            Secondary CTA Button (Outline)
-                          </span>
-                          <input
-                            type="text"
-                            value={heroSlidesDraft[activeHeroSlideIdx].secondaryCtaText || "Build Master Rig"}
-                            onChange={(e) => {
-                              const updated = [...heroSlidesDraft];
-                              updated[activeHeroSlideIdx] = { ...updated[activeHeroSlideIdx], secondaryCtaText: e.target.value };
-                              setHeroSlidesDraft(updated);
-                            }}
-                            placeholder="Button Label"
-                            className="w-full px-3 py-2 rounded-xl border border-border bg-card text-foreground"
-                          />
-                          <input
-                            type="text"
-                            value={heroSlidesDraft[activeHeroSlideIdx].secondaryCtaLink || "/store"}
-                            onChange={(e) => {
-                              const updated = [...heroSlidesDraft];
-                              updated[activeHeroSlideIdx] = { ...updated[activeHeroSlideIdx], secondaryCtaLink: e.target.value };
-                              setHeroSlidesDraft(updated);
-                            }}
-                            placeholder="Destination Link (/store)"
+                            placeholder="Fallback destination when no product is selected (/store)"
                             className="w-full px-3 py-2 rounded-xl border border-border bg-card text-foreground font-mono text-[11px]"
                           />
                         </div>
@@ -2469,9 +2396,9 @@ export default function DashboardPage() {
                       <div className="p-5 bg-secondary/20 border border-border rounded-2xl space-y-3">
                         <div className="flex items-center justify-between">
                           <span className="font-bold text-foreground font-mono text-[11px] uppercase flex items-center gap-1.5">
-                            <ImageIcon className="w-4 h-4 text-[#FFE600]" /> Slide Background Photo (High-Res)
+                            <ImageIcon className="w-4 h-4 text-[#FFE600]" /> Campaign Banner Artwork
                           </span>
-                          <span className="text-[10px] text-muted-foreground font-mono">Upload Device File or Paste URL</span>
+                          <span className="text-[10px] text-muted-foreground font-mono">Desktop and optional mobile image</span>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2512,82 +2439,70 @@ export default function DashboardPage() {
                               placeholder="Or paste https://images.unsplash.com/... direct URL"
                               className="w-full px-3 py-2 rounded-xl border border-border bg-card text-foreground font-mono text-[11px]"
                             />
+
+                            <label className="flex flex-col items-center justify-center gap-2 p-4 border-2 border-dashed border-border hover:border-[#FFE600]/50 rounded-2xl bg-card cursor-pointer transition-colors text-center">
+                              <Upload className="w-5 h-5 text-[#FFE600]" />
+                              <div>
+                                <p className="font-bold text-foreground text-xs">Add mobile banner (optional)</p>
+                                <p className="text-[10px] text-muted-foreground font-mono">Shown on phones instead of cropping the desktop banner</p>
+                              </div>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (!file) return;
+                                  if (file.size > 8 * 1024 * 1024) {
+                                    toast.error("Mobile banner must be under 8MB");
+                                    return;
+                                  }
+                                  const reader = new FileReader();
+                                  reader.onload = () => {
+                                    const updated = [...heroSlidesDraft];
+                                    updated[activeHeroSlideIdx] = { ...updated[activeHeroSlideIdx], mobileImage: reader.result as string };
+                                    setHeroSlidesDraft(updated);
+                                    toast.success("Mobile banner updated!");
+                                  };
+                                  reader.readAsDataURL(file);
+                                }}
+                                className="hidden"
+                              />
+                            </label>
+
+                            <input
+                              type="url"
+                              value={heroSlidesDraft[activeHeroSlideIdx].mobileImage || ""}
+                              onChange={(e) => {
+                                const updated = [...heroSlidesDraft];
+                                updated[activeHeroSlideIdx] = { ...updated[activeHeroSlideIdx], mobileImage: e.target.value };
+                                setHeroSlidesDraft(updated);
+                              }}
+                              placeholder="Or paste a mobile banner URL"
+                              className="w-full px-3 py-2 rounded-xl border border-border bg-card text-foreground font-mono text-[11px]"
+                            />
                           </div>
 
-                          {/* Live Image & Spotlight Card Preview */}
-                          <div className="space-y-3">
-                            <div className="relative h-44 rounded-2xl overflow-hidden bg-black border border-border group">
+                          <div className="grid grid-cols-1 gap-3 content-start">
+                            <div>
+                              <p className="mb-1 text-[10px] font-bold uppercase text-muted-foreground">Desktop preview</p>
+                              <div className="relative aspect-[2.8/1] overflow-hidden rounded-lg bg-secondary border border-border">
                               <img
                                 src={heroSlidesDraft[activeHeroSlideIdx].image}
-                                alt="Hero slide preview"
-                                className="w-full h-full object-cover brightness-50"
+                                alt="Desktop campaign banner preview"
+                                className="h-full w-full object-cover"
                               />
-                              <div className="absolute inset-0 p-4 flex flex-col justify-end text-white">
-                                <span className="text-[10px] font-mono text-[#FFE600] font-bold">
-                                  {heroSlidesDraft[activeHeroSlideIdx].badge}
-                                </span>
-                                <p className="font-black text-sm uppercase">
-                                  {heroSlidesDraft[activeHeroSlideIdx].headline}
-                                </p>
-                                <p className="text-xs text-[#FFE600] font-bold font-mono">
-                                  {heroSlidesDraft[activeHeroSlideIdx].subheadline}
-                                </p>
                               </div>
                             </div>
-
-                            {/* Linked Product Spotlight Preview with Direct Dropdown */}
-                            {(() => {
-                              const allProds = products && products.length > 0 ? products : PRODUCTS;
-                              const currentPid = heroSlidesDraft[activeHeroSlideIdx]?.productId;
-                              const heroProd =
-                                allProds.find((p) => p.id === currentPid) ||
-                                allProds.find((p) => currentPid === "sony-fx3" && p.id === "esa-637") ||
-                                allProds.find((p) => p.id === "esa-637") ||
-                                PRODUCTS.find((p) => p.id === "esa-637") ||
-                                allProds[0] ||
-                                PRODUCTS[0];
-                              return (
-                                <div className="p-3.5 bg-black/95 border border-[#FFE600]/40 rounded-2xl space-y-2 text-white text-xs shadow-lg">
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-[10px] font-mono text-[#FFE600] uppercase font-bold flex items-center gap-1">
-                                      <Camera className="w-3.5 h-3.5 text-[#FFE600]" /> Linked Hero Spotlight Product (المنتج المعروض على السلايد)
-                                    </span>
-                                    <span className="text-[10px] font-mono text-emerald-400 font-bold">● IN STOCK</span>
-                                  </div>
-
-                                  <div className="flex items-center gap-3">
-                                    <div className="w-14 h-14 rounded-xl bg-white border border-[#27272A] flex items-center justify-center p-1.5 shrink-0 shadow-inner">
-                                      <img src={heroProd.image} alt={heroProd.name} className="max-h-full max-w-full object-contain" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <p className="font-black text-white truncate text-xs uppercase">{heroProd.name}</p>
-                                      <p className="text-[10px] text-[#A1A1AA] font-mono">{heroProd.brand} • {heroProd.category.toUpperCase()}</p>
-                                      <p className="font-mono text-[#FFE600] text-xs font-black mt-0.5">{formatPrice(heroProd.price)}</p>
-                                    </div>
-                                  </div>
-
-                                  {/* Quick Switch Dropdown directly here */}
-                                  <div className="pt-1.5 border-t border-[#27272A]">
-                                    <SearchableProductSelect
-                                      products={products && products.length > 0 ? products : PRODUCTS}
-                                      selectedProductId={heroSlidesDraft[activeHeroSlideIdx]?.productId || "esa-637"}
-                                      onSelectProduct={(found) => {
-                                        const updated = [...heroSlidesDraft];
-                                        updated[activeHeroSlideIdx] = {
-                                          ...updated[activeHeroSlideIdx],
-                                          productId: found.id,
-                                        };
-                                        setHeroSlidesDraft(updated);
-                                        toast.success(`Changed Hero Product to "${found.name}"!`);
-                                      }}
-                                      label="تغيير المنتج المعروض (Change Product):"
-                                      placeholder="ابحث بالاسم أو الماركة (e.g. Sony FX3, Canon R5, Sigma 24mm)..."
-                                      formatPrice={formatPrice}
-                                    />
-                                  </div>
-                                </div>
-                              );
-                            })()}
+                            <div>
+                              <p className="mb-1 text-[10px] font-bold uppercase text-muted-foreground">Mobile preview</p>
+                              <div className="relative mx-auto aspect-[2/1] w-full max-w-sm overflow-hidden rounded-lg bg-secondary border border-border">
+                                <img
+                                  src={heroSlidesDraft[activeHeroSlideIdx].mobileImage || heroSlidesDraft[activeHeroSlideIdx].image}
+                                  alt="Mobile campaign banner preview"
+                                  className={`h-full w-full ${heroSlidesDraft[activeHeroSlideIdx].mobileImage ? "object-cover" : "object-contain"}`}
+                                />
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -3327,14 +3242,49 @@ export default function DashboardPage() {
                     <div>
                       <h4 className="text-base font-bold text-foreground">Top Header Announcement Strip</h4>
                       <p className="text-xs text-muted-foreground font-mono">
-                        Nikon-style notification bar at the very top of the website
+                        Scrolling ESA CAM announcement shown above the store header
                       </p>
                     </div>
                   </div>
 
                   <div className="space-y-4 text-xs">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <label className="flex items-center justify-between gap-4 rounded-xl border border-border bg-secondary/30 px-4 py-3">
+                        <span>
+                          <span className="block font-semibold text-foreground">Show announcement strip</span>
+                          <span className="mt-1 block text-[10px] text-muted-foreground">Toggle the yellow bar on the storefront</span>
+                        </span>
+                        <input
+                          type="checkbox"
+                          checked={announcementDraft.enabled !== false}
+                          onChange={(e) => setAnnouncementDraft({ ...announcementDraft, enabled: e.target.checked })}
+                          className="h-4 w-4 accent-[#FFE600]"
+                        />
+                      </label>
+
+                      <label className="rounded-xl border border-border bg-secondary/30 px-4 py-3">
+                        <span className="flex items-center justify-between gap-3 font-semibold text-foreground">
+                          <span>Scroll speed</span>
+                          <span className="font-mono text-muted-foreground">{announcementDraft.scrollDuration ?? 45}s / loop</span>
+                        </span>
+                        <input
+                          type="range"
+                          min={20}
+                          max={90}
+                          step={5}
+                          value={announcementDraft.scrollDuration ?? 45}
+                          onChange={(e) => setAnnouncementDraft({ ...announcementDraft, scrollDuration: Number(e.target.value) })}
+                          className="mt-3 w-full accent-[#FFE600]"
+                        />
+                        <span className="flex justify-between text-[10px] text-muted-foreground">
+                          <span>Fast</span>
+                          <span>Slow</span>
+                        </span>
+                      </label>
+                    </div>
+
                     <div className="space-y-1">
-                      <label className="font-semibold text-foreground block">Left Announcement Message</label>
+                      <label className="font-semibold text-foreground block">Main announcement message</label>
                       <input
                         type="text"
                         value={announcementDraft.announcementText}
@@ -3346,7 +3296,7 @@ export default function DashboardPage() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-1">
-                        <label className="font-semibold text-foreground block">Right Courier Link Text</label>
+                        <label className="font-semibold text-foreground block">Second message (linked)</label>
                         <input
                           type="text"
                           value={announcementDraft.courierText}
@@ -5641,9 +5591,21 @@ export default function DashboardPage() {
                             {formatPrice(order.totalUSD)}
                           </td>
                           <td className="py-4">
-                            <Badge variant="secondary" className="text-[10px] font-mono">
-                              {order.paymentMethod} • {order.paymentStatus}
-                            </Badge>
+                            <div className="flex flex-col items-start gap-1.5">
+                              <span className="text-[11px] font-semibold text-foreground">{order.paymentMethod}</span>
+                              <Badge
+                                variant="secondary"
+                                className={`border text-[10px] font-mono ${
+                                  order.paymentStatus === "Paid"
+                                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                                    : order.paymentStatus === "Failed"
+                                      ? "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-400"
+                                      : "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                                }`}
+                              >
+                                {order.paymentStatus}
+                              </Badge>
+                            </div>
                           </td>
                           <td className="py-4">
                             <select

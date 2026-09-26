@@ -74,3 +74,18 @@ export async function query<T = Record<string, unknown>>(
   }
   throw lastError;
 }
+
+export async function ensureOrderPaymentStatusColumn(): Promise<void> {
+  if (!getDbPool()) return;
+
+  const columns = await query<{ Field: string }>("SHOW COLUMNS FROM orders");
+  if (columns.some((column) => column.Field === "payment_status")) return;
+
+  try {
+    await query(
+      "ALTER TABLE orders ADD COLUMN payment_status ENUM('pending', 'paid', 'failed') NOT NULL DEFAULT 'pending' AFTER payment_method",
+    );
+  } catch (error) {
+    if ((error as { code?: string })?.code !== "ER_DUP_FIELDNAME") throw error;
+  }
+}

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { query, getDbPool } from "@/lib/db";
+import { query, getDbPool, ensureOrderPaymentStatusColumn } from "@/lib/db";
 import { createEasyKashIntention, getRequestOrigin } from "@/lib/easykash";
 
 export const dynamic = "force-dynamic";
@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
     const pool = getDbPool();
     if (pool) {
       try {
+        await ensureOrderPaymentStatusColumn();
         await query(
           `INSERT INTO orders (id, order_number, customer_name, customer_phone, customer_email, city, shipping_address, notes, payment_method, total_amount, items_json, status)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,

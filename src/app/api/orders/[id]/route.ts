@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { query, getDbPool } from "@/lib/db";
+import { query, getDbPool, ensureOrderPaymentStatusColumn } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -66,11 +66,19 @@ export async function PATCH(
 
     const pool = getDbPool();
     if (pool) {
-      await query("UPDATE orders SET status = ? WHERE id = ? OR order_number = ?", [
-        status,
-        id,
-        id,
-      ]);
+      await ensureOrderPaymentStatusColumn();
+      if (status === "delivered") {
+        await query(
+          "UPDATE orders SET status = ?, payment_status = CASE WHEN payment_method = 'cod' THEN 'paid' ELSE payment_status END WHERE id = ? OR order_number = ?",
+          [status, id, id],
+        );
+      } else {
+        await query("UPDATE orders SET status = ? WHERE id = ? OR order_number = ?", [
+          status,
+          id,
+          id,
+        ]);
+      }
     }
 
     return NextResponse.json({

@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS orders (
     shipping_address TEXT NOT NULL,
     notes TEXT NULL,
     payment_method VARCHAR(50) DEFAULT 'cod',
+    payment_status ENUM('pending', 'paid', 'failed') NOT NULL DEFAULT 'pending',
     total_amount DECIMAL(10, 2) NOT NULL,
     items_json JSON NOT NULL,
     status ENUM('new', 'confirmed', 'shipped', 'delivered', 'cancelled') DEFAULT 'new',
