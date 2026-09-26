@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
           : String(paymentData.status || "").toUpperCase();
     const txnId = directCallback ? paymentData.easykashRef : paymentData.id;
     const isSuccess = transactionStatus === "PAID";
-    const isFailure = ["FAILED", "EXPIRED", "CANCELED", "CANCELLED", "DECLINED"].includes(transactionStatus);
+    const isFailure = ["FAIL", "FAILED", "EXPIRED", "CANCELED", "CANCELLED", "DECLINED"].includes(transactionStatus);
 
     if (!specialReference || (!isSuccess && !isFailure)) {
       return NextResponse.json({ success: true, message: "Signed callback ignored" });

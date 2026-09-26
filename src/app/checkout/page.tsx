@@ -99,7 +99,7 @@ function CheckoutContent() {
       verifiedSessionRef.current = `easykash-${easykashOrderId}`;
 
       const rawStatus = (searchParams.get("status") || searchParams.get("success") || "").toLowerCase();
-      const failedReturnStatuses = ["failed", "declined", "rejected", "cancelled", "canceled", "error", "expired"];
+      const failedReturnStatuses = ["fail", "failed", "declined", "rejected", "cancelled", "canceled", "error", "expired"];
       const returnedAsFailed = failedReturnStatuses.includes(rawStatus);
 
       setIsVerifyingStripe(true);
