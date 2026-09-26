@@ -63,6 +63,7 @@ export async function GET(req: NextRequest) {
 
       if (rows && rows.length > 0) {
         order = rows[0];
+        await query("UPDATE orders SET payment_status = 'paid' WHERE id = ?", [order.id]);
 
         try {
           items = typeof order.items_json === "string" ? JSON.parse(order.items_json) : order.items_json || [];

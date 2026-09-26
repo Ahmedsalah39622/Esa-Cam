@@ -16,6 +16,7 @@ interface StoredOrder {
   shipping_address: string;
   notes: string;
   payment_method: string;
+  payment_status?: string;
   total_amount: number;
   items_json: string;
   items?: unknown[];
@@ -66,10 +67,10 @@ export async function GET(req: NextRequest) {
     if (pool) {
       await ensureOrdersTable();
       const rows = await query<StoredOrder>(
-        "SELECT * FROM orders ORDER BY created_at DESC"
+        "SELECT * FROM orders WHERE payment_method = 'cod' OR payment_status = 'paid' ORDER BY created_at DESC"
       );
 
-      if (rows && rows.length > 0) {
+      if (rows) {
         const formattedOrders = rows.map((order) => {
           let items = [];
           try {
@@ -84,10 +85,16 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true, source: "memory", count: memoryOrders.length, data: memoryOrders });
+    const visibleMemoryOrders = memoryOrders.filter(
+      (order) => order.payment_method === "cod" || order.payment_status === "paid",
+    );
+    return NextResponse.json({ success: true, source: "memory", count: visibleMemoryOrders.length, data: visibleMemoryOrders });
   } catch (error) {
     console.error("Error fetching orders:", error);
-    return NextResponse.json({ success: true, source: "memory_fallback", data: memoryOrders });
+    const visibleMemoryOrders = memoryOrders.filter(
+      (order) => order.payment_method === "cod" || order.payment_status === "paid",
+    );
+    return NextResponse.json({ success: true, source: "memory_fallback", count: visibleMemoryOrders.length, data: visibleMemoryOrders });
   }
 }
 
