@@ -23,6 +23,7 @@ import {
   ShoppingCart,
   Heart,
   Star,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -57,6 +58,12 @@ function StoreContent() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [expandedFilterSections, setExpandedFilterSections] = useState({
+    department: true,
+    brands: true,
+    mounts: true,
+    availability: true,
+  });
 
   useEffect(() => {
     setIsMounted(true);
@@ -124,6 +131,10 @@ function StoreContent() {
     setSelectedMounts((prev) =>
       prev.includes(mount) ? prev.filter((m) => m !== mount) : [...prev, mount]
     );
+  };
+
+  const toggleFilterSection = (section: keyof typeof expandedFilterSections) => {
+    setExpandedFilterSections((prev) => ({ ...prev, [section]: !prev[section] }));
   };
 
   const resetAllFilters = () => {
@@ -255,7 +266,7 @@ function StoreContent() {
       <Nav />
 
       {/* Store Header Banner */}
-      <div className="bg-secondary/20 border-b border-border py-10 md:py-14">
+      <div className="bg-secondary/20 py-10 md:py-14">
         <div className="mx-auto max-w-7xl px-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
@@ -297,10 +308,10 @@ function StoreContent() {
       </div>
 
       {/* Main Store Layout (Sidebar + Catalog Grid) */}
-      <div className="mx-auto max-w-7xl px-6 py-8 md:py-12 flex-1 w-full">
+      <div className="mx-auto max-w-7xl px-6 py-6 md:py-8 flex-1 w-full">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Desktop Sidebar Filters (3.5 Cols) */}
-          <aside className="hidden lg:block lg:col-span-3 space-y-6 sticky top-24">
+          <aside className="hidden lg:block lg:col-span-3 space-y-6 sticky top-24 max-h-[calc(100vh-6rem)] overflow-y-auto sidebar-scrollbar pr-1">
             <div className="bg-card border border-border rounded-3xl p-6 shadow-xs space-y-6">
               {/* Filter Header & Reset */}
               <div className="flex items-center justify-between border-b border-border pb-4">
@@ -319,100 +330,141 @@ function StoreContent() {
 
               {/* Category Radio / List */}
               <div className="space-y-2.5">
-                <h4 className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                <button
+                  type="button"
+                  aria-expanded={expandedFilterSections.department}
+                  aria-controls="department-filter-options"
+                  onClick={() => toggleFilterSection("department")}
+                  className="flex w-full items-center justify-between text-left font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground"
+                >
                   Department
-                </h4>
-                <div className="space-y-1 max-h-[480px] overflow-y-auto pr-1 no-scrollbar">
-                  {categories.map((cat) => (
-                    <button
-                      key={cat.id}
-                      onClick={() => handleSelectCategory(cat.id)}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
-                        selectedCategory === cat.id
-                          ? "bg-foreground text-background font-bold shadow-xs"
-                          : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                      }`}
-                    >
-                      <span>{cat.label}</span>
-                      <span suppressHydrationWarning className="font-mono text-[11px] opacity-70">
-                        ({isMounted ? cat.count : ""})
-                      </span>
-                    </button>
-                  ))}
-                </div>
+                  <ChevronDown className={`h-3.5 w-3.5 transition-transform ${expandedFilterSections.department ? "rotate-180" : ""}`} />
+                </button>
+                {expandedFilterSections.department && (
+                  <div id="department-filter-options" className="space-y-1">
+                    {categories.map((cat) => (
+                      <button
+                        key={cat.id}
+                        onClick={() => handleSelectCategory(cat.id)}
+                        className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
+                          selectedCategory === cat.id
+                            ? "bg-foreground text-background font-bold shadow-xs"
+                            : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                        }`}
+                      >
+                        <span>{cat.label}</span>
+                        <span suppressHydrationWarning className="font-mono text-[11px] opacity-70">
+                          ({isMounted ? cat.count : ""})
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Brand Checkboxes */}
               <div className="border-t border-border pt-4 space-y-2.5">
-                <h4 className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                <button
+                  type="button"
+                  aria-expanded={expandedFilterSections.brands}
+                  aria-controls="brand-filter-options"
+                  onClick={() => toggleFilterSection("brands")}
+                  className="flex w-full items-center justify-between text-left font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground"
+                >
                   Manufacturer / Brand
-                </h4>
-                <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-                  {allBrands.map((brand) => (
-                    <label
-                      key={brand}
-                      className="flex items-center justify-between text-xs text-foreground hover:bg-secondary/40 px-2 py-1.5 rounded-lg cursor-pointer transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={selectedBrands.includes(brand)}
-                          onChange={() => toggleBrand(brand)}
-                          className="rounded border-border text-primary focus:ring-primary h-3.5 w-3.5"
-                        />
-                        <span className="font-medium">{brand}</span>
-                      </div>
-                      <span suppressHydrationWarning className="font-mono text-[11px] text-muted-foreground">
-                        {isMounted ? products.filter((p) => p.brand === brand).length : ""}
-                      </span>
-                    </label>
-                  ))}
-                </div>
+                  <ChevronDown className={`h-3.5 w-3.5 transition-transform ${expandedFilterSections.brands ? "rotate-180" : ""}`} />
+                </button>
+                {expandedFilterSections.brands && (
+                  <div id="brand-filter-options" className="space-y-1.5">
+                    {allBrands.map((brand) => (
+                      <label
+                        key={brand}
+                        className="flex items-center justify-between text-xs text-foreground hover:bg-secondary/40 px-2 py-1.5 rounded-lg cursor-pointer transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={selectedBrands.includes(brand)}
+                            onChange={() => toggleBrand(brand)}
+                            className="rounded border-border text-primary focus:ring-primary h-3.5 w-3.5"
+                          />
+                          <span className="font-medium">{brand}</span>
+                        </div>
+                        <span suppressHydrationWarning className="font-mono text-[11px] text-muted-foreground">
+                          {isMounted ? products.filter((p) => p.brand === brand).length : ""}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Lens Mount Filter */}
               <div className="border-t border-border pt-4 space-y-2.5">
-                <h4 className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                <button
+                  type="button"
+                  aria-expanded={expandedFilterSections.mounts}
+                  aria-controls="mount-filter-options"
+                  onClick={() => toggleFilterSection("mounts")}
+                  className="flex w-full items-center justify-between text-left font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground"
+                >
                   Mount / Standard
-                </h4>
-                <div className="space-y-1.5">
-                  {allMounts.map((mount) => (
-                    <label
-                      key={mount}
-                      className="flex items-center gap-2 text-xs text-foreground hover:bg-secondary/40 px-2 py-1.5 rounded-lg cursor-pointer transition-colors"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedMounts.includes(mount)}
-                        onChange={() => toggleMount(mount)}
-                        className="rounded border-border text-primary focus:ring-primary h-3.5 w-3.5"
-                      />
-                      <span>{mount}</span>
-                    </label>
-                  ))}
-                </div>
+                  <ChevronDown className={`h-3.5 w-3.5 transition-transform ${expandedFilterSections.mounts ? "rotate-180" : ""}`} />
+                </button>
+                {expandedFilterSections.mounts && (
+                  <div id="mount-filter-options" className="space-y-1.5">
+                    {allMounts.map((mount) => (
+                      <label
+                        key={mount}
+                        className="flex items-center gap-2 text-xs text-foreground hover:bg-secondary/40 px-2 py-1.5 rounded-lg cursor-pointer transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedMounts.includes(mount)}
+                          onChange={() => toggleMount(mount)}
+                          className="rounded border-border text-primary focus:ring-primary h-3.5 w-3.5"
+                        />
+                        <span>{mount}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Toggles: In-Stock Only & On Sale */}
               <div className="border-t border-border pt-4 space-y-2">
-                <label className="flex items-center justify-between text-xs cursor-pointer py-1">
-                  <span className="font-medium text-foreground">In-Stock Gear Only</span>
-                  <input
-                    type="checkbox"
-                    checked={inStockOnly}
-                    onChange={(e) => setInStockOnly(e.target.checked)}
-                    className="rounded border-border text-primary focus:ring-primary h-4 w-4"
-                  />
-                </label>
-                <label className="flex items-center justify-between text-xs cursor-pointer py-1">
-                  <span className="font-medium text-foreground">Discounted Offers Only</span>
-                  <input
-                    type="checkbox"
-                    checked={onSaleOnly}
-                    onChange={(e) => setOnSaleOnly(e.target.checked)}
-                    className="rounded border-border text-primary focus:ring-primary h-4 w-4"
-                  />
-                </label>
+                <button
+                  type="button"
+                  aria-expanded={expandedFilterSections.availability}
+                  aria-controls="availability-filter-options"
+                  onClick={() => toggleFilterSection("availability")}
+                  className="flex w-full items-center justify-between text-left font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground"
+                >
+                  Availability & Offers
+                  <ChevronDown className={`h-3.5 w-3.5 transition-transform ${expandedFilterSections.availability ? "rotate-180" : ""}`} />
+                </button>
+                {expandedFilterSections.availability && (
+                  <div id="availability-filter-options">
+                    <label className="flex items-center justify-between text-xs cursor-pointer py-1">
+                      <span className="font-medium text-foreground">In-Stock Gear Only</span>
+                      <input
+                        type="checkbox"
+                        checked={inStockOnly}
+                        onChange={(e) => setInStockOnly(e.target.checked)}
+                        className="rounded border-border text-primary focus:ring-primary h-4 w-4"
+                      />
+                    </label>
+                    <label className="flex items-center justify-between text-xs cursor-pointer py-1">
+                      <span className="font-medium text-foreground">Discounted Offers Only</span>
+                      <input
+                        type="checkbox"
+                        checked={onSaleOnly}
+                        onChange={(e) => setOnSaleOnly(e.target.checked)}
+                        className="rounded border-border text-primary focus:ring-primary h-4 w-4"
+                      />
+                    </label>
+                  </div>
+                )}
               </div>
             </div>
           </aside>
@@ -562,7 +614,7 @@ function StoreContent() {
                 {/* Categories */}
                 <div className="space-y-1.5">
                   <p className="text-[11px] font-mono font-bold uppercase text-muted-foreground">Department</p>
-                  <div className="grid grid-cols-2 gap-1.5 max-h-60 overflow-y-auto pr-1">
+                  <div className="grid grid-cols-2 gap-1.5 max-h-60 overflow-y-auto pr-1 sidebar-scrollbar">
                     {categories.map((cat) => (
                       <button
                         key={cat.id}
