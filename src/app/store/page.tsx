@@ -7,6 +7,7 @@ import { Nav } from "@/components/hero/nav";
 import { Footer } from "@/components/footer/footer";
 import { ProductCategory } from "@/data/products";
 import { ProductCard } from "@/components/products/product-card";
+import { BrandMarquee } from "@/components/brands/brand-marquee";
 import { useStore } from "@/context/store-context";
 import {
   Search,
@@ -35,6 +36,7 @@ import { getProductImage } from "@/lib/product-image";
 function StoreContent() {
   const {
     products,
+    brands: managedBrands,
     formatPrice,
     addToCart,
     toggleWishlist,
@@ -119,6 +121,31 @@ function StoreContent() {
     return Array.from(new Set(products.map((p) => p.brand))).filter(Boolean).sort();
   }, [products]);
 
+  const managedBrandLogos = useMemo(
+    () => new Map(managedBrands.filter((brand) => brand.logoImage).map((brand) => [brand.name.trim().toLowerCase(), brand.logoImage!])),
+    [managedBrands]
+  );
+
+  const categoryBrands = useMemo(() => {
+    const categoryProducts = products.filter((product) => {
+      if (selectedCategory === "all") return true;
+      if (selectedCategory === "deals") {
+        return Boolean(product.originalPrice && product.originalPrice > product.price) || Boolean(product.badge?.includes("SAVE"));
+      }
+      return product.category === selectedCategory;
+    });
+
+    return Array.from(
+      new Map(categoryProducts.filter((product) => product.brand).map((product) => [product.brand.toLowerCase(), product.brand])).values()
+    )
+      .sort((first, second) => first.localeCompare(second))
+      .map((brand) => ({
+        name: brand,
+        search: brand,
+        logo: managedBrandLogos.get(brand.trim().toLowerCase()),
+      }));
+  }, [products, selectedCategory, managedBrandLogos]);
+
   const allMounts = ["Sony E", "Canon RF", "L-Mount", "Fujifilm X", "Universal"];
 
   const toggleBrand = (brand: string) => {
@@ -162,11 +189,13 @@ function StoreContent() {
 
         // Brand
         if (selectedBrands.length > 0) {
-          const hasBrand = selectedBrands.some(
-            (b) =>
-              product.brand?.toLowerCase() === b.toLowerCase() ||
-              product.name?.toLowerCase().includes(b.toLowerCase())
-          );
+          const hasBrand = selectedBrands.some((selectedBrand) => {
+            const normalizedSelected = selectedBrand.toLowerCase().replace(/[^a-z0-9]/g, "");
+            const normalizedProductBrand = product.brand?.toLowerCase().replace(/[^a-z0-9]/g, "") ?? "";
+            const brandMatches = normalizedProductBrand === normalizedSelected ||
+              (normalizedProductBrand.length >= 3 && normalizedSelected.startsWith(normalizedProductBrand));
+            return brandMatches || product.name?.toLowerCase().includes(selectedBrand.trim().toLowerCase());
+          });
           if (!hasBrand) return false;
         }
 
@@ -309,6 +338,15 @@ function StoreContent() {
 
       {/* Main Store Layout (Sidebar + Catalog Grid) */}
       <div className="mx-auto max-w-7xl px-6 py-6 md:py-8 flex-1 w-full">
+        {categoryBrands.length > 0 && (
+          <div className="mb-5">
+            <BrandMarquee
+              brands={categoryBrands}
+              selectedBrands={selectedBrands}
+              onBrandClick={toggleBrand}
+            />
+          </div>
+        )}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Desktop Sidebar Filters (3.5 Cols) */}
           <aside className="hidden lg:block lg:col-span-3 space-y-6 sticky top-24 max-h-[calc(100vh-6rem)] overflow-y-auto sidebar-scrollbar pr-1">
