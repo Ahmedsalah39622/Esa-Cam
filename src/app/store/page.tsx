@@ -344,6 +344,7 @@ function StoreContent() {
               brands={categoryBrands}
               selectedBrands={selectedBrands}
               onBrandClick={toggleBrand}
+              animated
             />
           </div>
         )}
@@ -413,7 +414,7 @@ function StoreContent() {
                   <ChevronDown className={`h-3.5 w-3.5 transition-transform ${expandedFilterSections.brands ? "rotate-180" : ""}`} />
                 </button>
                 {expandedFilterSections.brands && (
-                  <div id="brand-filter-options" className="space-y-1.5">
+                  <div id="brand-filter-options" className="max-h-56 space-y-1.5 overflow-y-auto pr-1 sidebar-scrollbar">
                     {allBrands.map((brand) => (
                       <label
                         key={brand}

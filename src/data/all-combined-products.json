@@ -1,39 +1,5 @@
 [
   {
-    "id": "gear-1790356139554",
-    "name": "TEST CAMERA 1",
-    "brand": "Sony",
-    "category": "cameras",
-    "price": 0.1,
-    "originalPrice": 0.1,
-    "rating": 5,
-    "reviewsCount": 0,
-    "image": "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1000&q=80",
-    "images": [
-      "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1000&q=80"
-    ],
-    "badge": "New Arrival",
-    "stockStatus": "in-stock",
-    "stockCount": 5,
-    "shortDescription": "High performance cinema photography equipment.",
-    "specs": [
-      {
-        "label": "Mount",
-        "value": "Universal"
-      }
-    ],
-    "features": [
-      "Official Distributor Warranty",
-      "Factory Sealed & Calibrated",
-      "Includes VIP Fragile Express Delivery"
-    ],
-    "inTheBox": [
-      "Main Unit",
-      "Official Warranty Card",
-      "Documentation"
-    ]
-  },
-  {
     "id": "esa-637",
     "name": "Sony FX3 Full-Frame Cinema Camera",
     "brand": "Sony",
