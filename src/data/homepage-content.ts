@@ -229,9 +229,9 @@ export const DEFAULT_HOMEPAGE_CONTENT: HomepageContentState = {
   },
   editorial: {
     headerTag: "ESA CAM STORE • YOUR CREATIVE PARTNER IN EGYPT",
-    title: "MEET ESA CAM STORE",
+    title: "THE GEAR BEHIND EVERY GREAT SHOT",
     description:
-      "ESA CAM Store is a Cairo destination for cameras, lenses, lighting, audio and filmmaking gear. Visit us for help finding the right equipment, or shop online with delivery available across Egypt.",
+      "Explore professional cameras, cinema optics, lighting and audio from trusted global brands. Visit ESA CAM in Cairo for expert guidance, official support and delivery across Egypt.",
     image:
       "https://images.unsplash.com/photo-1533563906091-fdfdffc3e3c4?auto=format&fit=crop&w=1200&q=85",
     tags: ["Pro Cameras", "Cinema Optics", "Lighting & Audio", "Cairo, Egypt"],

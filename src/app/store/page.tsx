@@ -62,9 +62,9 @@ function StoreContent() {
   const [isMounted, setIsMounted] = useState(false);
   const [expandedFilterSections, setExpandedFilterSections] = useState({
     department: true,
-    brands: true,
-    mounts: true,
-    availability: true,
+    brands: false,
+    mounts: false,
+    availability: false,
   });
 
   useEffect(() => {
@@ -349,7 +349,7 @@ function StoreContent() {
         )}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Desktop Sidebar Filters (3.5 Cols) */}
-          <aside className="hidden lg:block lg:col-span-3 space-y-6 sticky top-24 max-h-[calc(100vh-6rem)] overflow-y-auto sidebar-scrollbar pr-1">
+          <aside data-lenis-prevent className="hidden lg:block lg:col-span-3 space-y-6 sticky top-24 max-h-[calc(100vh-6rem)] overflow-y-auto sidebar-scrollbar pr-1">
             <div className="bg-card border border-border rounded-3xl p-6 shadow-xs space-y-6">
               {/* Filter Header & Reset */}
               <div className="flex items-center justify-between border-b border-border pb-4">
@@ -652,7 +652,7 @@ function StoreContent() {
                 {/* Categories */}
                 <div className="space-y-1.5">
                   <p className="text-[11px] font-mono font-bold uppercase text-muted-foreground">Department</p>
-                  <div className="grid grid-cols-2 gap-1.5 max-h-60 overflow-y-auto pr-1 sidebar-scrollbar">
+                  <div className="grid grid-cols-2 gap-1.5 max-h-48 overflow-y-auto pr-1 sidebar-scrollbar">
                     {categories.map((cat) => (
                       <button
                         key={cat.id}
