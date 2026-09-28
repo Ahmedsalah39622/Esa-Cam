@@ -597,37 +597,49 @@ function StoreContent() {
                   {selectedCategory !== "all" && (
                     <Badge variant="secondary" className="text-[11px] gap-1 capitalize">
                       {categories.find((c) => c.id === selectedCategory)?.label || selectedCategory}
-                      <X className="w-3 h-3 cursor-pointer" onClick={() => handleSelectCategory("all")} />
+                      <button type="button" aria-label="Remove category filter" onClick={() => handleSelectCategory("all")} className="rounded-sm hover:bg-background/60">
+                        <X className="w-3 h-3" />
+                      </button>
                     </Badge>
                   )}
                   {selectedBrands.map((b) => (
                     <Badge key={b} variant="secondary" className="text-[11px] gap-1">
                       {b}
-                      <X className="w-3 h-3 cursor-pointer" onClick={() => toggleBrand(b)} />
+                      <button type="button" aria-label={`Remove ${b} brand filter`} onClick={() => toggleBrand(b)} className="rounded-sm hover:bg-background/60">
+                        <X className="w-3 h-3" />
+                      </button>
                     </Badge>
                   ))}
                   {selectedMounts.map((m) => (
                     <Badge key={m} variant="secondary" className="text-[11px] gap-1">
                       {m}
-                      <X className="w-3 h-3 cursor-pointer" onClick={() => toggleMount(m)} />
+                      <button type="button" aria-label={`Remove ${m} mount filter`} onClick={() => toggleMount(m)} className="rounded-sm hover:bg-background/60">
+                        <X className="w-3 h-3" />
+                      </button>
                     </Badge>
                   ))}
                   {inStockOnly && (
                     <Badge variant="secondary" className="text-[11px] gap-1">
                       In-Stock Only
-                      <X className="w-3 h-3 cursor-pointer" onClick={() => setInStockOnly(false)} />
+                      <button type="button" aria-label="Remove stock filter" onClick={() => setInStockOnly(false)} className="rounded-sm hover:bg-background/60">
+                        <X className="w-3 h-3" />
+                      </button>
                     </Badge>
                   )}
                   {onSaleOnly && (
                     <Badge variant="secondary" className="text-[11px] gap-1">
                       On Sale
-                      <X className="w-3 h-3 cursor-pointer" onClick={() => setOnSaleOnly(false)} />
+                      <button type="button" aria-label="Remove sale filter" onClick={() => setOnSaleOnly(false)} className="rounded-sm hover:bg-background/60">
+                        <X className="w-3 h-3" />
+                      </button>
                     </Badge>
                   )}
                   {searchQuery && (
                     <Badge variant="secondary" className="text-[11px] gap-1">
                       &quot;{searchQuery}&quot;
-                      <X className="w-3 h-3 cursor-pointer" onClick={() => setSearchQuery("")} />
+                      <button type="button" aria-label="Clear search filter" onClick={() => setSearchQuery("")} className="rounded-sm hover:bg-background/60">
+                        <X className="w-3 h-3" />
+                      </button>
                     </Badge>
                   )}
                   <button
