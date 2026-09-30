@@ -142,7 +142,6 @@ export default function OffersAdminPage() {
       image: images[0] || "",
       images,
       imageUrls: images.filter((image) => /^https?:\/\//i.test(image)).join("\n"),
-      imageUrls: images.filter((image) => /^https?:\/\//i.test(image)).join("\n"),
       badge: offer.badge || "",
       stockStatus: offer.stockStatus,
       shortDescription: offer.shortDescription || "",
