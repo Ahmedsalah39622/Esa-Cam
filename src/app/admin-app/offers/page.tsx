@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ImagePlus, PackagePlus, Save, Trash2, X } from "lucide-react";
+import { ArrowLeft, ImagePlus, PackagePlus, Pencil, Save, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Product, OFFERS } from "@/data/products";
 import { CURRENCIES, useStore } from "@/context/store-context";
@@ -20,6 +20,8 @@ const defaultForm = {
   price: "",
   originalPrice: "",
   image: "",
+  images: [] as string[],
+  imageUrls: "",
   badge: "",
   stockStatus: "in-stock" as Product["stockStatus"],
   shortDescription: "",
@@ -42,6 +44,12 @@ function normalizeOffer(form: typeof defaultForm, selectedProducts: Product[]): 
   const computedBadge = form.badge || (original && original > price ? `SAVE ${Math.round(((original - price) / original) * 100)}%` : "HOT DEAL");
   const firstProduct = selectedProducts[0];
   const brands = Array.from(new Set(selectedProducts.map((product) => product.brand)));
+  const defaultImage = firstProduct?.image || "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1000&q=80";
+  const imageUrls = form.imageUrls
+    .split("\n")
+    .map((image) => image.trim())
+    .filter((image) => /^https?:\/\//i.test(image));
+  const images = Array.from(new Set([...form.images, ...imageUrls, form.image].filter(Boolean))).slice(0, 5);
 
   return {
     id: form.id || `offer-${Date.now()}`,
@@ -52,7 +60,8 @@ function normalizeOffer(form: typeof defaultForm, selectedProducts: Product[]): 
     originalPrice: original,
     rating: 4.8,
     reviewsCount: 0,
-    image: form.image || firstProduct?.image || "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1000&q=80",
+    image: images[0] || defaultImage,
+    images: images.length ? images : firstProduct?.images?.length ? firstProduct.images : [defaultImage],
     badge: computedBadge,
     isBestSeller: true,
     stockStatus: form.stockStatus || "in-stock",
@@ -118,21 +127,52 @@ export default function OffersAdminPage() {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
+  const handleEdit = (offer: Product) => {
+    const bundleProductIds = offer.bundleProductIds || [];
+    const bundleNames = new Set(
+      inventoryProducts.filter((product) => bundleProductIds.includes(product.id)).map((product) => product.name)
+    );
+    const images = offer.images?.length ? offer.images.slice(0, 5) : offer.image ? [offer.image] : [];
+    setForm({
+      id: offer.id,
+      name: offer.name,
+      brand: offer.brand,
+      price: String(Math.round(offer.price * USD_TO_EGP)),
+      originalPrice: offer.originalPrice ? String(Math.round(offer.originalPrice * USD_TO_EGP)) : "",
+      image: images[0] || "",
+      images,
+      imageUrls: images.filter((image) => /^https?:\/\//i.test(image)).join("\n"),
+      imageUrls: images.filter((image) => /^https?:\/\//i.test(image)).join("\n"),
+      badge: offer.badge || "",
+      stockStatus: offer.stockStatus,
+      shortDescription: offer.shortDescription || "",
+      itemsText: (offer.items || []).filter((item) => !bundleNames.has(item)).join("\n"),
+    });
+    setSelectedProductIds(bundleProductIds);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+    const files = Array.from(event.target.files || []);
     event.target.value = "";
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      toast.error("اختار ملف صورة صالح");
+    if (files.length === 0) return;
+
+    const remainingSlots = Math.max(0, 5 - form.images.length);
+    if (remainingSlots === 0) {
+      toast.error("تقدر تضيف لحد 5 صور للعرض");
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("حجم الصورة لازم يكون أقل من 10 ميجابايت");
+
+    const validFiles = files.filter((file) => file.type.startsWith("image/") && file.size <= 10 * 1024 * 1024);
+    if (validFiles.length !== files.length) {
+      toast.error("اتجاهلنا الملفات غير الصالحة أو اللي أكبر من 10 ميجابايت");
+    }
+    if (validFiles.length === 0) {
       return;
     }
 
     try {
-      const imageData = await new Promise<string>((resolve, reject) => {
+      const uploadedImages = await Promise.all(validFiles.slice(0, remainingSlots).map((file) => new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onerror = () => reject(new Error("Could not read image"));
         reader.onload = () => {
@@ -154,9 +194,12 @@ export default function OffersAdminPage() {
           image.src = String(reader.result);
         };
         reader.readAsDataURL(file);
+      })));
+      setForm((prev) => {
+        const images = [...prev.images, ...uploadedImages].slice(0, 5);
+        return { ...prev, images, image: prev.image || images[0] || "" };
       });
-      handleChange("image", imageData);
-      toast.success("تم رفع الصورة وتجهيزها");
+      toast.success(`تم تجهيز ${uploadedImages.length} صور`);
     } catch {
       toast.error("تعذر قراءة الصورة، جرّب ملفًا آخر");
     }
@@ -253,7 +296,7 @@ export default function OffersAdminPage() {
             </div>
             <div>
               <p className="text-xs text-neutral-400">Create Offer</p>
-              <h2 className="text-xl font-black">إضافة باقة جديدة</h2>
+              <h2 className="text-xl font-black">{form.id ? "تعديل العرض" : "إضافة باقة جديدة"}</h2>
             </div>
           </div>
 
@@ -280,21 +323,43 @@ export default function OffersAdminPage() {
 
             <div className="space-y-2 text-sm text-neutral-300 sm:col-span-2">
               <label htmlFor="offer-image-url">صورة العرض</label>
-              <input id="offer-image-url" value={form.image.startsWith("data:") ? "" : form.image} onChange={(e) => handleChange("image", e.target.value)} className="w-full rounded-xl border border-neutral-700 bg-[#0d0d0f] px-3 py-2.5 text-white outline-none focus:border-[#FFE600]" placeholder="رابط الصورة (اختياري)" />
+              <input id="offer-image-url" value={form.image.startsWith("data:") ? "" : form.image} onChange={(event) => {
+                const image = event.target.value;
+                setForm((prev) => ({
+                  ...prev,
+                  image,
+                  images: image ? [image, ...prev.images.filter((item) => item !== image)].slice(0, 5) : prev.images.filter((item) => item !== prev.image),
+                }));
+              }} className="w-full rounded-xl border border-neutral-700 bg-[#0d0d0f] px-3 py-2.5 text-white outline-none focus:border-[#FFE600]" placeholder="رابط الصورة (اختياري)" />
               <div className="flex flex-wrap items-center gap-3">
                 <label htmlFor="offer-image-upload" className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-700 bg-neutral-900 px-3 py-2 text-xs font-bold text-neutral-200 transition hover:border-[#FFE600]">
                   <ImagePlus className="h-4 w-4" />
-                  رفع صورة من الجهاز
+                  رفع صور من الجهاز
                 </label>
-                <input id="offer-image-upload" type="file" accept="image/*" onChange={handleImageUpload} className="sr-only" />
-                {form.image.startsWith("data:") && (
-                  <button type="button" onClick={() => handleChange("image", "")} className="inline-flex items-center gap-1 text-xs text-red-400 hover:text-red-300">
-                    <X className="h-3.5 w-3.5" />
-                    إزالة الصورة
-                  </button>
-                )}
+                <input id="offer-image-upload" type="file" accept="image/*" multiple onChange={handleImageUpload} className="sr-only" />
+                <span className="text-xs text-neutral-500">{form.images.length}/5 صور · أول صورة هي الرئيسية</span>
               </div>
-              {form.image && <img src={form.image} alt="معاينة صورة العرض" className="h-24 w-24 rounded-xl border border-neutral-700 object-cover" />}
+              {form.images.length > 0 && (
+                <div className="flex flex-wrap gap-3 pt-1">
+                  {form.images.map((image, index) => (
+                    <div key={`${index}-${image.slice(0, 32)}`} className="relative h-24 w-24 overflow-hidden rounded-xl border border-neutral-700">
+                      <img src={image} alt={`صورة العرض ${index + 1}`} className="h-full w-full object-cover" />
+                      {index === 0 && <span className="absolute inset-x-0 bottom-0 bg-black/70 px-1 py-0.5 text-center text-[9px] font-bold">رئيسية</span>}
+                      <button
+                        type="button"
+                        onClick={() => setForm((prev) => {
+                          const images = prev.images.filter((_, imageIndex) => imageIndex !== index);
+                          return { ...prev, images, image: prev.image === image ? images[0] || "" : prev.image };
+                        })}
+                        aria-label={`إزالة الصورة ${index + 1}`}
+                        className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/75 text-white hover:bg-red-600"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <label className="space-y-2 text-sm text-neutral-300">
@@ -349,10 +414,23 @@ export default function OffersAdminPage() {
             </label>
           </div>
 
-          <button onClick={handleSave} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#FFE600] px-4 py-3 text-sm font-black text-black transition hover:bg-[#ffe600]/90">
-            <Save className="h-4 w-4" />
-            حفظ العرض
-          </button>
+          <div className="flex gap-3">
+            <button onClick={handleSave} className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-[#FFE600] px-4 py-3 text-sm font-black text-black transition hover:bg-[#ffe600]/90">
+              <Save className="h-4 w-4" />
+              {form.id ? "حفظ التعديلات" : "حفظ العرض"}
+            </button>
+            {form.id && (
+              <button
+                onClick={() => {
+                  setForm(defaultForm);
+                  setSelectedProductIds([]);
+                }}
+                className="rounded-2xl border border-neutral-700 px-4 py-3 text-sm font-bold text-neutral-300 hover:bg-neutral-800"
+              >
+                إلغاء التعديل
+              </button>
+            )}
+          </div>
         </section>
 
         <aside className="space-y-5 rounded-3xl border border-neutral-800 bg-[#121214] p-5">
@@ -379,9 +457,14 @@ export default function OffersAdminPage() {
                     <p className="text-xs text-neutral-400">{offer.brand}</p>
                   </div>
                   {!OFFERS.some((defaultOffer) => defaultOffer.id === offer.id) && (
-                    <button onClick={() => handleDelete(offer.id)} className="rounded-xl border border-red-500/40 bg-red-500/5 p-2 text-red-400 hover:bg-red-500/10">
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => handleEdit(offer)} title="تعديل العرض" aria-label={`تعديل ${offer.name}`} className="rounded-xl border border-neutral-700 bg-neutral-900 p-2 text-neutral-300 hover:border-[#FFE600] hover:text-[#FFE600]">
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button onClick={() => handleDelete(offer.id)} title="حذف العرض" aria-label={`حذف ${offer.name}`} className="rounded-xl border border-red-500/40 bg-red-500/5 p-2 text-red-400 hover:bg-red-500/10">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   )}
                 </div>
 

@@ -66,6 +66,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: "A name, valid price, and at least two products are required" }, { status: 400 });
     }
 
+    const images = Array.isArray(payload.images)
+      ? payload.images.filter((image): image is string => typeof image === "string" && image.trim().length > 0).slice(0, 5)
+      : [];
+    const defaultImage = "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1000&q=80";
+    const primaryImage = images[0] || payload.image || defaultImage;
+
     const newOffer: Product = {
       id: payload.id || `offer-${Date.now()}`,
       name: payload.name.trim(),
@@ -75,7 +81,8 @@ export async function POST(request: NextRequest) {
       originalPrice: payload.originalPrice ? Number(payload.originalPrice) : undefined,
       rating: Number(payload.rating ?? 4.8),
       reviewsCount: Number(payload.reviewsCount ?? 0),
-      image: payload.image || "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1000&q=80",
+      image: primaryImage,
+      images: images.length > 0 ? images : [primaryImage],
       badge: payload.badge || (payload.originalPrice && payload.price ? `SAVE ${Math.round(((Number(payload.originalPrice) - Number(payload.price)) / Number(payload.originalPrice)) * 100)}%` : "HOT DEAL"),
       isBestSeller: Boolean(payload.isBestSeller),
       isSale: true,
