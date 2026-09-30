@@ -151,6 +151,7 @@ export default function ProductDetailPage() {
   };
 
   const handleGalleryPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "touch") return;
     if (!event.currentTarget) return;
     dragStartRef.current = {
       x: event.clientX,
@@ -162,7 +163,42 @@ export default function ProductDetailPage() {
     event.currentTarget.setPointerCapture(event.pointerId);
   };
 
+  const handleGalleryTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    const touch = event.touches[0];
+    if (!touch) return;
+
+    dragStartRef.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+      panX: pan.x,
+      panY: pan.y,
+    };
+    dragDeltaXRef.current = 0;
+  };
+
+  const handleGalleryTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
+    if (!dragStartRef.current) return;
+
+    const touch = event.touches[0];
+    if (!touch) return;
+
+    const deltaX = touch.clientX - dragStartRef.current.x;
+    const deltaY = touch.clientY - dragStartRef.current.y;
+    dragDeltaXRef.current = deltaX;
+
+    if (zoomLevel > 1) {
+      setPan({
+        x: Math.max(Math.min(dragStartRef.current.panX + deltaX / 1.5, 120), -120),
+        y: Math.max(Math.min(dragStartRef.current.panY + deltaY / 1.5, 120), -120),
+      });
+      return;
+    }
+
+    setDragOffsetX(deltaX);
+  };
+
   const handleGalleryPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "touch") return;
     if (!dragStartRef.current) return;
 
     const deltaX = event.clientX - dragStartRef.current.x;
@@ -249,8 +285,11 @@ export default function ProductDetailPage() {
                 onPointerDown={handleGalleryPointerDown}
                 onPointerMove={handleGalleryPointerMove}
                 onPointerUp={handleGalleryPointerUp}
-                onPointerLeave={handleGalleryPointerUp}
                 onPointerCancel={handleGalleryPointerUp}
+                onTouchStart={handleGalleryTouchStart}
+                onTouchMove={handleGalleryTouchMove}
+                onTouchEnd={handleGalleryPointerUp}
+                onTouchCancel={handleGalleryPointerUp}
                 onWheel={handleWheelZoom}
                 onDoubleClick={() => handleZoomChange(zoomLevel > 1 ? 1 : 2)}
                 style={{ touchAction: "pan-y" }}
