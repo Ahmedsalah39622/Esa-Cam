@@ -437,6 +437,24 @@ export default function ProductDetailPage() {
                 {product.shortDescription}
               </p>
 
+              {product.items && product.items.length > 0 && (
+                <div className="rounded-xl border border-border bg-secondary/30 p-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-2">
+                    Included in this bundle
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {product.items.map((item, idx) => (
+                      <span
+                        key={`${item}-${idx}`}
+                        className="rounded-full border border-border bg-card px-2.5 py-1 text-[11px] font-medium text-foreground"
+                      >
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Price */}
               <div className="flex items-baseline gap-3 font-mono">
                 <span className="text-3xl sm:text-4xl font-black text-foreground">

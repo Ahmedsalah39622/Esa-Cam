@@ -107,7 +107,7 @@ function StoreContent() {
     { id: "accessories", label: "Accessories", count: products.filter((p) => p.category === "accessories").length },
     { id: "audio", label: "Audio & Video", count: products.filter((p) => p.category === "audio").length },
     { id: "dental", label: "Dental Equipments", count: products.filter((p) => p.category === "dental").length },
-    { id: "deals", label: "Deals", count: products.filter((p) => Boolean(p.originalPrice && p.originalPrice > p.price) || Boolean(p.badge?.includes("SAVE"))).length },
+    { id: "deals", label: "Deals", count: products.filter((p) => p.category === "deals" || Boolean(p.originalPrice && p.originalPrice > p.price) || Boolean(p.badge?.includes("SAVE"))).length },
     { id: "bags", label: "Bags & Straps", count: products.filter((p) => p.category === "bags").length },
     { id: "gimbals", label: "Stabilizer & Gimbal", count: products.filter((p) => p.category === "gimbals").length },
     { id: "flashes", label: "Flashes", count: products.filter((p) => p.category === "flashes").length },
@@ -130,7 +130,7 @@ function StoreContent() {
     const categoryProducts = products.filter((product) => {
       if (selectedCategory === "all") return true;
       if (selectedCategory === "deals") {
-        return Boolean(product.originalPrice && product.originalPrice > product.price) || Boolean(product.badge?.includes("SAVE"));
+        return product.category === "deals" || Boolean(product.originalPrice && product.originalPrice > product.price) || Boolean(product.badge?.includes("SAVE"));
       }
       return product.category === selectedCategory;
     });
@@ -179,7 +179,7 @@ function StoreContent() {
       .filter((product) => {
         // Category / Deals
         if (selectedCategory === "deals") {
-          const isSaleItem = Boolean(product.originalPrice && product.originalPrice > product.price) || Boolean(product.badge?.includes("SAVE"));
+          const isSaleItem = product.category === "deals" || Boolean(product.originalPrice && product.originalPrice > product.price) || Boolean(product.badge?.includes("SAVE"));
           if (!isSaleItem) return false;
         } else if (selectedCategory !== "all") {
           if (product.category !== selectedCategory) {

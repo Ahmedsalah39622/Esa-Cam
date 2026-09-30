@@ -373,6 +373,13 @@ export default function AdminMobileAppPage() {
           </div>
         </div>
 
+        <Link
+          href="/admin-app/offers"
+          className="block rounded-2xl border border-[#FFE600]/30 bg-[#FFE600]/10 px-4 py-3 text-sm font-bold text-[#FFE600] transition hover:bg-[#FFE600]/15"
+        >
+          إدارة العروض والباكات
+        </Link>
+
         {/* Search Bar */}
         <div className="relative">
           <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500" />

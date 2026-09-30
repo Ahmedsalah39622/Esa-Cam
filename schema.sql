@@ -62,6 +62,13 @@ CREATE TABLE IF NOT EXISTS products (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 3.1 جدول العروض والباقات (Offers)
+CREATE TABLE IF NOT EXISTS admin_catalog_offers (
+    id VARCHAR(100) PRIMARY KEY,
+    offer_json JSON NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- 4. جدول البراندات في شريط الـ Marquee (Brands)
 CREATE TABLE IF NOT EXISTS brands (
     id VARCHAR(100) PRIMARY KEY,

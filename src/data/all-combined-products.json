@@ -1,5 +1,41 @@
 [
   {
+    "id": "gear-1790790828226",
+    "name": "SONY A7I11x",
+    "brand": "Sony",
+    "category": "cameras",
+    "price": 1425.74,
+    "originalPrice": 1425.74,
+    "rating": 5,
+    "reviewsCount": 0,
+    "image": "https://camerashop.com.eg/wp-content/uploads/2022/04/Alpha-7-III-Full-frame-Interchangeable-Lens-Camera-24.2MP-10FPS-4K-30p-front-.webp",
+    "images": [
+      "https://camerashop.com.eg/wp-content/uploads/2022/04/Alpha-7-III-Full-frame-Interchangeable-Lens-Camera-24.2MP-10FPS-4K-30p-front-.webp",
+      "https://camerashop.com.eg/wp-content/uploads/2022/04/Alpha-7-III-Full-frame-Interchangeable-Lens-Camera-24.2MP-10FPS-4K-30p-plan--300x300.webp",
+      "https://camerashop.com.eg/wp-content/uploads/2022/04/Alpha-7-III-Full-frame-Interchangeable-Lens-Camera-24.2MP-10FPS-4K-30p-back--300x300.webp"
+    ],
+    "badge": "New Arrival",
+    "stockStatus": "in-stock",
+    "stockCount": 5,
+    "shortDescription": "High performance cinema photography equipment.",
+    "specs": [
+      {
+        "label": "Mount",
+        "value": "Sony E"
+      }
+    ],
+    "features": [
+      "Official Distributor Warranty",
+      "Factory Sealed & Calibrated",
+      "Includes VIP Fragile Express Delivery"
+    ],
+    "inTheBox": [
+      "Main Unit",
+      "Official Warranty Card",
+      "Documentation"
+    ]
+  },
+  {
     "id": "esa-637",
     "name": "Sony FX3 Full-Frame Cinema Camera",
     "brand": "Sony",

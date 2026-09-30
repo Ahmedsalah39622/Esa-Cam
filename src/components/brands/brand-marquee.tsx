@@ -64,6 +64,7 @@ export function BrandMarquee({
               <div key={copy} className="flex shrink-0 gap-1 sm:gap-3" aria-hidden={copy === 1}>
                 {brandSequence.map((brand, index) => {
                   const isRepeated = index >= visibleBrands.length;
+                  const needsDarkLogoSurface = brand.name === "Neewer" || brand.name === "Sony";
                   return (
                     <Link
                       key={`${copy}-${brand.name}-${index}`}
@@ -79,7 +80,7 @@ export function BrandMarquee({
                         selectedBrands.includes(brand.search) ? "rounded-2xl bg-secondary ring-2 ring-foreground" : ""
                       }`}
                     >
-                      <span className="flex h-[76px] w-full items-center justify-center sm:h-[88px]">
+                      <span className={`flex h-[76px] w-full items-center justify-center sm:h-[88px] ${needsDarkLogoSurface ? "rounded-lg bg-[#111111] px-3" : ""}`}>
                         {logoByBrand(brand) ? (
                           <img
                             src={logoByBrand(brand)}

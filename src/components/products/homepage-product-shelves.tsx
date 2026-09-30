@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { motion } from "motion/react";
 import { Product, PRODUCTS } from "@/data/products";
@@ -11,10 +12,11 @@ interface ProductShelfProps {
   title: string;
   href: string;
   products: Product[];
+  emptyMessage?: string;
 }
 
-function ProductShelf({ title, href, products }: ProductShelfProps) {
-  if (products.length === 0) return null;
+function ProductShelf({ title, href, products, emptyMessage }: ProductShelfProps) {
+  if (products.length === 0 && !emptyMessage) return null;
 
   return (
     <section className="bg-white py-10 sm:py-14">
@@ -25,7 +27,7 @@ function ProductShelf({ title, href, products }: ProductShelfProps) {
             View all <ArrowRight aria-hidden="true" className="h-4 w-4" />
           </Link>
         </div>
-        <motion.div
+        {products.length > 0 ? <motion.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.12 }}
@@ -42,9 +44,47 @@ function ProductShelf({ title, href, products }: ProductShelfProps) {
               <ProductCard product={product} />
             </motion.div>
           ))}
-        </motion.div>
+        </motion.div> : <p className="rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-6 text-center text-sm text-neutral-500">{emptyMessage}</p>}
       </div>
     </section>
+  );
+}
+
+export function HomepageOffersSection() {
+  const { products } = useStore();
+  const [savedOffers, setSavedOffers] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let isCurrent = true;
+    fetch("/api/offers")
+      .then(async (response) => {
+        const result = await response.json();
+        if (response.ok && result.success && Array.isArray(result.data) && isCurrent) {
+          setSavedOffers(result.data as Product[]);
+        }
+      })
+      .catch((error: unknown) => console.error("Could not load homepage offers:", error))
+      .finally(() => {
+        if (isCurrent) setIsLoading(false);
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, []);
+
+  const offers = [...savedOffers, ...products.filter((product) => product.category === "deals")]
+    .filter((product, index, list) => list.findIndex((item) => item.id === product.id) === index)
+    .slice(0, 6);
+
+  return (
+    <ProductShelf
+      title="Special offers"
+      href="/store?cat=deals"
+      products={offers}
+      emptyMessage={isLoading ? undefined : "No special offers available right now."}
+    />
   );
 }
 
@@ -56,16 +96,12 @@ export function HomepageProductShelves() {
     .slice(0, 6);
   const cameras = products.filter((product) => product.category === "cameras").slice(0, 6);
   const lenses = products.filter((product) => product.category === "lenses").slice(0, 6);
-  const offers = products
-    .filter((product) => product.isSale || Boolean(product.originalPrice && product.originalPrice > product.price))
-    .slice(0, 6);
 
   return (
     <>
       <ProductShelf title="Best sellers" href="/store" products={bestSellers} />
       <ProductShelf title="Cameras" href="/store?cat=cameras" products={cameras} />
       <ProductShelf title="Lenses & optics" href="/store?cat=lenses" products={lenses} />
-      <ProductShelf title="Special offers" href="/store?cat=deals" products={offers} />
     </>
   );
 }

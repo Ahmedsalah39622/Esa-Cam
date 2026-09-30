@@ -26,6 +26,8 @@ export interface Product {
   reviewsCount: number;
   image: string;
   images?: string[];
+  items?: string[];
+  bundleProductIds?: string[];
   badge?: string;
   isNew?: boolean;
   isBestSeller?: boolean;
@@ -15789,3 +15791,5 @@ export const PRODUCTS: Product[] = [
     ]
   }
 ];
+
+export const OFFERS: Product[] = [];

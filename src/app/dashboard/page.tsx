@@ -5680,6 +5680,13 @@ export default function DashboardPage() {
                     <Plus className="w-4 h-4 mr-1.5" />
                     <span>Add New Camera / Lens SKU</span>
                   </Button>
+                  <Link
+                    href="/admin-app/offers"
+                    className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 text-xs font-bold text-amber-600 transition hover:bg-amber-500/20 dark:text-amber-300"
+                  >
+                    <Tag className="h-4 w-4" />
+                    <span>Create Offer</span>
+                  </Link>
                 </div>
               </div>
 

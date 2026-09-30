@@ -433,8 +433,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     try {
       const res = await fetch("/api/products");
       const data = await res.json();
-      if (data.success && Array.isArray(data.data) && data.data.length > 0) {
-        const serverMapped: Product[] = (data.data as DbProductRow[]).map((row) => {
+      const serverMapped: Product[] = data.success && Array.isArray(data.data)
+        ? (data.data as DbProductRow[]).map((row) => {
           let images: string[] = [];
           if (Array.isArray(row.images) && row.images.length > 0) {
             images = row.images;
@@ -478,10 +478,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             features: ["Official 2-Year Warranty", "Factory Sealed & Calibrated"],
             inTheBox: [row.name, "Accessories", "User Documentation"],
           };
-        });
+        })
+        : [];
 
-        setProducts(serverMapped);
-      }
+      const offersResponse = await fetch("/api/offers");
+      const offersResult = await offersResponse.json();
+      const offers = offersResponse.ok && offersResult.success && Array.isArray(offersResult.data)
+        ? offersResult.data as Product[]
+        : [];
+      setProducts((currentProducts) => {
+        const productsById = new Map<string, Product>();
+        (serverMapped.length > 0 ? serverMapped : currentProducts).forEach((product) => {
+          productsById.set(product.id, product);
+        });
+        offers.forEach((offer) => productsById.set(offer.id, offer));
+        return Array.from(productsById.values());
+      });
     } catch (err) {
       console.warn("Could not fetch products from API:", err);
     }

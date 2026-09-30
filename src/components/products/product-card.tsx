@@ -119,11 +119,15 @@ export function ProductCard({ product }: { product: Product }) {
           </Link>
 
           {/* Key spec highlight */}
-          {product.specs?.[0] && (
+          {product.items && product.items.length > 0 ? (
+            <p className="text-[10px] sm:text-[11px] text-muted-foreground font-mono mt-1 line-clamp-1 hidden sm:block">
+              Includes: {product.items.slice(0, 2).join(" • ")}
+            </p>
+          ) : product.specs?.[0] ? (
             <p className="text-[10px] sm:text-[11px] text-muted-foreground font-mono mt-1 line-clamp-1 hidden sm:block">
               {product.specs[0].label}: {product.specs[0].value}
             </p>
-          )}
+          ) : null}
         </div>
 
         {/* Price & Action Row */}
