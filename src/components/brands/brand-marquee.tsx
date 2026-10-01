@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
+import useEmblaCarousel from "embla-carousel-react";
 
 type Brand = {
   name: string;
@@ -45,11 +47,25 @@ export function BrandMarquee({
   onBrandClick,
   animated = true,
 }: BrandMarqueeProps) {
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "start", dragFree: true });
+  const isPointerDown = useRef(false);
+  const lastInteractionAt = useRef(0);
   const logoByBrand = (brand: Brand) => BRAND_LOGOS[brand.search.trim().toLowerCase()] || brand.logo;
   const visibleBrands = brands.filter((brand) => Boolean(logoByBrand(brand)));
-  const brandSequence = animated
-    ? [...visibleBrands, ...visibleBrands.slice(0, Math.min(2, visibleBrands.length))]
-    : visibleBrands;
+
+  useEffect(() => {
+    if (!animated || !emblaApi || visibleBrands.length < 2) return;
+
+    const interval = window.setInterval(() => {
+      if (!isPointerDown.current && Date.now() - lastInteractionAt.current >= 3500) {
+        emblaApi.scrollNext();
+      }
+    }, 3500);
+
+    return () => window.clearInterval(interval);
+  }, [animated, emblaApi, visibleBrands.length]);
+
+  const brandSequence = visibleBrands;
 
   return (
     <section className="w-full overflow-hidden bg-white py-7 sm:py-9">
@@ -58,47 +74,55 @@ export function BrandMarquee({
           <h2 className="text-lg font-medium text-black sm:text-xl">Brands</h2>
         </div>
 
-        <div className="relative w-full overflow-hidden">
-          <div className={`flex gap-1 py-1 sm:gap-3 ${animated ? "w-max animate-marquee-slow" : "flex-wrap"}`}>
-            {(animated ? [0, 1] : [0]).map((copy) => (
-              <div key={copy} className="flex shrink-0 gap-1 sm:gap-3" aria-hidden={copy === 1}>
-                {brandSequence.map((brand, index) => {
-                  const isRepeated = index >= visibleBrands.length;
-                  const needsDarkLogoSurface = brand.name === "Neewer" || brand.name === "Sony";
-                  return (
-                    <Link
-                      key={`${copy}-${brand.name}-${index}`}
-                      href={`/store?brand=${encodeURIComponent(brand.search)}`}
-                      onClick={onBrandClick ? (event) => {
-                        event.preventDefault();
-                        onBrandClick(brand.search);
-                      } : undefined}
-                      aria-label={`Shop ${brand.name} products`}
-                      aria-hidden={copy === 1 || isRepeated}
-                      tabIndex={copy === 1 || isRepeated ? -1 : undefined}
-                      className={`group flex h-[138px] w-[112px] shrink-0 flex-col items-center justify-between px-2 py-4 sm:h-[154px] sm:w-[158px] sm:px-4 sm:py-5 lg:h-[156px] lg:w-[180px] ${
-                        selectedBrands.includes(brand.search) ? "rounded-2xl bg-secondary ring-2 ring-foreground" : ""
-                      }`}
-                    >
-                      <span className={`flex h-[76px] w-full items-center justify-center sm:h-[88px] ${needsDarkLogoSurface ? "rounded-lg bg-[#111111] px-3" : ""}`}>
-                        {logoByBrand(brand) ? (
-                          <img
-                            src={logoByBrand(brand)}
-                            alt={`${brand.name} logo`}
-                            className="max-h-full max-w-[82%] object-contain transition-transform duration-200 group-hover:scale-105"
-                          />
-                        ) : (
-                          <span className="text-center text-lg font-bold text-muted-foreground">{brand.name}</span>
-                        )}
-                      </span>
-                      <span className="text-center text-sm font-medium text-[#171717] sm:text-base">
-                        {brand.name}
-                      </span>
-                    </Link>
-                  );
-                })}
-              </div>
-            ))}
+        <div
+          ref={animated ? emblaRef : undefined}
+          className="relative w-full overflow-hidden touch-pan-y"
+          onPointerDown={() => {
+            isPointerDown.current = true;
+            lastInteractionAt.current = Date.now();
+          }}
+          onPointerUp={() => {
+            isPointerDown.current = false;
+            lastInteractionAt.current = Date.now();
+          }}
+          onPointerCancel={() => {
+            isPointerDown.current = false;
+            lastInteractionAt.current = Date.now();
+          }}
+        >
+          <div className={`flex gap-1 py-1 sm:gap-3 ${animated ? "cursor-grab active:cursor-grabbing" : "flex-wrap"}`}>
+            {brandSequence.map((brand) => {
+                const needsDarkLogoSurface = brand.name === "Neewer" || brand.name === "Sony";
+                return (
+                  <Link
+                    key={brand.name}
+                    href={`/store?brand=${encodeURIComponent(brand.search)}`}
+                    onClick={onBrandClick ? (event) => {
+                      event.preventDefault();
+                      onBrandClick(brand.search);
+                    } : undefined}
+                    aria-label={`Shop ${brand.name} products`}
+                    className={`group flex h-[138px] w-[112px] shrink-0 flex-col items-center justify-between px-2 py-4 sm:h-[154px] sm:w-[158px] sm:px-4 sm:py-5 lg:h-[156px] lg:w-[180px] ${
+                      selectedBrands.includes(brand.search) ? "rounded-2xl bg-secondary ring-2 ring-foreground" : ""
+                    }`}
+                  >
+                    <span className={`flex h-[76px] w-full items-center justify-center sm:h-[88px] ${needsDarkLogoSurface ? "rounded-lg bg-[#111111] px-3" : ""}`}>
+                      {logoByBrand(brand) ? (
+                        <img
+                          src={logoByBrand(brand)}
+                          alt={`${brand.name} logo`}
+                          className="max-h-full max-w-[82%] object-contain transition-transform duration-200 group-hover:scale-105"
+                        />
+                      ) : (
+                        <span className="text-center text-lg font-bold text-muted-foreground">{brand.name}</span>
+                      )}
+                    </span>
+                    <span className="text-center text-sm font-medium text-[#171717] sm:text-base">
+                      {brand.name}
+                    </span>
+                  </Link>
+                );
+              })}
           </div>
         </div>
       </div>

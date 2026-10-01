@@ -60,9 +60,9 @@ function StoreContent() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const [expandedCategoryId, setExpandedCategoryId] = useState<ProductCategory | "all" | "deals" | null>(null);
   const [expandedFilterSections, setExpandedFilterSections] = useState({
     department: true,
-    brands: false,
     mounts: false,
     availability: false,
   });
@@ -74,8 +74,10 @@ function StoreContent() {
   useEffect(() => {
     if (urlCat) {
       setSelectedCategory(urlCat);
+      setExpandedCategoryId(urlCat);
     } else {
       setSelectedCategory("all");
+      setExpandedCategoryId(null);
     }
 
     if (urlBrand) {
@@ -93,6 +95,7 @@ function StoreContent() {
 
   const handleSelectCategory = (catId: ProductCategory | "all" | "deals") => {
     setSelectedCategory(catId);
+    setExpandedCategoryId(catId);
     if (catId === "all") {
       router.push("/store", { scroll: false });
     } else {
@@ -100,58 +103,60 @@ function StoreContent() {
     }
   };
 
-  const categories: { id: ProductCategory | "all" | "deals"; label: string; count: number }[] = [
-    { id: "all", label: "All Equipment", count: products.length },
-    { id: "cameras", label: "Cameras", count: products.filter((p) => p.category === "cameras").length },
-    { id: "lenses", label: "Lenses", count: products.filter((p) => p.category === "lenses").length },
-    { id: "accessories", label: "Accessories", count: products.filter((p) => p.category === "accessories").length },
-    { id: "audio", label: "Audio & Video", count: products.filter((p) => p.category === "audio").length },
-    { id: "dental", label: "Dental Equipments", count: products.filter((p) => p.category === "dental").length },
-    { id: "deals", label: "Deals", count: products.filter((p) => p.category === "deals" || Boolean(p.originalPrice && p.originalPrice > p.price) || Boolean(p.badge?.includes("SAVE"))).length },
-    { id: "bags", label: "Bags & Straps", count: products.filter((p) => p.category === "bags").length },
-    { id: "gimbals", label: "Stabilizer & Gimbal", count: products.filter((p) => p.category === "gimbals").length },
-    { id: "flashes", label: "Flashes", count: products.filter((p) => p.category === "flashes").length },
-    { id: "lighting", label: "Lighting Equipment", count: products.filter((p) => p.category === "lighting").length },
-    { id: "memory-cards", label: "Memory Cards", count: products.filter((p) => p.category === "memory-cards").length },
-    { id: "tripods", label: "Tripods & Supports", count: products.filter((p) => p.category === "tripods").length },
-    { id: "pre-owned", label: "Used", count: products.filter((p) => p.category === "pre-owned").length },
-  ];
-
-  const allBrands = useMemo(() => {
-    return Array.from(new Set(products.map((p) => p.brand))).filter(Boolean).sort();
-  }, [products]);
+  const categories = useMemo(() => [
+    { id: "all" as const, label: "All Equipment", count: products.length },
+    { id: "cameras" as const, label: "Cameras", count: products.filter((p) => p.category === "cameras").length },
+    { id: "lenses" as const, label: "Lenses", count: products.filter((p) => p.category === "lenses").length },
+    { id: "accessories" as const, label: "Accessories", count: products.filter((p) => p.category === "accessories").length },
+    { id: "audio" as const, label: "Audio & Video", count: products.filter((p) => p.category === "audio").length },
+    { id: "dental" as const, label: "Dental Equipments", count: products.filter((p) => p.category === "dental").length },
+    { id: "deals" as const, label: "Deals", count: products.filter((p) => p.category === "deals" || Boolean(p.originalPrice && p.originalPrice > p.price) || Boolean(p.badge?.includes("SAVE"))).length },
+    { id: "bags" as const, label: "Bags & Straps", count: products.filter((p) => p.category === "bags").length },
+    { id: "gimbals" as const, label: "Stabilizer & Gimbal", count: products.filter((p) => p.category === "gimbals").length },
+    { id: "flashes" as const, label: "Flashes", count: products.filter((p) => p.category === "flashes").length },
+    { id: "lighting" as const, label: "Lighting Equipment", count: products.filter((p) => p.category === "lighting").length },
+    { id: "memory-cards" as const, label: "Memory Cards", count: products.filter((p) => p.category === "memory-cards").length },
+    { id: "tripods" as const, label: "Tripods & Supports", count: products.filter((p) => p.category === "tripods").length },
+    { id: "pre-owned" as const, label: "Used", count: products.filter((p) => p.category === "pre-owned").length },
+  ], [products]);
 
   const managedBrandLogos = useMemo(
     () => new Map(managedBrands.filter((brand) => brand.logoImage).map((brand) => [brand.name.trim().toLowerCase(), brand.logoImage!])),
     [managedBrands]
   );
 
-  const categoryBrands = useMemo(() => {
+  const categoryBrandsById = useMemo(() => new Map<string, { name: string; search: string; logo?: string; count: number }[]>(categories.map((category) => {
     const categoryProducts = products.filter((product) => {
-      if (selectedCategory === "all") return true;
-      if (selectedCategory === "deals") {
+      if (category.id === "all") return true;
+      if (category.id === "deals") {
         return product.category === "deals" || Boolean(product.originalPrice && product.originalPrice > product.price) || Boolean(product.badge?.includes("SAVE"));
       }
-      return product.category === selectedCategory;
+      return product.category === category.id;
     });
 
-    return Array.from(
-      new Map(categoryProducts.filter((product) => product.brand).map((product) => [product.brand.toLowerCase(), product.brand])).values()
-    )
-      .sort((first, second) => first.localeCompare(second))
-      .map((brand) => ({
-        name: brand,
-        search: brand,
-        logo: managedBrandLogos.get(brand.trim().toLowerCase()),
-      }));
-  }, [products, selectedCategory, managedBrandLogos]);
+    const brandCounts = new Map<string, number>();
+    categoryProducts.forEach((product) => {
+      if (product.brand) {
+        brandCounts.set(product.brand, (brandCounts.get(product.brand) ?? 0) + 1);
+      }
+    });
+
+    const brands = Array.from(brandCounts, ([brand, count]) => ({
+      name: brand,
+      search: brand,
+      logo: managedBrandLogos.get(brand.trim().toLowerCase()),
+      count,
+    })).sort((first, second) => first.name.localeCompare(second.name));
+
+    return [category.id, brands] as const;
+  })), [categories, products, managedBrandLogos]);
+
+  const categoryBrands = categoryBrandsById.get(selectedCategory) ?? [];
 
   const allMounts = ["Sony E", "Canon RF", "L-Mount", "Fujifilm X", "Universal"];
 
   const toggleBrand = (brand: string) => {
-    setSelectedBrands((prev) =>
-      prev.includes(brand) ? prev.filter((b) => b !== brand) : [...prev, brand]
-    );
+    setSelectedBrands((prev) => (prev.includes(brand) ? [] : [brand]));
   };
 
   const toggleMount = (mount: string) => {
@@ -381,59 +386,62 @@ function StoreContent() {
                 </button>
                 {expandedFilterSections.department && (
                   <div id="department-filter-options" className="space-y-1">
-                    {categories.map((cat) => (
-                      <button
-                        key={cat.id}
-                        onClick={() => handleSelectCategory(cat.id)}
-                        className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
-                          selectedCategory === cat.id
-                            ? "bg-foreground text-background font-bold shadow-xs"
-                            : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-                        }`}
-                      >
-                        <span>{cat.label}</span>
-                        <span suppressHydrationWarning className="font-mono text-[11px] opacity-70">
-                          ({isMounted ? cat.count : ""})
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+                    {categories.map((cat) => {
+                      const isExpanded = expandedCategoryId === cat.id;
+                      const brands = categoryBrandsById.get(cat.id) ?? [];
 
-              {/* Brand Checkboxes */}
-              <div className="border-t border-border pt-4 space-y-2.5">
-                <button
-                  type="button"
-                  aria-expanded={expandedFilterSections.brands}
-                  aria-controls="brand-filter-options"
-                  onClick={() => toggleFilterSection("brands")}
-                  className="flex w-full items-center justify-between text-left font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground"
-                >
-                  Manufacturer / Brand
-                  <ChevronDown className={`h-3.5 w-3.5 transition-transform ${expandedFilterSections.brands ? "rotate-180" : ""}`} />
-                </button>
-                {expandedFilterSections.brands && (
-                  <div id="brand-filter-options" className="max-h-56 space-y-1.5 overflow-y-auto pr-1 sidebar-scrollbar">
-                    {allBrands.map((brand) => (
-                      <label
-                        key={brand}
-                        className="flex items-center justify-between text-xs text-foreground hover:bg-secondary/40 px-2 py-1.5 rounded-lg cursor-pointer transition-colors"
-                      >
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            checked={selectedBrands.includes(brand)}
-                            onChange={() => toggleBrand(brand)}
-                            className="rounded border-border text-primary focus:ring-primary h-3.5 w-3.5"
-                          />
-                          <span className="font-medium">{brand}</span>
+                      return (
+                        <div key={cat.id}>
+                          <div className="flex items-center">
+                            <button
+                              onClick={() => handleSelectCategory(cat.id)}
+                              className={`flex min-w-0 flex-1 items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
+                                selectedCategory === cat.id
+                                  ? "bg-foreground text-background font-bold shadow-xs"
+                                  : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                              }`}
+                            >
+                              <span>{cat.label}</span>
+                              <span suppressHydrationWarning className="font-mono text-[11px] opacity-70">
+                                ({isMounted ? cat.count : ""})
+                              </span>
+                            </button>
+                            <button
+                              type="button"
+                              aria-label={`${isExpanded ? "Collapse" : "Expand"} ${cat.label} brands`}
+                              aria-expanded={isExpanded}
+                              aria-controls={`desktop-category-brands-${cat.id}`}
+                              onClick={() => setExpandedCategoryId(isExpanded ? null : cat.id)}
+                              className="p-2 text-muted-foreground hover:text-foreground"
+                            >
+                              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                            </button>
+                          </div>
+                          {isExpanded && (
+                            <div id={`desktop-category-brands-${cat.id}`} className="ml-3 mt-1 space-y-1 border-l border-border pl-2">
+                              {brands.length > 0 ? brands.map((brand) => (
+                                <label key={brand.name} className="flex cursor-pointer items-center justify-between rounded-lg px-2 py-1.5 text-xs text-foreground hover:bg-secondary/40">
+                                  <span className="flex items-center gap-2">
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedBrands.includes(brand.name)}
+                                      onChange={() => toggleBrand(brand.name)}
+                                      className="h-3.5 w-3.5 rounded border-border text-primary focus:ring-primary"
+                                    />
+                                    <span className="font-medium">{brand.name}</span>
+                                  </span>
+                                  <span suppressHydrationWarning className="font-mono text-[11px] text-muted-foreground">
+                                    {isMounted ? brand.count : ""}
+                                  </span>
+                                </label>
+                              )) : (
+                                <p className="px-2 py-2 text-xs text-muted-foreground">No brands in this category</p>
+                              )}
+                            </div>
+                          )}
                         </div>
-                        <span suppressHydrationWarning className="font-mono text-[11px] text-muted-foreground">
-                          {isMounted ? products.filter((p) => p.brand === brand).length : ""}
-                        </span>
-                      </label>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -665,21 +673,57 @@ function StoreContent() {
                 {/* Categories */}
                 <div className="space-y-1.5">
                   <p className="text-[11px] font-mono font-bold uppercase text-muted-foreground">Department</p>
-                  <div className="grid grid-cols-2 gap-1.5 max-h-48 overflow-y-auto pr-1 sidebar-scrollbar">
-                    {categories.map((cat) => (
-                      <button
-                        key={cat.id}
-                        onClick={() => {
-                          handleSelectCategory(cat.id);
-                          setIsMobileFilterOpen(false);
-                        }}
-                        className={`text-left px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
-                          selectedCategory === cat.id ? "bg-foreground text-background font-bold" : "bg-secondary/40 text-muted-foreground"
-                        }`}
-                      >
-                        {cat.label} ({cat.count})
-                      </button>
-                    ))}
+                  <div className="max-h-72 space-y-1.5 overflow-y-auto pr-1 sidebar-scrollbar">
+                    {categories.map((cat) => {
+                      const isExpanded = expandedCategoryId === cat.id;
+                      const brands = categoryBrandsById.get(cat.id) ?? [];
+
+                      return (
+                        <div key={cat.id} className="rounded-lg bg-secondary/30">
+                          <div className="flex items-center">
+                            <button
+                              onClick={() => handleSelectCategory(cat.id)}
+                              className={`flex min-w-0 flex-1 items-center justify-between px-2.5 py-2 text-left text-xs font-medium transition-colors cursor-pointer ${
+                                selectedCategory === cat.id ? "font-bold text-foreground" : "text-muted-foreground"
+                              }`}
+                            >
+                              <span>{cat.label}</span>
+                              <span className="ml-2 font-mono text-[11px] opacity-70">({cat.count})</span>
+                            </button>
+                            <button
+                              type="button"
+                              aria-label={`${isExpanded ? "Collapse" : "Expand"} ${cat.label} brands`}
+                              aria-expanded={isExpanded}
+                              aria-controls={`mobile-category-brands-${cat.id}`}
+                              onClick={() => setExpandedCategoryId(isExpanded ? null : cat.id)}
+                              className="p-2 text-muted-foreground hover:text-foreground"
+                            >
+                              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                            </button>
+                          </div>
+                          {isExpanded && (
+                            <div id={`mobile-category-brands-${cat.id}`} className="space-y-1 border-t border-border/60 px-2 py-1.5">
+                              {brands.length > 0 ? brands.map((brand) => (
+                                <label key={brand.name} className="flex cursor-pointer items-center justify-between rounded-md px-1.5 py-1.5 text-xs text-foreground hover:bg-background/70">
+                                  <span className="flex items-center gap-2">
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedBrands.includes(brand.name)}
+                                      onChange={() => toggleBrand(brand.name)}
+                                      className="h-3.5 w-3.5 rounded border-border text-primary focus:ring-primary"
+                                    />
+                                    <span className="font-medium">{brand.name}</span>
+                                  </span>
+                                  <span className="font-mono text-[11px] text-muted-foreground">{brand.count}</span>
+                                </label>
+                              )) : (
+                                <p className="px-1.5 py-2 text-xs text-muted-foreground">No brands in this category</p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
