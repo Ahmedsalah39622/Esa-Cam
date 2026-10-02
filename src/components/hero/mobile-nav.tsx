@@ -5,28 +5,91 @@ import Link from "next/link";
 import { useStore } from "@/context/store-context";
 
 import { useAuth } from "@/context/auth-context";
-import { ShoppingBag, Menu, X, Search, PhoneCall, Heart, User, ShieldCheck, LogOut } from "lucide-react";
+import { ShoppingBag, Menu, X, Search, PhoneCall, Heart, User, ShieldCheck, LogOut, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+interface MobileNavSubcategory {
+  label: string;
+  href: string;
+}
+
+interface MobileNavCategory {
+  label: string;
+  href: string;
+  cat?: string;
+  subcategories?: MobileNavSubcategory[];
+}
 
 export function MobileNav() {
   const { cartItemCount, setIsCartOpen, setSelectedCategory, wishlist, homepageContent } = useStore();
   const hotline = homepageContent?.footer?.hotline || "+20 1092298665";
   const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [mobileSearch, setMobileSearch] = useState("");
 
-  const categories = [
+  const categories: MobileNavCategory[] = [
     { label: "Home", href: "/" },
-    { label: "Cameras", href: "/store?cat=cameras", cat: "cameras" },
-    { label: "Lenses", href: "/store?cat=lenses", cat: "lenses" },
+    {
+      label: "Cameras",
+      href: "/store?cat=cameras",
+      cat: "cameras",
+      subcategories: [
+        { label: "Canon Camera", href: "/store?cat=cameras&brand=Canon" },
+        { label: "Sony Camera", href: "/store?cat=cameras&brand=Sony" },
+        { label: "Nikon Camera", href: "/store?cat=cameras&brand=Nikon" },
+        { label: "Fujifilm Camera", href: "/store?cat=cameras&brand=Fujifilm" },
+      ],
+    },
+    {
+      label: "Lenses",
+      href: "/store?cat=lenses",
+      cat: "lenses",
+      subcategories: [
+        { label: "Sony E-Mount Lenses", href: "/store?cat=lenses&brand=Sony" },
+        { label: "Canon RF / EF Lenses", href: "/store?cat=lenses&brand=Canon" },
+        { label: "Nikon Z-Mount Lenses", href: "/store?cat=lenses&brand=Nikon" },
+        { label: "Sigma Art & Cine Lenses", href: "/store?cat=lenses&brand=Sigma" },
+      ],
+    },
     { label: "Accessories", href: "/store?cat=accessories", cat: "accessories" },
-    { label: "Audio & Video", href: "/store?cat=audio", cat: "audio" },
+    {
+      label: "Audio & Video",
+      href: "/store?cat=audio",
+      cat: "audio",
+      subcategories: [
+        { label: "Wireless Microphones", href: "/store?cat=audio&q=wireless" },
+        { label: "DJI Microphones", href: "/store?cat=audio&brand=DJI" },
+        { label: "Shotgun Microphones", href: "/store?cat=audio&q=shotgun" },
+        { label: "Audio Recorders", href: "/store?cat=audio&q=recorder" },
+      ],
+    },
     { label: "Dental Equipments", href: "/store?cat=dental", cat: "dental" },
     { label: "Deals", href: "/store?cat=deals", cat: "deals" },
     { label: "Bags & Straps", href: "/store?cat=bags", cat: "bags" },
-    { label: "Stabilizer & Gimbal", href: "/store?cat=gimbals", cat: "gimbals" },
+    {
+      label: "Stabilizer & Gimbal",
+      href: "/store?cat=gimbals",
+      cat: "gimbals",
+      subcategories: [
+        { label: "DJI Ronin Stabilizers", href: "/store?cat=gimbals&brand=DJI" },
+        { label: "Zhiyun Stabilizers", href: "/store?cat=gimbals&brand=Zhiyun" },
+        { label: "Smartphone Gimbals", href: "/store?cat=gimbals&q=mobile" },
+        { label: "Cages & Camera Rigs", href: "/store?cat=gimbals&q=rig" },
+      ],
+    },
     { label: "Flashes", href: "/store?cat=flashes", cat: "flashes" },
-    { label: "Lighting Equipment", href: "/store?cat=lighting", cat: "lighting" },
+    {
+      label: "Lighting Equipment",
+      href: "/store?cat=lighting",
+      cat: "lighting",
+      subcategories: [
+        { label: "LED Lights & Monolights", href: "/store?cat=lighting&q=monolight" },
+        { label: "RGB Tubes & Soft Panels", href: "/store?cat=lighting&q=RGB" },
+        { label: "Studio Strobes", href: "/store?cat=lighting&q=strobe" },
+        { label: "Softboxes & Modifiers", href: "/store?cat=lighting&q=softbox" },
+      ],
+    },
     { label: "Memory Cards", href: "/store?cat=memory-cards", cat: "memory-cards" },
     { label: "Tripods & Supports", href: "/store?cat=tripods", cat: "tripods" },
     { label: "Used", href: "/store?cat=pre-owned", cat: "pre-owned" },
@@ -124,19 +187,59 @@ export function MobileNav() {
               Shop Categories
             </p>
             <div className="flex flex-col space-y-1">
-              {categories.map((item, idx) => (
-                <Link
-                  key={idx}
-                  href={item.href}
-                  onClick={() => {
-                    if (item.cat) setSelectedCategory(item.cat);
-                    setIsOpen(false);
-                  }}
-                  className="py-2 text-sm font-medium text-foreground hover:text-primary transition-colors border-b border-border/40 last:border-0"
-                >
-                  {item.label}
-                </Link>
-              ))}
+              {categories.map((item) => {
+                const isExpanded = expandedCategory === item.cat;
+                const subcategoryId = `mobile-subcategories-${item.cat}`;
+
+                return (
+                  <div key={item.label} className="border-b border-border/40 last:border-0">
+                    <div className="flex items-center">
+                      <Link
+                        href={item.href}
+                        onClick={() => {
+                          if (item.cat) setSelectedCategory(item.cat);
+                          setIsOpen(false);
+                        }}
+                        className="flex-1 py-2 text-sm font-medium text-foreground transition-colors hover:text-primary"
+                      >
+                        {item.label}
+                      </Link>
+                      {item.subcategories && (
+                        <button
+                          type="button"
+                          onClick={() => setExpandedCategory(isExpanded ? null : item.cat || null)}
+                          aria-label={`${isExpanded ? "Hide" : "Show"} ${item.label} subcategories`}
+                          aria-expanded={isExpanded}
+                          aria-controls={subcategoryId}
+                          className="flex h-9 w-10 shrink-0 items-center justify-center text-muted-foreground transition-colors hover:text-primary"
+                        >
+                          <ChevronDown
+                            aria-hidden="true"
+                            className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-180 text-primary" : ""}`}
+                          />
+                        </button>
+                      )}
+                    </div>
+                    {isExpanded && item.subcategories && (
+                      <div id={subcategoryId} className="mb-2 ml-2 border-l border-border pl-3">
+                        {item.subcategories.map((subcategory) => (
+                          <Link
+                            key={subcategory.label}
+                            href={subcategory.href}
+                            onClick={() => {
+                              if (item.cat) setSelectedCategory(item.cat);
+                              setIsOpen(false);
+                            }}
+                            className="block py-2 text-xs text-muted-foreground transition-colors hover:text-primary"
+                          >
+                            {subcategory.label}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
