@@ -241,7 +241,7 @@ export const DEFAULT_HOMEPAGE_CONTENT: HomepageContentState = {
   footer: {
     tagline: "Official Authorized Cinema & Optics Distributor in Egypt and the Middle East.",
     hotline: "+20 1092298665",
-    email: "pro@esacam.com",
+    email: "eissacamstore@gmail.com",
     address: "24 Hassan Assem St, Zamalek, Cairo, Egypt",
     copyright: "ESA CAM Optics Lab • All rights reserved.",
     instagramUrl: "https://instagram.com/esacam.store",

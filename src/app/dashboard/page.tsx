@@ -708,19 +708,19 @@ export default function DashboardPage() {
       prev.map((p) =>
         p.id === editProduct.id
           ? {
-              ...p,
-              name: editProduct.name,
-              brand: editProduct.brand,
-              category: editProduct.category,
-              price: basePrice,
-              originalPrice: baseOriginalPrice,
-              image: cleanImages[0] || productImage,
-              images: cleanImages,
-              badge: editProduct.badge || undefined,
-              stockCount: editProduct.stockCount,
-              stockStatus: editProduct.stockCount > 0 ? "in-stock" : "pre-order",
-              mount: editProduct.mount,
-            }
+            ...p,
+            name: editProduct.name,
+            brand: editProduct.brand,
+            category: editProduct.category,
+            price: basePrice,
+            originalPrice: baseOriginalPrice,
+            image: cleanImages[0] || productImage,
+            images: cleanImages,
+            badge: editProduct.badge || undefined,
+            stockCount: editProduct.stockCount,
+            stockStatus: editProduct.stockCount > 0 ? "in-stock" : "pre-order",
+            mount: editProduct.mount,
+          }
           : p
       )
     );
@@ -821,14 +821,14 @@ export default function DashboardPage() {
               o.status === "new"
                 ? "Processing"
                 : o.status === "failed"
-                ? "Failed"
-                : o.status === "shipped"
-                ? "Out for Delivery"
-                : o.status === "delivered"
-                ? "Delivered"
-                : o.status === "cancelled"
-                ? "Cancelled"
-                : "Processing",
+                  ? "Failed"
+                  : o.status === "shipped"
+                    ? "Out for Delivery"
+                    : o.status === "delivered"
+                      ? "Delivered"
+                      : o.status === "cancelled"
+                        ? "Cancelled"
+                        : "Processing",
             city: o.city ? `${o.shipping_address}, ${o.city}` : o.shipping_address || "Cairo",
             date: o.created_at ? new Date(o.created_at).toLocaleString() : "Just now",
             trackingNumber: `EXP-${o.order_number || o.id}`,
@@ -976,12 +976,12 @@ export default function DashboardPage() {
     setOrders((prev) => prev.map((order) => (
       order.id === orderId
         ? {
-            ...order,
-            status: newStatus,
-            paymentStatus: order.paymentMethod === "COD"
-              ? getOrderPaymentStatus(order.paymentMethod, newStatus)
-              : order.paymentStatus,
-          }
+          ...order,
+          status: newStatus,
+          paymentStatus: order.paymentMethod === "COD"
+            ? getOrderPaymentStatus(order.paymentMethod, newStatus)
+            : order.paymentStatus,
+        }
         : order
     )));
     toast.success(`Order ${orderId} updated to "${newStatus}"`);
@@ -1000,10 +1000,10 @@ export default function DashboardPage() {
         newStatus === "Processing"
           ? "new"
           : newStatus === "Out for Delivery"
-          ? "shipped"
-          : newStatus === "Delivered"
-          ? "delivered"
-          : "cancelled";
+            ? "shipped"
+            : newStatus === "Delivered"
+              ? "delivered"
+              : "cancelled";
       await fetch(`/api/orders/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -1315,7 +1315,7 @@ export default function DashboardPage() {
       <div>
         <div style="font-weight: 700; color: #000;">ESA CAM Optics Lab, Inc.</div>
         <div>5 Roshdi Street, Mohamed Faried, Downtown</div>
-        <div style="margin-top: 2px;">Support: ${homepageContent?.footer?.hotline || "+20 1092298665"} • ${homepageContent?.footer?.email || "pro@esacam.com"}</div>
+        <div style="margin-top: 2px;">Support: ${homepageContent?.footer?.hotline || "+20 1092298665"} • ${homepageContent?.footer?.email || "eissacamstore@gmail.com"}</div>
       </div>
 
       <div class="stamp-circle">
@@ -1491,7 +1491,7 @@ export default function DashboardPage() {
     const csvContent = "data:text/csv;charset=utf-8," +
       "ID,Name,Brand,Category,Price USD,Stock Count\n" +
       inventory.map(p => `"${p.id}","${p.name}","${p.brand}","${p.category}",${p.price},${p.stockCount ?? 5}`).join("\n");
-    
+
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -1710,9 +1710,8 @@ export default function DashboardPage() {
 
       {/* LEFT SIDEBAR NAVIGATION */}
       <aside
-        className={`fixed lg:sticky top-0 left-0 z-50 h-screen w-72 bg-card border-r border-border flex flex-col justify-between transition-transform duration-300 ${
-          isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        }`}
+        className={`fixed lg:sticky top-0 left-0 z-50 h-screen w-72 bg-card border-r border-border flex flex-col justify-between transition-transform duration-300 ${isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          }`}
       >
         {/* Sidebar Top Branding */}
         <div className="p-5 border-b border-border space-y-3">
@@ -1781,11 +1780,10 @@ export default function DashboardPage() {
                         }
                         setIsMobileSidebarOpen(false);
                       }}
-                      className={`w-full px-3 py-2.5 rounded-xl flex items-center justify-between transition-all cursor-pointer text-xs font-semibold ${
-                        isActive
+                      className={`w-full px-3 py-2.5 rounded-xl flex items-center justify-between transition-all cursor-pointer text-xs font-semibold ${isActive
                           ? "bg-foreground text-background font-bold shadow-xs"
                           : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center gap-2.5">
                         <span className={isActive ? "text-amber-400" : "text-muted-foreground"}>
@@ -2006,13 +2004,12 @@ export default function DashboardPage() {
                             </div>
 
                             <span
-                              className={`text-[10px] font-mono font-bold px-2.5 py-1 rounded-full border ${
-                                order.status === "Delivered"
+                              className={`text-[10px] font-mono font-bold px-2.5 py-1 rounded-full border ${order.status === "Delivered"
                                   ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
                                   : order.status === "Out for Delivery"
-                                  ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
-                                  : "bg-amber-400/10 text-amber-600 dark:text-amber-400 border-amber-400/25"
-                              }`}
+                                    ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
+                                    : "bg-amber-400/10 text-amber-600 dark:text-amber-400 border-amber-400/25"
+                                }`}
                             >
                               {order.status}
                             </span>
@@ -2206,11 +2203,10 @@ export default function DashboardPage() {
                   <button
                     key={tab.id}
                     onClick={() => setCmsSection(tab.id as typeof cmsSection)}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap transition-all border cursor-pointer ${
-                      cmsSection === tab.id
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap transition-all border cursor-pointer ${cmsSection === tab.id
                         ? "bg-foreground text-background border-foreground shadow-xs font-black"
                         : "bg-card border-border text-muted-foreground hover:text-foreground hover:bg-secondary/40"
-                    }`}
+                      }`}
                   >
                     {tab.icon}
                     <span>{tab.label}</span>
@@ -2241,11 +2237,10 @@ export default function DashboardPage() {
                           <button
                             key={s.id || idx}
                             onClick={() => setActiveHeroSlideIdx(idx)}
-                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                              activeHeroSlideIdx === idx
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${activeHeroSlideIdx === idx
                                 ? "bg-card text-foreground shadow-xs font-black"
                                 : "text-muted-foreground hover:text-foreground"
-                            }`}
+                              }`}
                           >
                             Slide {idx + 1}: {s.badge?.slice(0, 14) || `Slide ${idx + 1}`}
                           </button>
@@ -2483,11 +2478,11 @@ export default function DashboardPage() {
                             <div>
                               <p className="mb-1 text-[10px] font-bold uppercase text-muted-foreground">Desktop preview</p>
                               <div className="relative aspect-[2.8/1] overflow-hidden rounded-lg bg-secondary border border-border">
-                              <img
-                                src={heroSlidesDraft[activeHeroSlideIdx].image}
-                                alt="Desktop campaign banner preview"
-                                className="h-full w-full object-cover"
-                              />
+                                <img
+                                  src={heroSlidesDraft[activeHeroSlideIdx].image}
+                                  alt="Desktop campaign banner preview"
+                                  className="h-full w-full object-cover"
+                                />
                               </div>
                             </div>
                             <div>
@@ -2721,7 +2716,7 @@ export default function DashboardPage() {
                         return (
                           <div className="p-4 rounded-2xl bg-black border border-[#27272A] max-w-sm space-y-3 shadow-xl relative overflow-hidden text-white">
                             <div className="absolute top-0 right-0 w-8 h-8 bg-[#FFE600] [clip-path:polygon(100%_0,0_0,100%_100%)]" />
-                            
+
                             <div className="flex items-center justify-between text-[11px] font-mono pt-1">
                               <span className="flex items-center gap-1 text-[#FFE600] font-bold">
                                 <Camera className="w-3.5 h-3.5" />
@@ -3449,7 +3444,7 @@ export default function DashboardPage() {
                           type="email"
                           value={footerDraft.email}
                           onChange={(e) => setFooterDraft({ ...footerDraft, email: e.target.value })}
-                          placeholder="pro@esacam.com"
+                          placeholder="eissacamstore@gmail.com"
                           className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-foreground font-mono text-xs focus:ring-1 focus:ring-primary"
                         />
                       </div>
@@ -3776,21 +3771,19 @@ export default function DashboardPage() {
                     <div className="flex items-center gap-1.5 bg-secondary/40 p-1 rounded-2xl border border-border">
                       <button
                         onClick={() => setRolesSubTab("admins")}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                          rolesSubTab === "admins"
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${rolesSubTab === "admins"
                             ? "bg-card text-foreground shadow-xs font-black"
                             : "text-muted-foreground hover:text-foreground"
-                        }`}
+                          }`}
                       >
                         🛡️ Staff Admins ({adminStaffList.length})
                       </button>
                       <button
                         onClick={() => setRolesSubTab("clients")}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                          rolesSubTab === "clients"
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${rolesSubTab === "clients"
                             ? "bg-card text-foreground shadow-xs font-black"
                             : "text-muted-foreground hover:text-foreground"
-                        }`}
+                          }`}
                       >
                         👥 Client Accounts ({studios.length + 8})
                       </button>
@@ -3835,11 +3828,10 @@ export default function DashboardPage() {
                             </div>
 
                             <span
-                              className={`px-2.5 py-1 rounded-xl text-[10px] font-mono font-bold border ${
-                                adm.is_active
+                              className={`px-2.5 py-1 rounded-xl text-[10px] font-mono font-bold border ${adm.is_active
                                   ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/30"
                                   : "bg-rose-500/10 text-rose-500 border-rose-500/30"
-                              }`}
+                                }`}
                             >
                               {adm.is_active ? "● ACTIVE" : "○ SUSPENDED"}
                             </span>
@@ -3926,11 +3918,10 @@ export default function DashboardPage() {
                                 }
                               }}
                               disabled={adm.id === "admin_master"}
-                              className={`px-3 py-1.5 rounded-xl font-bold cursor-pointer transition-colors ${
-                                adm.is_active
+                              className={`px-3 py-1.5 rounded-xl font-bold cursor-pointer transition-colors ${adm.is_active
                                   ? "bg-secondary text-muted-foreground hover:text-rose-500"
                                   : "bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20"
-                              } ${adm.id === "admin_master" ? "opacity-50 cursor-not-allowed" : ""}`}
+                                } ${adm.id === "admin_master" ? "opacity-50 cursor-not-allowed" : ""}`}
                             >
                               {adm.is_active ? "Suspend Access" : "Activate Access"}
                             </button>
@@ -4027,11 +4018,10 @@ export default function DashboardPage() {
                         return (
                           <div
                             key={c.id}
-                            className={`p-5 rounded-3xl border transition-all text-xs space-y-3 ${
-                              isPromotedAdmin
+                            className={`p-5 rounded-3xl border transition-all text-xs space-y-3 ${isPromotedAdmin
                                 ? "bg-amber-500/5 border-[#FFE600]/40 shadow-sm"
                                 : "bg-secondary/20 border-border hover:border-[#FFE600]/30"
-                            }`}
+                              }`}
                           >
                             <div className="flex items-start justify-between gap-2">
                               <div>
@@ -4042,11 +4032,10 @@ export default function DashboardPage() {
                                 <p className="text-[11px] text-muted-foreground font-mono">{clientEmail} • {clientCity}</p>
                               </div>
                               <span
-                                className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border ${
-                                  isPromotedAdmin
+                                className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border ${isPromotedAdmin
                                     ? "bg-amber-500/20 text-[#FFE600] border-[#FFE600]/40"
                                     : "bg-blue-500/10 text-blue-400 border-blue-500/30"
-                                }`}
+                                  }`}
                               >
                                 {isPromotedAdmin ? "👑 ADMIN" : "CLIENT"}
                               </span>
@@ -4527,11 +4516,10 @@ export default function DashboardPage() {
                       <button
                         key={tier.id}
                         onClick={() => setStudioTierFilter(tier.id)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer border ${
-                          studioTierFilter === tier.id
+                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer border ${studioTierFilter === tier.id
                             ? "bg-foreground text-background border-foreground font-bold"
                             : "bg-secondary/40 border-border text-muted-foreground hover:text-foreground"
-                        }`}
+                          }`}
                       >
                         {tier.label}
                       </button>
@@ -4575,15 +4563,14 @@ export default function DashboardPage() {
 
                           <Badge
                             variant="secondary"
-                            className={`text-[10px] font-mono font-bold shrink-0 border ${
-                              studio.tier.includes("Platinum")
+                            className={`text-[10px] font-mono font-bold shrink-0 border ${studio.tier.includes("Platinum")
                                 ? "bg-[#FFE600]/15 text-amber-600 dark:text-[#FFE600] border-[#FFE600]/30"
                                 : studio.tier.includes("Gold")
-                                ? "bg-amber-500/10 text-amber-500 border-amber-500/30"
-                                : studio.tier.includes("Broadcast")
-                                ? "bg-purple-500/10 text-purple-400 border-purple-500/30"
-                                : "bg-zinc-500/10 text-zinc-400 border-zinc-500/30"
-                            }`}
+                                  ? "bg-amber-500/10 text-amber-500 border-amber-500/30"
+                                  : studio.tier.includes("Broadcast")
+                                    ? "bg-purple-500/10 text-purple-400 border-purple-500/30"
+                                    : "bg-zinc-500/10 text-zinc-400 border-zinc-500/30"
+                              }`}
                           >
                             {studio.tier}
                           </Badge>
@@ -4840,11 +4827,10 @@ export default function DashboardPage() {
                         onClick={() =>
                           setShippingDraft((prev) => ({ ...prev, calculationMode: "city" }))
                         }
-                        className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
-                          shippingDraft.calculationMode === "city"
+                        className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${shippingDraft.calculationMode === "city"
                             ? "border-primary bg-primary/10 font-bold text-foreground"
                             : "border-border bg-card/60 text-muted-foreground hover:bg-secondary/40"
-                        }`}
+                          }`}
                       >
                         <span className="flex items-center gap-2">
                           <span>📍</span>
@@ -4864,11 +4850,10 @@ export default function DashboardPage() {
                         onClick={() =>
                           setShippingDraft((prev) => ({ ...prev, calculationMode: "flat" }))
                         }
-                        className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
-                          shippingDraft.calculationMode === "flat"
+                        className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${shippingDraft.calculationMode === "flat"
                             ? "border-primary bg-primary/10 font-bold text-foreground"
                             : "border-border bg-card/60 text-muted-foreground hover:bg-secondary/40"
-                        }`}
+                          }`}
                       >
                         <span className="flex items-center gap-2">
                           <span>🌐</span>
@@ -5064,9 +5049,8 @@ export default function DashboardPage() {
                       {shippingDraft.cityRates.map((city) => (
                         <tr
                           key={city.id}
-                          className={`hover:bg-secondary/20 transition-colors ${
-                            !city.isActive ? "opacity-50" : ""
-                          }`}
+                          className={`hover:bg-secondary/20 transition-colors ${!city.isActive ? "opacity-50" : ""
+                            }`}
                         >
                           <td className="py-3.5 pr-4">
                             <div className="font-bold text-foreground text-xs flex items-center gap-1.5">
@@ -5107,11 +5091,10 @@ export default function DashboardPage() {
                             <button
                               type="button"
                               onClick={() => handleToggleCityActive(city.id)}
-                              className={`text-[10px] font-mono font-bold px-3 py-1 rounded-full border cursor-pointer transition-all ${
-                                city.isActive
+                              className={`text-[10px] font-mono font-bold px-3 py-1 rounded-full border cursor-pointer transition-all ${city.isActive
                                   ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20"
                                   : "bg-secondary text-muted-foreground border-border hover:bg-secondary/80"
-                              }`}
+                                }`}
                             >
                               {city.isActive ? "Active (مفعل)" : "Paused (معطل)"}
                             </button>
@@ -5307,11 +5290,10 @@ export default function DashboardPage() {
 
                         <div className="flex items-center gap-3">
                           <span
-                            className={`text-[10px] font-mono font-bold px-2.5 py-1 rounded-full border ${
-                              order.status === "Delivered"
+                            className={`text-[10px] font-mono font-bold px-2.5 py-1 rounded-full border ${order.status === "Delivered"
                                 ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
                                 : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30"
-                            }`}
+                              }`}
                           >
                             {order.status}
                           </span>
@@ -5472,11 +5454,10 @@ export default function DashboardPage() {
                           <td className="py-3.5">
                             <button
                               onClick={() => toggleBrandActive(brand.id)}
-                              className={`px-2.5 py-1 rounded-full text-[10px] font-mono font-bold border transition-colors cursor-pointer ${
-                                brand.isActive
-                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
-                                : "bg-zinc-500/10 text-zinc-400 border-zinc-500/30"
-                              }`}
+                              className={`px-2.5 py-1 rounded-full text-[10px] font-mono font-bold border transition-colors cursor-pointer ${brand.isActive
+                                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                                  : "bg-zinc-500/10 text-zinc-400 border-zinc-500/30"
+                                }`}
                             >
                               {brand.isActive ? "✓ Active in Marquee" : "Hidden"}
                             </button>
@@ -5592,13 +5573,12 @@ export default function DashboardPage() {
                               <span className="text-[11px] font-semibold text-foreground">{order.paymentMethod}</span>
                               <Badge
                                 variant="secondary"
-                                className={`border text-[10px] font-mono ${
-                                  order.paymentStatus === "Paid"
+                                className={`border text-[10px] font-mono ${order.paymentStatus === "Paid"
                                     ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                                     : order.paymentStatus === "Failed"
                                       ? "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-400"
                                       : "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400"
-                                }`}
+                                  }`}
                               >
                                 {order.paymentStatus}
                               </Badge>
@@ -5608,13 +5588,12 @@ export default function DashboardPage() {
                             <select
                               value={order.status}
                               onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value as Order["status"])}
-                              className={`text-[11px] font-mono font-bold px-2.5 py-1 rounded-xl border cursor-pointer focus:outline-hidden ${
-                                order.status === "Delivered"
+                              className={`text-[11px] font-mono font-bold px-2.5 py-1 rounded-xl border cursor-pointer focus:outline-hidden ${order.status === "Delivered"
                                   ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
                                   : order.status === "Out for Delivery"
-                                  ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30"
-                                  : "bg-amber-400/10 text-amber-600 dark:text-amber-400 border-amber-400/30"
-                              }`}
+                                    ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30"
+                                    : "bg-amber-400/10 text-amber-600 dark:text-amber-400 border-amber-400/30"
+                                }`}
                             >
                               <option value="Processing">Processing</option>
                               <option value="Out for Delivery">Out for Delivery</option>
@@ -5851,13 +5830,12 @@ export default function DashboardPage() {
                           </td>
                           <td className="py-3.5 pr-4 whitespace-nowrap">
                             <span
-                              className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md ${
-                                (item.stockCount ?? 5) > 3
+                              className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md ${(item.stockCount ?? 5) > 3
                                   ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                                   : (item.stockCount ?? 5) > 0
-                                  ? "bg-amber-400/10 text-amber-600 dark:text-amber-400"
-                                  : "bg-rose-500/10 text-rose-500"
-                              }`}
+                                    ? "bg-amber-400/10 text-amber-600 dark:text-amber-400"
+                                    : "bg-rose-500/10 text-rose-500"
+                                }`}
                             >
                               {(item.stockCount ?? 5) > 3 ? "Healthy Stock" : (item.stockCount ?? 5) > 0 ? "Low Stock" : "Out of Stock"}
                             </span>
@@ -5943,11 +5921,10 @@ export default function DashboardPage() {
                           <button
                             key={pageNum}
                             onClick={() => setInventoryPage(pageNum)}
-                            className={`w-7 h-7 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
-                              inventoryPage === pageNum
+                            className={`w-7 h-7 rounded-lg text-xs font-bold transition-colors cursor-pointer ${inventoryPage === pageNum
                                 ? "bg-primary text-primary-foreground"
                                 : "hover:bg-secondary text-muted-foreground"
-                            }`}
+                              }`}
                           >
                             {pageNum}
                           </button>
@@ -6004,11 +5981,10 @@ export default function DashboardPage() {
 
                       <Badge
                         variant="secondary"
-                        className={`text-xs font-mono font-semibold ${
-                          t.status.includes("Approved")
+                        className={`text-xs font-mono font-semibold ${t.status.includes("Approved")
                             ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
                             : "bg-amber-400/10 text-amber-600 dark:text-amber-400 border-amber-400/30"
-                        }`}
+                          }`}
                       >
                         {t.status}
                       </Badge>
@@ -6093,7 +6069,7 @@ export default function DashboardPage() {
                     .filter((c) =>
                       couponSearch.trim()
                         ? c.code.toLowerCase().includes(couponSearch.toLowerCase()) ||
-                          (c.description && c.description.toLowerCase().includes(couponSearch.toLowerCase()))
+                        (c.description && c.description.toLowerCase().includes(couponSearch.toLowerCase()))
                         : true
                     )
                     .map((coupon) => {
@@ -6103,13 +6079,12 @@ export default function DashboardPage() {
                       return (
                         <div
                           key={coupon.code}
-                          className={`p-5 rounded-2xl border transition-all space-y-3.5 bg-card/60 hover:shadow-md relative overflow-hidden ${
-                            !coupon.is_active
+                          className={`p-5 rounded-2xl border transition-all space-y-3.5 bg-card/60 hover:shadow-md relative overflow-hidden ${!coupon.is_active
                               ? "opacity-60 border-border bg-secondary/10"
                               : isExpired
-                              ? "border-rose-500/30 bg-rose-500/5"
-                              : "border-primary/30 bg-primary/5 hover:border-primary"
-                          }`}
+                                ? "border-rose-500/30 bg-rose-500/5"
+                                : "border-primary/30 bg-primary/5 hover:border-primary"
+                            }`}
                         >
                           {/* Header: Code & Status */}
                           <div className="flex items-center justify-between">
@@ -6278,7 +6253,7 @@ export default function DashboardPage() {
             <div className="p-5 bg-white text-black rounded-2xl space-y-3 font-mono shadow-md">
               <p className="font-black text-sm tracking-tight">{selectedBarcodeProduct.name}</p>
               <p className="text-[11px] text-zinc-600">ID: {selectedBarcodeProduct.id.toUpperCase()}</p>
-              
+
               <div className="py-2 flex justify-center items-center gap-1">
                 {[4, 2, 6, 1, 5, 2, 7, 3, 2, 5, 1, 6, 3, 4, 2, 7, 1, 5, 3, 6, 2].map((w, i) => (
                   <div key={i} style={{ width: `${w}px` }} className="h-14 bg-black" />
@@ -6403,11 +6378,10 @@ export default function DashboardPage() {
                   <button
                     type="button"
                     onClick={() => setBrandLogoType("image")}
-                    className={`py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                      brandLogoType === "image"
+                    className={`py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${brandLogoType === "image"
                         ? "bg-card text-foreground shadow-xs border border-border"
                         : "text-muted-foreground hover:text-foreground"
-                    }`}
+                      }`}
                   >
                     <ImageIcon className="w-3.5 h-3.5 text-amber-500" />
                     <span>Upload / Image Logo</span>
@@ -6415,11 +6389,10 @@ export default function DashboardPage() {
                   <button
                     type="button"
                     onClick={() => setBrandLogoType("text")}
-                    className={`py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                      brandLogoType === "text"
+                    className={`py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${brandLogoType === "text"
                         ? "bg-card text-foreground shadow-xs border border-border"
                         : "text-muted-foreground hover:text-foreground"
-                    }`}
+                      }`}
                   >
                     <Award className="w-3.5 h-3.5 text-blue-500" />
                     <span>Stylized Text Badge</span>
@@ -6752,11 +6725,10 @@ export default function DashboardPage() {
                   <button
                     type="button"
                     onClick={() => setProductImageType("upload")}
-                    className={`py-1.5 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                      productImageType === "upload"
+                    className={`py-1.5 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${productImageType === "upload"
                         ? "bg-foreground text-background shadow-xs"
                         : "text-muted-foreground hover:text-foreground"
-                    }`}
+                      }`}
                   >
                     <Upload className="w-3.5 h-3.5" />
                     <span>Upload Image</span>
@@ -6764,11 +6736,10 @@ export default function DashboardPage() {
                   <button
                     type="button"
                     onClick={() => setProductImageType("url")}
-                    className={`py-1.5 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                      productImageType === "url"
+                    className={`py-1.5 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${productImageType === "url"
                         ? "bg-foreground text-background shadow-xs"
                         : "text-muted-foreground hover:text-foreground"
-                    }`}
+                      }`}
                   >
                     <ImageIcon className="w-3.5 h-3.5" />
                     <span>Image URL Link</span>
@@ -7092,11 +7063,10 @@ export default function DashboardPage() {
                   <button
                     type="button"
                     onClick={() => setEditProductImageType("upload")}
-                    className={`py-1.5 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                      editProductImageType === "upload"
+                    className={`py-1.5 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${editProductImageType === "upload"
                         ? "bg-foreground text-background shadow-xs"
                         : "text-muted-foreground hover:text-foreground"
-                    }`}
+                      }`}
                   >
                     <Upload className="w-3.5 h-3.5" />
                     <span>Upload Image</span>
@@ -7104,11 +7074,10 @@ export default function DashboardPage() {
                   <button
                     type="button"
                     onClick={() => setEditProductImageType("url")}
-                    className={`py-1.5 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                      editProductImageType === "url"
+                    className={`py-1.5 rounded-lg font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${editProductImageType === "url"
                         ? "bg-foreground text-background shadow-xs"
                         : "text-muted-foreground hover:text-foreground"
-                    }`}
+                      }`}
                   >
                     <ImageIcon className="w-3.5 h-3.5" />
                     <span>Image URL Link</span>
@@ -7188,9 +7157,9 @@ export default function DashboardPage() {
                         setEditProduct((prev) =>
                           prev
                             ? {
-                                ...prev,
-                                additionalImages: [...(prev.additionalImages || []), ""],
-                              }
+                              ...prev,
+                              additionalImages: [...(prev.additionalImages || []), ""],
+                            }
                             : null
                         )
                       }
@@ -7273,9 +7242,9 @@ export default function DashboardPage() {
                           setEditProduct((prev) =>
                             prev
                               ? {
-                                  ...prev,
-                                  additionalImages: [""],
-                                }
+                                ...prev,
+                                additionalImages: [""],
+                              }
                               : null
                           )
                         }
@@ -7526,11 +7495,10 @@ export default function DashboardPage() {
                 <button
                   key={tab.id}
                   onClick={() => setHistoryTab(tab.id as typeof historyTab)}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                    historyTab === tab.id
+                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${historyTab === tab.id
                       ? "bg-foreground text-background shadow-xs"
                       : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
-                  }`}
+                    }`}
                 >
                   {tab.icon}
                   <span>{tab.label}</span>
@@ -7616,13 +7584,12 @@ export default function DashboardPage() {
                             </div>
                             <Badge
                               variant="secondary"
-                              className={`text-[9px] font-mono font-bold border ${
-                                gear.warrantyStatus === "Under Warranty"
+                              className={`text-[9px] font-mono font-bold border ${gear.warrantyStatus === "Under Warranty"
                                   ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
                                   : gear.warrantyStatus.includes("Pro Care")
-                                  ? "bg-[#FFE600]/15 text-amber-600 dark:text-[#FFE600] border-[#FFE600]/30"
-                                  : "bg-zinc-500/10 text-zinc-400 border-zinc-500/30"
-                              }`}
+                                    ? "bg-[#FFE600]/15 text-amber-600 dark:text-[#FFE600] border-[#FFE600]/30"
+                                    : "bg-zinc-500/10 text-zinc-400 border-zinc-500/30"
+                                }`}
                             >
                               {gear.warrantyStatus}
                             </Badge>
@@ -8043,11 +8010,10 @@ export default function DashboardPage() {
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <label
-                    className={`p-2.5 rounded-xl border flex items-center gap-2 cursor-pointer transition-all ${
-                      !couponForm.is_single_use
+                    className={`p-2.5 rounded-xl border flex items-center gap-2 cursor-pointer transition-all ${!couponForm.is_single_use
                         ? "border-primary bg-primary/10 text-foreground font-bold"
                         : "border-border bg-card text-muted-foreground"
-                    }`}
+                      }`}
                   >
                     <input
                       type="radio"
@@ -8060,11 +8026,10 @@ export default function DashboardPage() {
                   </label>
 
                   <label
-                    className={`p-2.5 rounded-xl border flex items-center gap-2 cursor-pointer transition-all ${
-                      couponForm.is_single_use
+                    className={`p-2.5 rounded-xl border flex items-center gap-2 cursor-pointer transition-all ${couponForm.is_single_use
                         ? "border-primary bg-primary/10 text-foreground font-bold"
                         : "border-border bg-card text-muted-foreground"
-                    }`}
+                      }`}
                   >
                     <input
                       type="radio"

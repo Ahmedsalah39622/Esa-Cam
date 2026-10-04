@@ -12,7 +12,7 @@ export function Footer() {
   const footerData = homepageContent?.footer || {
     tagline: "Receive firmware updates, VIP optical release notices, and exclusive technical masterclasses directly to your inbox.",
     hotline: "+20 1092298665",
-    email: "pro@esacam.com",
+    email: "eissacamstore@gmail.com",
     address: "Zamalek Cinema Hub, Cairo",
     copyright: "ESA CAM. Authorized Cinema Distributor.",
     instagramUrl: "https://instagram.com/esacam.store",
