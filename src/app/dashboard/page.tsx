@@ -1290,7 +1290,7 @@ export default function DashboardPage() {
     </table>
 
     <div class="guarantee-bar">
-      ✓ All Serial Numbers Registered with 2-Year Official ESA CAM Distributor Warranty & Sensor Calibration Guarantee
+      ✓ All Serial Numbers Registered and Authenticated with ESA CAM
     </div>
 
     <div class="summary-section">
@@ -1303,10 +1303,7 @@ export default function DashboardPage() {
           <td style="color: #71717a;">Insured Fragile White-Glove Shipping:</td>
           <td style="text-align: right; color: #059669; font-weight: 700;">Free Included</td>
         </tr>
-        <tr>
-          <td style="color: #71717a;">2-Year Center Calibration & Warranty:</td>
-          <td style="text-align: right; color: #059669; font-weight: 700;">Free Included</td>
-        </tr>
+    
         <tr style="border-top: 2px solid #000000; font-size: 16px;">
           <td style="font-weight: 900; padding-top: 10px;">TOTAL INVOICE AMOUNT:</td>
           <td style="text-align: right; padding-top: 10px;" class="grand-total">${formattedTotal}</td>
@@ -1317,7 +1314,7 @@ export default function DashboardPage() {
     <div class="footer-auth">
       <div>
         <div style="font-weight: 700; color: #000;">ESA CAM Optics Lab, Inc.</div>
-        <div>24 Hassan Assem St, Zamalek, Cairo, Egypt</div>
+        <div>5 Roshdi Street, Mohamed Faried, Downtown</div>
         <div style="margin-top: 2px;">Support: ${homepageContent?.footer?.hotline || "+20 1092298665"} • ${homepageContent?.footer?.email || "pro@esacam.com"}</div>
       </div>
 
