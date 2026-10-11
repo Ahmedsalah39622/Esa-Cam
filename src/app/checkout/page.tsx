@@ -81,7 +81,7 @@ function CheckoutContent() {
     phone: "",
     company: "",
     address: "",
-    city: "Cairo",
+    city: "Greater Cairo (Bab El-Louq & Downtown)",
     notes: "",
   });
 
@@ -246,7 +246,6 @@ function CheckoutContent() {
     }
   }, [searchParams, clearCart]);
 
-  // Promo Code Engine
   const [promoInput, setPromoInput] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<{
     code: string;
@@ -264,10 +263,9 @@ function CheckoutContent() {
   const discountAmountUSD = appliedCoupon ? (cartTotalUSD * appliedCoupon.discount_percent) / 100 : 0;
   const finalTotalUSD = Math.max(0, cartTotalUSD - discountAmountUSD + shippingCostUSD);
 
-
   const handleApplyPromoCode = async () => {
     if (!promoInput.trim()) {
-      toast.error("Please enter a coupon code");
+      toast.error("يرجى إدخال كود الخصم");
       return;
     }
     setIsCheckingPromo(true);
@@ -279,12 +277,12 @@ function CheckoutContent() {
         const match = data.coupons.find((c: CouponItem) => c.code.toUpperCase() === cleanInput);
 
         if (!match) {
-          toast.error(`Invalid promo code "${cleanInput}".`);
+          toast.error(`كود الخصم "${cleanInput}" غير صحيح`);
           return;
         }
 
         if (!match.is_active) {
-          toast.error(`Promo code "${match.code}" is currently paused or inactive.`);
+          toast.error(`كود الخصم "${match.code}" متوقف حالياً`);
           return;
         }
 
@@ -294,17 +292,17 @@ function CheckoutContent() {
         endDate.setHours(23, 59, 59, 999);
 
         if (today < startDate) {
-          toast.error(`This coupon is scheduled and will be valid starting ${match.start_date}.`);
+          toast.error(`كود الخصم "${match.code}" سيبدأ العمل به في ${match.start_date}`);
           return;
         }
 
         if (today > endDate) {
-          toast.error(`This coupon expired on ${match.end_date}.`);
+          toast.error(`كود الخصم "${match.code}" انتهت صلاحيته`);
           return;
         }
 
         if (match.is_single_use && match.usage_count >= 1) {
-          toast.error(`This single-use coupon "${match.code}" has already been redeemed.`);
+          toast.error(`كود الخصم "${match.code}" مخصص للاستخدام مرة واحدة فقط وتم استخدامه`);
           return;
         }
 
@@ -313,12 +311,12 @@ function CheckoutContent() {
           discount_percent: match.discount_percent,
           description: match.description,
         });
-        toast.success(`Coupon "${match.code}" Applied! ${match.discount_percent}% OFF!`);
+        toast.success(`تم تفعيل الخصم! كود "${match.code}" خصم ${match.discount_percent}%`);
       } else {
-        toast.error("Could not verify promo code with server.");
+        toast.error("تعذر التحقق من كود الخصم مع السيرفر");
       }
     } catch {
-      toast.error("Error validating promo code");
+      toast.error("حدث خطأ أثناء فحص كود الخصم");
     } finally {
       setIsCheckingPromo(false);
     }
@@ -327,7 +325,7 @@ function CheckoutContent() {
   const handleRemovePromoCode = () => {
     setAppliedCoupon(null);
     setPromoInput("");
-    toast.info("Promo code removed.");
+    toast.info("تم إلغاء كود الخصم");
   };
 
   const handleSubmitOrder = async (e: React.FormEvent) => {
@@ -356,7 +354,7 @@ function CheckoutContent() {
           customerEmail: formData.email,
           city: formData.city,
           shippingAddress: `${formData.address}${formData.company ? ` (${formData.company})` : ""}`,
-          notes: `${formData.notes || ""}${appliedCoupon ? ` [Promo Code: ${appliedCoupon.code} (-${appliedCoupon.discount_percent}%)]` : ""}`,
+          notes: `${formData.notes || ""}${appliedCoupon ? ` [كود الخصم: ${appliedCoupon.code} (-${appliedCoupon.discount_percent}%)]` : ""}`,
           currency: activeCurrency,
           items: cart.map((item) => ({
             id: item.product.id,
@@ -367,7 +365,7 @@ function CheckoutContent() {
             image: item.product.image,
           })),
           appliedCoupon,
-          shippingCost: 0,
+          shippingCost: Math.round(shippingCostUSD * rate),
           finalTotalUSD,
           finalTotalEGP: Math.round(finalTotalUSD * rate),
         };
@@ -388,7 +386,7 @@ function CheckoutContent() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ code: appliedCoupon.code, increment_usage: true }),
               });
-            } catch {}
+            } catch { }
           }
           toast.loading("Redirecting to EasyKash secure checkout...");
           window.location.href = data.url;
@@ -414,9 +412,10 @@ function CheckoutContent() {
         customerEmail: formData.email,
         city: formData.city,
         shippingAddress: `${formData.address}${formData.company ? ` (${formData.company})` : ""}`,
-        notes: `${formData.notes || ""}${appliedCoupon ? ` [Promo Code: ${appliedCoupon.code} (-${appliedCoupon.discount_percent}%)]` : ""}`,
+        notes: `${formData.notes || ""}${appliedCoupon ? ` [كود الخصم: ${appliedCoupon.code} (-${appliedCoupon.discount_percent}%)]` : ""}`,
         paymentMethod,
         totalAmount: finalTotalUSD,
+        shippingCost: shippingCostUSD,
         items: cart.map((item) => ({
           id: item.product.id,
           name: item.product.name,
@@ -436,7 +435,6 @@ function CheckoutContent() {
       const data = await res.json();
 
       if (data.success) {
-        // Increment coupon usage
         if (appliedCoupon) {
           try {
             await fetch("/api/coupons", {
@@ -444,7 +442,7 @@ function CheckoutContent() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ code: appliedCoupon.code, increment_usage: true }),
             });
-          } catch {}
+          } catch { }
         }
 
         setPlacedOrderData(data.data);
@@ -575,10 +573,10 @@ function CheckoutContent() {
                 {placedOrderData.payment_method === "easykash"
                   ? "Paid & Verified via EasyKash (تم الدفع والتأكيد إلكترونياً)"
                   : placedOrderData.payment_method === "kashier"
-                  ? "Paid & Verified via Kashier (تم الدفع والتأكيد عبر كاشير)"
-                  : placedOrderData.payment_method === "card" || placedOrderData.payment_method === "card_stripe" || placedOrderData.payment_method === "stripe"
-                  ? "Paid & Verified Online (تم الدفع والتأكيد إلكترونياً)"
-                  : "Order Confirmed & Logged"}
+                    ? "Paid & Verified via Kashier (تم الدفع والتأكيد عبر كاشير)"
+                    : placedOrderData.payment_method === "card" || placedOrderData.payment_method === "card_stripe" || placedOrderData.payment_method === "stripe"
+                      ? "Paid & Verified Online (تم الدفع والتأكيد إلكترونياً)"
+                      : "Order Confirmed & Logged"}
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
@@ -662,20 +660,20 @@ function CheckoutContent() {
                 {placedOrderData.payment_method === "easykash"
                   ? "EasyKash Online Payment (مدفوع إلكترونياً عبر باي موب)"
                   : placedOrderData.payment_method === "kashier"
-                  ? "Kashier Online Payment (مدفوع إلكترونياً عبر كاشير)"
-                  : placedOrderData.payment_method === "card_stripe" || placedOrderData.payment_method === "card" || placedOrderData.payment_method === "stripe"
-                  ? "Online Card Payment (مدفوع إلكترونياً بالبطاقة)"
-                  : "Cash on Delivery (الدفع عند الاستلام)"}
+                    ? "Kashier Online Payment (مدفوع إلكترونياً عبر كاشير)"
+                    : placedOrderData.payment_method === "card_stripe" || placedOrderData.payment_method === "card" || placedOrderData.payment_method === "stripe"
+                      ? "Online Card Payment (مدفوع إلكترونياً بالبطاقة)"
+                      : "Cash on Delivery (الدفع عند الاستلام)"}
               </span>
             </div>
             <div className="flex justify-between items-center pb-2 border-b border-neutral-800">
               <span className="text-neutral-400">Payment Status</span>
               <span className="font-bold text-emerald-400">
                 {placedOrderData.payment_method === "easykash" ||
-                placedOrderData.payment_method === "kashier" ||
-                placedOrderData.payment_method === "card" ||
-                placedOrderData.payment_method === "card_stripe" ||
-                placedOrderData.payment_method === "stripe"
+                  placedOrderData.payment_method === "kashier" ||
+                  placedOrderData.payment_method === "card" ||
+                  placedOrderData.payment_method === "card_stripe" ||
+                  placedOrderData.payment_method === "stripe"
                   ? "Paid in Full ✓ (تم استلام الدفعة بنجاح)"
                   : "Pending on Delivery (مستحق عند الاستلام)"}
               </span>
@@ -683,10 +681,10 @@ function CheckoutContent() {
             <div className="flex justify-between items-baseline pt-1">
               <span className="text-sm font-bold text-white">
                 {placedOrderData.payment_method === "easykash" ||
-                placedOrderData.payment_method === "kashier" ||
-                placedOrderData.payment_method === "card" ||
-                placedOrderData.payment_method === "card_stripe" ||
-                placedOrderData.payment_method === "stripe"
+                  placedOrderData.payment_method === "kashier" ||
+                  placedOrderData.payment_method === "card" ||
+                  placedOrderData.payment_method === "card_stripe" ||
+                  placedOrderData.payment_method === "stripe"
                   ? "Total Amount Paid (المبلغ المدفوع)"
                   : "Total Amount Due (المبلغ المستحق)"}
               </span>
@@ -844,19 +842,20 @@ function CheckoutContent() {
                           .filter((c) => c.isActive)
                           .map((c) => (
                             <option key={c.id} value={c.cityNameEn}>
-                              {c.cityNameEn} ({c.cityNameAr}) • {c.estimatedDelivery}
+                              {c.cityNameAr} • {formatPrice(c.rateUSD)} ({c.estimatedDelivery})
                             </option>
                           ))
                       ) : (
                         <>
-                          <option value="Cairo">Greater Cairo (Same-Day / 24h)</option>
-                          <option value="Giza">Giza &amp; 6th of October</option>
-                          <option value="Alexandria">Alexandria</option>
-                          <option value="Mansoura">Mansoura &amp; Delta</option>
-                          <option value="Tanta">Tanta &amp; Gharbia</option>
-                          <option value="Hurghada">Hurghada &amp; Red Sea</option>
-                          <option value="Sharm">Sharm El-Sheikh &amp; Sinai</option>
-                          <option value="UpperEgypt">Assiut &amp; Upper Egypt</option>
+                          <option value="Greater Cairo (Bab El-Louq & Downtown)">القاهرة الكبرى (باب اللوق ووسط البلد) • {formatPrice(0.99)} (خلال 24 ساعة)</option>
+                          <option value="Giza & 6th of October">الجيزة و 6 أكتوبر • {formatPrice(0.99)} (خلال 24-48 ساعة)</option>
+                          <option value="Alexandria">الإسكندرية • {formatPrice(1.98)} (1-2 يوم عمل)</option>
+                          <option value="Mansoura & Delta Governorates">المنصورة ومحافظات الدلتا • {formatPrice(1.98)} (2-3 أيام عمل)</option>
+                          <option value="Tanta & Gharbia">طنطا والغربية • {formatPrice(1.98)} (2-3 أيام عمل)</option>
+                          <option value="Suez, Port Said & Ismailia">مدن القناة (السويس، بورسعيد، الإسماعيلية) • {formatPrice(2.97)} (2-3 أيام عمل)</option>
+                          <option value="Hurghada & Red Sea">الغردقة والبحر الأحمر • {formatPrice(3.96)} (2-4 أيام عمل)</option>
+                          <option value="Sharm El-Sheikh & Sinai">شرم الشيخ وجنوب سيناء • {formatPrice(3.96)} (3-4 أيام عمل)</option>
+                          <option value="Assiut & Upper Egypt">أسيوط ومحافظات الصعيد • {formatPrice(4.95)} (2-4 أيام عمل)</option>
                         </>
                       )}
                     </select>
@@ -877,11 +876,10 @@ function CheckoutContent() {
                 {shippingSettings.enableExpressShipping && (
                   <div
                     onClick={() => setIsExpressDelivery(!isExpressDelivery)}
-                    className={`p-3.5 rounded-2xl border flex items-center justify-between cursor-pointer transition-all ${
-                      isExpressDelivery
+                    className={`p-3.5 rounded-2xl border flex items-center justify-between cursor-pointer transition-all ${isExpressDelivery
                         ? "border-primary bg-primary/5 ring-1 ring-primary"
                         : "border-border bg-secondary/20 hover:bg-secondary/40"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-3">
                       <input
@@ -924,11 +922,10 @@ function CheckoutContent() {
                   {/* Option 1: Cash on Delivery */}
                   <label
                     onClick={() => setPaymentMethod("cod")}
-                    className={`p-4 rounded-2xl border flex items-start gap-3 cursor-pointer transition-all ${
-                      paymentMethod === "cod"
+                    className={`p-4 rounded-2xl border flex items-start gap-3 cursor-pointer transition-all ${paymentMethod === "cod"
                         ? "border-primary bg-primary/5 ring-1 ring-primary"
                         : "border-border bg-secondary/20 hover:bg-secondary/40"
-                    }`}
+                      }`}
                   >
                     <input
                       type="radio"
@@ -948,11 +945,10 @@ function CheckoutContent() {
                   {/* Option 2: EasyKash Online Payment */}
                   <label
                     onClick={() => setPaymentMethod("card")}
-                    className={`p-4 rounded-2xl border flex items-start gap-3 cursor-pointer transition-all relative overflow-hidden ${
-                      paymentMethod === "card"
+                    className={`p-4 rounded-2xl border flex items-start gap-3 cursor-pointer transition-all relative overflow-hidden ${paymentMethod === "card"
                         ? "border-[#0070BA] bg-[#0070BA]/5 ring-1 ring-[#0070BA]"
                         : "border-border bg-secondary/20 hover:bg-secondary/40"
-                    }`}
+                      }`}
                   >
                     <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-md bg-[#0070BA]/15 border border-[#0070BA]/30 text-[#0070BA] text-[10px] font-mono font-black uppercase">
                       EasyKash • إيزي كاش
@@ -1028,7 +1024,7 @@ function CheckoutContent() {
                   ))}
                 </div>
 
-                {/* Promo / Voucher Code Section */}
+                {/* Promo / Coupon Code Section */}
                 <div className="border-t border-border pt-3">
                   {appliedCoupon ? (
                     <div className="flex items-center justify-between p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs">
@@ -1037,7 +1033,7 @@ function CheckoutContent() {
                         <div>
                           <span className="font-mono font-black">{appliedCoupon.code}</span>
                           <span className="text-[11px] block font-medium">
-                            {appliedCoupon.discount_percent}% Creator Discount Applied
+                            خصم {appliedCoupon.discount_percent}% مفعّل
                           </span>
                         </div>
                       </div>
@@ -1046,20 +1042,26 @@ function CheckoutContent() {
                         onClick={handleRemovePromoCode}
                         className="text-xs text-rose-500 hover:underline font-semibold cursor-pointer p-1"
                       >
-                        Remove
+                        إلغاء الكود
                       </button>
                     </div>
                   ) : (
                     <div className="space-y-1.5">
                       <label className="text-[11px] font-semibold text-muted-foreground block">
-                        Have a Promo / Creator Code? (كوبون خصم)
+                        كود الخصم (Promo Code)
                       </label>
                       <div className="flex gap-2">
                         <input
                           type="text"
-                          placeholder="e.g. CINE10 or ESA20"
+                          placeholder="أدخل كود الخصم"
                           value={promoInput}
                           onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              handleApplyPromoCode();
+                            }
+                          }}
                           className="flex-1 px-3 py-2 rounded-xl border border-border bg-secondary/30 text-xs text-foreground font-mono font-bold uppercase focus:outline-hidden focus:ring-1 focus:ring-primary"
                         />
                         <Button
@@ -1069,7 +1071,7 @@ function CheckoutContent() {
                           variant="outline"
                           className="rounded-xl text-xs font-bold px-3.5 cursor-pointer shrink-0"
                         >
-                          {isCheckingPromo ? "Checking..." : "Apply"}
+                          {isCheckingPromo ? "جاري الفحص..." : "تطبيق"}
                         </Button>
                       </div>
                     </div>
@@ -1085,24 +1087,16 @@ function CheckoutContent() {
 
                   {appliedCoupon && (
                     <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-semibold">
-                      <span>Promo Discount ({appliedCoupon.discount_percent}%)</span>
+                      <span>كود الخصم ({appliedCoupon.code} - {appliedCoupon.discount_percent}%)</span>
                       <span className="font-mono">-{formatPrice(discountAmountUSD)}</span>
                     </div>
                   )}
 
                   <div className="flex justify-between text-muted-foreground">
-                    <span>Fragile-Cine Insured Shipping</span>
-                    <span>
-                      {shippingCostUSD === 0 ? (
-                        <span className="text-emerald-600 dark:text-emerald-400 font-semibold">FREE</span>
-                      ) : (
-                        <span className="font-mono">{formatPrice(shippingCostUSD)}</span>
-                      )}
+                    <span>Shipping Fee (مصاريف الشحن)</span>
+                    <span className="font-mono font-bold text-foreground">
+                      {formatPrice(shippingCostUSD)}
                     </span>
-                  </div>
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>2-Year Official ESA Warranty</span>
-                    <span className="text-emerald-600 dark:text-emerald-400 font-medium">Included</span>
                   </div>
 
                   <div className="border-t border-border pt-3 flex justify-between items-baseline font-black text-lg text-foreground">

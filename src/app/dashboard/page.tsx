@@ -1389,7 +1389,8 @@ export default function DashboardPage() {
       stockCount: Number(newProduct.stockCount),
       shortDescription: newProduct.shortDescription || "High performance cinema photography equipment.",
       specs: [{ label: "Mount", value: newProduct.mount || "Universal" }],
-      features: ["Factory Sealed", "2-Year Official ESA Warranty"],
+      features: ["Factory Sealed"
+      ],
       inTheBox: [newProduct.name, "Accessories", "Manual"],
       mount: newProduct.mount,
     };
@@ -6144,11 +6145,11 @@ export default function DashboardPage() {
                           <div className="p-2.5 rounded-xl bg-secondary/40 border border-border/50 text-[11px] font-mono space-y-1">
                             <div className="flex items-center justify-between text-muted-foreground">
                               <span>Valid From (من):</span>
-                              <strong className="text-foreground">{coupon.start_date}</strong>
+                              <strong className="text-foreground">{String(coupon.start_date).split("T")[0]}</strong>
                             </div>
                             <div className="flex items-center justify-between text-muted-foreground">
                               <span>Expires At (إلى):</span>
-                              <strong className="text-foreground">{coupon.end_date}</strong>
+                              <strong className="text-foreground">{String(coupon.end_date).split("T")[0]}</strong>
                             </div>
                           </div>
 
@@ -7917,7 +7918,7 @@ export default function DashboardPage() {
                   <input
                     required
                     type="text"
-                    placeholder="e.g. CINE20 or ESA-8841"
+                    placeholder="كود الخصم (مثل: CINE)"
                     value={couponForm.code}
                     onChange={(e) => setCouponForm({ ...couponForm, code: e.target.value.toUpperCase() })}
                     className="flex-1 px-3.5 py-2.5 rounded-xl border border-border bg-secondary/30 text-foreground font-mono font-black text-sm tracking-wider uppercase"

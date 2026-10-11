@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useStore } from "@/context/store-context";
@@ -14,10 +14,7 @@ import {
   ShoppingBag,
   ShieldCheck,
   ArrowRight,
-  Truck,
-  Sparkles,
 } from "lucide-react";
-import { toast } from "sonner";
 
 export default function CartPage() {
   const {
@@ -27,41 +24,7 @@ export default function CartPage() {
     formatPrice,
     cartTotalUSD,
     cartItemCount,
-    shippingSettings,
-    calculateShippingFee,
   } = useStore();
-
-  const [promoCode, setPromoCode] = useState("");
-  const [promoApplied, setPromoApplied] = useState(false);
-
-  const hasFreeShipping = shippingSettings.enableFreeShipping;
-  const freeThreshold = shippingSettings.freeShippingThresholdUSD;
-  const progressPercent = hasFreeShipping
-    ? Math.min(100, (cartTotalUSD / freeThreshold) * 100)
-    : 0;
-  const remainingForFreeShipping = hasFreeShipping
-    ? Math.max(0, freeThreshold - cartTotalUSD)
-    : 0;
-  const isFreeUnlocked = hasFreeShipping && cartTotalUSD >= freeThreshold;
-
-  const estimatedShippingCost = calculateShippingFee(cartTotalUSD);
-  const discountAmount = promoApplied ? cartTotalUSD * 0.1 : 0;
-  const finalTotalUSD = Math.max(0, cartTotalUSD - discountAmount + estimatedShippingCost);
-
-
-  const handleApplyPromo = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!promoCode.trim()) return;
-    if (
-      promoCode.trim().toUpperCase() === "ESAFILM10" ||
-      promoCode.trim().toUpperCase() === "CINE10"
-    ) {
-      setPromoApplied(true);
-      toast.success("10% Creator Discount Applied!");
-    } else {
-      toast.error("Invalid discount code. Try 'CINE10'");
-    }
-  };
 
   return (
     <main className="min-h-screen flex flex-col bg-white text-[#0A0A0A] selection:bg-[#0A0A0A] selection:text-[#FACC15]">
@@ -198,53 +161,9 @@ export default function CartPage() {
                 SUMMARY
               </h2>
 
-              {/* Free Shipping Progress Indicator */}
-              {hasFreeShipping && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs font-mono">
-                    <span className="flex items-center gap-1.5 font-bold text-[#0A0A0A]">
-                      <Truck className="w-3.5 h-3.5 text-[#FACC15]" />
-                      {isFreeUnlocked ? (
-                        <span className="text-emerald-600 font-bold">
-                          ✓ FREE VIP Express Shipping Unlocked!
-                        </span>
-                      ) : (
-                        <span>
-                          Add <strong>{formatPrice(remainingForFreeShipping)}</strong> for Free Express
-                        </span>
-                      )}
-                    </span>
-                    <span className="text-[#737373] text-[10px]">
-                      {Math.round(progressPercent)}%
-                    </span>
-                  </div>
-                  <div className="w-full h-1 bg-[#E5E5E5] overflow-hidden">
-                    <div
-                      className="h-full bg-[#0A0A0A] transition-all duration-500"
-                      style={{ width: `${progressPercent}%` }}
-                    />
-                  </div>
-                </div>
-              )}
 
-              {/* Promo Coupon Form */}
-              <form onSubmit={handleApplyPromo} className="flex gap-2 pt-1">
-                <input
-                  type="text"
-                  placeholder="Coupon code (e.g. CINE10)"
-                  value={promoCode}
-                  onChange={(e) => setPromoCode(e.target.value)}
-                  disabled={promoApplied}
-                  className="flex-1 px-4 py-2.5 text-xs border border-[#E5E5E5] bg-white focus:outline-hidden focus:border-[#0A0A0A] uppercase placeholder:normal-case font-mono"
-                />
-                <button
-                  type="submit"
-                  disabled={promoApplied || !promoCode.trim()}
-                  className="px-4 py-2.5 text-xs font-black uppercase tracking-wider bg-white border border-[#0A0A0A] hover:bg-[#0A0A0A] hover:text-white transition-colors cursor-pointer disabled:opacity-40"
-                >
-                  {promoApplied ? "Applied ✓" : "Apply"}
-                </button>
-              </form>
+
+
 
               {/* Breakdown */}
               <div className="space-y-3 text-xs border-t border-[#E5E5E5] pt-4 font-mono">
@@ -253,35 +172,19 @@ export default function CartPage() {
                   <span className="font-bold text-[#0A0A0A]">{formatPrice(cartTotalUSD)}</span>
                 </div>
 
-                {promoApplied && (
-                  <div className="flex justify-between text-emerald-600 font-bold">
-                    <span className="flex items-center gap-1">
-                      <Sparkles className="w-3 h-3 text-[#FACC15]" /> Promo Discount (10%)
-                    </span>
-                    <span>-{formatPrice(discountAmount)}</span>
-                  </div>
-                )}
 
-                <div className="flex justify-between text-[#737373]">
-                  <span>Warranty (2 Years)</span>
-                  <span className="text-emerald-600 font-bold">FREE</span>
-                </div>
 
                 <div className="flex justify-between text-[#737373]">
                   <span>Shipping</span>
-                  <span>
-                    {isFreeUnlocked || estimatedShippingCost === 0 ? (
-                      <span className="text-emerald-600 font-bold">FREE Express</span>
-                    ) : (
-                      <span className="font-bold text-[#0A0A0A]">{formatPrice(estimatedShippingCost)}</span>
-                    )}
+                  <span className="font-mono text-[#737373] italic text-[11px]">
+                    Calculated at checkout
                   </span>
                 </div>
 
                 <div className="border-t border-[#0A0A0A] pt-4 flex justify-between items-baseline font-sans">
-                  <span className="text-sm font-black uppercase text-[#0A0A0A]">Total Amount</span>
+                  <span className="text-sm font-black uppercase text-[#0A0A0A]">Subtotal</span>
                   <span className="font-mono font-black text-xl text-[#0A0A0A]">
-                    {formatPrice(finalTotalUSD)}
+                    {formatPrice(cartTotalUSD)}
                   </span>
                 </div>
               </div>

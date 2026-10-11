@@ -16,18 +16,6 @@ async function ensureCouponsTable() {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
   `);
-
-  // Insert starter default coupons if table is empty
-  const rows = await query<{ cnt: number }>("SELECT COUNT(*) as cnt FROM coupons");
-  if (rows.length === 0 || rows[0].cnt === 0) {
-    await query(`
-      INSERT INTO coupons (code, discount_percent, description, start_date, end_date, is_single_use, usage_count, is_active)
-      VALUES 
-        ('CINE10', 10, '10% Universal Creator Discount for cinema gear', '2026-01-01', '2026-12-31', FALSE, 14, TRUE),
-        ('ESAFILM15', 15, '15% Filmmaker Master Bundle Promotion', '2026-01-01', '2026-12-31', FALSE, 8, TRUE),
-        ('VIP50', 50, '50% VIP Single-Use Exclusive Voucher', '2026-01-01', '2026-12-31', TRUE, 0, TRUE)
-    `);
-  }
 }
 
 export async function GET() {
