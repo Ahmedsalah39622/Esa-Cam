@@ -169,14 +169,6 @@ export function generateEpicReceiptHtml(props: EmailReceiptProps): string {
         <tbody>
           ${itemsTableRows}
           <tr>
-            <td style="padding: 10px 12px; border-bottom: 1px solid #f4f4f5; font-size: 12px; color: #059669; font-weight: 600;">
-              ✓ 2-Year Official ESA CAM Warranty
-            </td>
-            <td style="padding: 10px 12px; border-bottom: 1px solid #f4f4f5; font-size: 12px; color: #059669; font-weight: 600; text-align: right;">
-              Included Free
-            </td>
-          </tr>
-          <tr>
             <td style="padding: 10px 12px; border-bottom: 1px solid #e4e4e7; font-size: 12px; color: #52525b;">
               VIP Fragile Express Delivery
             </td>

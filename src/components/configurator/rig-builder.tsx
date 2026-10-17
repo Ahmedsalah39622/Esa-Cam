@@ -276,7 +276,7 @@ export function RigBuilder() {
                   </div>
                 )}
                 <div className="flex justify-between text-muted-foreground">
-                  <span>2-Year ESA Warranty & Setup Calibration</span>
+                 
                   <span className="text-emerald-600 dark:text-emerald-400 font-medium">FREE Included</span>
                 </div>
 

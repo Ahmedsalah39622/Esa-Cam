@@ -475,7 +475,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
                 ? JSON.parse(row.specs_json)
                 : row.specs_json
               : [{ label: "Brand", value: row.brand }],
-            features: ["Official 2-Year Warranty", "Factory Sealed & Calibrated"],
+            features: ["Factory Sealed & Calibrated"],
             inTheBox: [row.name, "Accessories", "User Documentation"],
           };
         })

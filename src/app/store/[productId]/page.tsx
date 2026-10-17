@@ -436,7 +436,6 @@ export default function ProductDetailPage() {
             <div className="bg-card border border-border rounded-2xl p-5 space-y-3">
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
                 <ShieldCheck className="w-4 h-4 text-primary shrink-0" />
-                <span>2-Year Official Center Warranty &amp; Calibration</span>
               </div>
               <div className="flex items-center gap-3 text-xs text-muted-foreground">
                 <Truck className="w-4 h-4 text-amber-500 shrink-0" />

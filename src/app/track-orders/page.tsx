@@ -429,9 +429,7 @@ export default function TrackOrdersPage() {
                     <Camera className="w-4 h-4 text-[#FFE600]" />
                     <span>Purchased Gear &amp; Serialized Fleet ({selectedOrder.items.length} Items)</span>
                   </h4>
-                  <span className="text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 font-bold">
-                    Official 2-Year Warranty
-                  </span>
+                  
                 </div>
 
                 <div className="divide-y divide-[#27272A]">

@@ -78,7 +78,7 @@ export function FAQs() {
               </AccordionTriggerFAQs>
               <AccordionContentFAQs>
                 <p>
-                  Yes, unconditionally. ESA CAM is an official authorized distributor and dealer for Sony Alpha, Canon Cinema EOS, RED Digital Cinema, Blackmagic Design, Aputure, DJI Pro, and RØDE. Every item comes factory sealed with valid regional serial numbers and a 2-Year Official Manufacturer Warranty.
+                  Yes, unconditionally. ESA CAM is an official authorized distributor and dealer for Sony Alpha, Canon Cinema EOS, RED Digital Cinema, Blackmagic Design, Aputure, DJI Pro, and RØDE. Every item comes factory sealed with valid regional serial numbers.
                 </p>
               </AccordionContentFAQs>
             </AccordionItemFAQs>

@@ -424,10 +424,6 @@ export function StudioStage() {
                   <span className="text-[10px] font-mono uppercase text-[#A1A1AA] block">
                     Combined Setup Total
                   </span>
-                  <span className="text-xs text-emerald-400 font-mono font-bold flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Includes 2-Year Official Warranty</span>
-                  </span>
                 </div>
                 <span className="text-xl sm:text-2xl font-black font-mono text-[#FFE600]">
                   {formatPrice(totalScenePrice)}
