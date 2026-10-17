@@ -177,7 +177,7 @@ export function NavinaHeader() {
   ].filter((message): message is string => Boolean(message?.trim()));
   useEffect(() => {
     setIsAnnouncementVisible(isAnnouncementEnabled && tickerMessages.length > 0);
-  }, [isAnnouncementEnabled, announcement?.announcementText, announcement?.courierText]);
+  }, [isAnnouncementEnabled, tickerMessages.length]);
   const activeCategory = ALL_13_CATEGORIES.find((category) => category.label === activeTopCategory);
   const activeCategoryId = activeCategory?.href.match(/[?&]cat=([^&]+)/)?.[1];
   const activeSearchTerm = activeCategory?.href.match(/[?&]q=([^&]+)/)?.[1]?.replace(/\+/g, " ");

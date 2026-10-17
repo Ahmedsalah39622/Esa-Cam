@@ -9,7 +9,6 @@ import {
   Video,
   Aperture,
   Zap,
-  CheckCircle2,
 } from "lucide-react";
 import { PRODUCTS } from "@/data/products";
 import { toast } from "sonner";
