@@ -17,6 +17,7 @@ interface ProductItem {
   badge: string | null;
   stock_status: string;
   stock_count: number;
+  stockCount?: number;
   rating: number;
   reviews_count: number;
   short_description: string | null;
@@ -204,7 +205,7 @@ export async function GET() {
           }
           const currentCount = r.stock_count !== undefined && r.stock_count !== null ? Number(r.stock_count) : 5;
           r.stock_count = currentCount;
-          (r as any).stockCount = currentCount;
+          r.stockCount = currentCount;
           if (currentCount === 0 && (!r.stock_status || r.stock_status === "in-stock")) {
             r.stock_status = "out-of-stock";
           }
