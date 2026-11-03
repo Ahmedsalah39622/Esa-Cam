@@ -698,7 +698,8 @@ export default function DashboardPage() {
       image: cleanImages[0] || productImage,
       images: cleanImages,
       badge: editProduct.badge || undefined,
-      stockStatus: editProduct.stockCount > 0 ? "in-stock" : "pre-order",
+      stockStatus: editProduct.stockCount > 0 ? "in-stock" : "out-of-stock",
+      stockCount: editProduct.stockCount,
       shortDescription: editProduct.shortDescription || "High performance cinema photography equipment.",
       specs: [{ label: "Mount", value: editProduct.mount || "Universal" }],
     });
@@ -718,7 +719,7 @@ export default function DashboardPage() {
             images: cleanImages,
             badge: editProduct.badge || undefined,
             stockCount: editProduct.stockCount,
-            stockStatus: editProduct.stockCount > 0 ? "in-stock" : "pre-order",
+            stockStatus: editProduct.stockCount > 0 ? "in-stock" : "out-of-stock",
             mount: editProduct.mount,
           }
           : p
@@ -1385,7 +1386,7 @@ export default function DashboardPage() {
       images: cleanImages,
       badge: newProduct.badge,
       isNew: true,
-      stockStatus: newProduct.stockCount > 0 ? "in-stock" : "pre-order",
+      stockStatus: newProduct.stockCount > 0 ? "in-stock" : "out-of-stock",
       stockCount: Number(newProduct.stockCount),
       shortDescription: newProduct.shortDescription || "High performance cinema photography equipment.",
       specs: [{ label: "Mount", value: newProduct.mount || "Universal" }],
@@ -1470,22 +1471,41 @@ export default function DashboardPage() {
     });
   };
 
-  const handleStockUpdate = (productId: string, delta: number) => {
+  const handleStockUpdate = async (productId: string, delta: number) => {
+    let updatedCount = 0;
+    let updatedStatus = "in-stock";
     setInventory((prev) =>
       prev.map((p) => {
         if (p.id === productId) {
-          const current = p.stockCount || 5;
+          const current = p.stockCount ?? 5;
           const updated = Math.max(0, current + delta);
+          updatedCount = updated;
+          updatedStatus = updated === 0 ? "out-of-stock" : updated <= 2 ? "low-stock" : "in-stock";
           return {
             ...p,
             stockCount: updated,
-            stockStatus: updated === 0 ? "pre-order" : updated <= 2 ? "low-stock" : "in-stock",
+            stockStatus: updatedStatus as "in-stock" | "low-stock" | "pre-order",
           };
         }
         return p;
       })
     );
-    toast.info("Stock level updated");
+
+    // Persist stock change to database
+    try {
+      await fetch("/api/products", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: productId,
+          stockCount: updatedCount,
+          stockStatus: updatedStatus,
+        }),
+      });
+      toast.success("Stock level saved to database");
+    } catch {
+      toast.info("Stock level updated locally");
+    }
   };
 
   const handleExportCSV = () => {

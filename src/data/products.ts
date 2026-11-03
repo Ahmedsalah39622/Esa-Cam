@@ -32,7 +32,7 @@ export interface Product {
   isNew?: boolean;
   isBestSeller?: boolean;
   isSale?: boolean;
-  stockStatus: "in-stock" | "low-stock" | "pre-order";
+  stockStatus: "in-stock" | "low-stock" | "pre-order" | "out-of-stock";
   stockCount?: number;
   shortDescription: string;
   specs: {

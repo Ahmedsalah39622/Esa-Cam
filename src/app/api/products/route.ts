@@ -16,6 +16,7 @@ interface ProductItem {
   image_url: string;
   badge: string | null;
   stock_status: string;
+  stock_count: number;
   rating: number;
   reviews_count: number;
   short_description: string | null;
@@ -41,6 +42,7 @@ function loadInitialProducts(): ProductItem[] {
           image_url: p.image,
           badge: p.badge || null,
           stock_status: p.stockStatus || "in-stock",
+          stock_count: Number(p.stockCount ?? 5),
           rating: Number(p.rating || 5.0),
           reviews_count: Number(p.reviewsCount || 0),
           short_description: p.shortDescription || null,
@@ -64,6 +66,7 @@ function loadInitialProducts(): ProductItem[] {
     image_url: p.image,
     badge: p.badge || null,
     stock_status: p.stockStatus || "in-stock",
+    stock_count: Number(p.stockCount ?? 5),
     rating: Number(p.rating || 5.0),
     reviews_count: Number(p.reviewsCount || 0),
     short_description: p.shortDescription || null,
@@ -97,7 +100,7 @@ function saveProductsToDisk(productsList: ProductItem[]) {
         images: p.images || (p.images_json ? (() => { try { return JSON.parse(p.images_json); } catch { return [p.image_url]; } })() : [p.image_url]),
         badge: p.badge || undefined,
         stockStatus: p.stock_status || "in-stock",
-        stockCount: 5,
+        stockCount: p.stock_count ?? 5,
         shortDescription: p.short_description || "Professional cinema gear.",
         specs: specs,
         features: [
@@ -130,6 +133,7 @@ async function ensureProductsTable() {
         image_url LONGTEXT NOT NULL,
         badge VARCHAR(50) NULL,
         stock_status VARCHAR(50) DEFAULT 'in-stock',
+        stock_count INT DEFAULT 5,
         rating DECIMAL(3, 1) DEFAULT 5.0,
         reviews_count INT DEFAULT 0,
         short_description TEXT NULL,
@@ -137,6 +141,9 @@ async function ensureProductsTable() {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
+    try {
+      await query("ALTER TABLE products ADD COLUMN stock_count INT NOT NULL DEFAULT 5 AFTER stock_status");
+    } catch {}
   } catch (err) {
     console.warn("Table ensure warning:", err);
   }
@@ -195,6 +202,12 @@ export async function GET() {
             const memoryItem = memoryProducts.find((p) => p.id === r.id);
             r.images = memoryItem?.images || [r.image_url];
           }
+          const currentCount = r.stock_count !== undefined && r.stock_count !== null ? Number(r.stock_count) : 5;
+          r.stock_count = currentCount;
+          (r as any).stockCount = currentCount;
+          if (currentCount === 0 && (!r.stock_status || r.stock_status === "in-stock")) {
+            r.stock_status = "out-of-stock";
+          }
           return r;
         });
 
@@ -250,6 +263,8 @@ export async function POST(req: NextRequest) {
       badge,
       stockStatus,
       stock_status,
+      stockCount,
+      stock_count,
       shortDescription,
       short_description,
       specsJson,
@@ -269,6 +284,7 @@ export async function POST(req: NextRequest) {
       image ||
       "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1000&q=80";
     const cleanStockStatus = stockStatus || stock_status || "in-stock";
+    const cleanStockCount = stockCount !== undefined ? Number(stockCount) : (stock_count !== undefined ? Number(stock_count) : 5);
     const cleanShortDesc =
       shortDescription ||
       short_description ||
@@ -290,6 +306,7 @@ export async function POST(req: NextRequest) {
       image_url: cleanImages[0] || cleanImageUrl,
       badge: badge ? String(badge) : null,
       stock_status: cleanStockStatus,
+      stock_count: cleanStockCount,
       rating: 5.0,
       reviews_count: 0,
       short_description: cleanShortDesc,
@@ -312,8 +329,8 @@ export async function POST(req: NextRequest) {
       try {
         await ensureProductsTable();
         await query(
-          `INSERT INTO products (id, name, brand, price, original_price, category, image_url, badge, stock_status, short_description, specs_json, images_json)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `INSERT INTO products (id, name, brand, price, original_price, category, image_url, badge, stock_status, stock_count, short_description, specs_json, images_json)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
            ON DUPLICATE KEY UPDATE 
              name=VALUES(name), 
              brand=VALUES(brand), 
@@ -323,6 +340,7 @@ export async function POST(req: NextRequest) {
              image_url=VALUES(image_url), 
              badge=VALUES(badge), 
              stock_status=VALUES(stock_status), 
+             stock_count=VALUES(stock_count),
              short_description=VALUES(short_description), 
              specs_json=VALUES(specs_json),
              images_json=VALUES(images_json)`,
@@ -336,6 +354,7 @@ export async function POST(req: NextRequest) {
             cleanImages[0] || cleanImageUrl,
             badge || null,
             cleanStockStatus,
+            cleanStockCount,
             cleanShortDesc,
             typeof cleanSpecs === "string" ? cleanSpecs : JSON.stringify(cleanSpecs),
             JSON.stringify(cleanImages),
@@ -375,6 +394,7 @@ export async function PATCH(req: NextRequest) {
       imagesJson,
       badge,
       stockStatus,
+      stockCount,
       shortDescription,
       specsJson,
     } = body;
@@ -402,6 +422,7 @@ export async function PATCH(req: NextRequest) {
           ...(imageUrl !== undefined && { image_url: imageUrl }),
           ...(badge !== undefined && { badge: badge || null }),
           ...(stockStatus !== undefined && { stock_status: stockStatus }),
+          ...(stockCount !== undefined && { stock_count: Number(stockCount) }),
           ...(shortDescription !== undefined && { short_description: shortDescription }),
           ...(specsJson !== undefined && { specs_json: typeof specsJson === "string" ? specsJson : JSON.stringify(specsJson) }),
           ...(resolvedImages !== undefined && {
@@ -431,6 +452,7 @@ export async function PATCH(req: NextRequest) {
             image_url = COALESCE(?, image_url),
             badge = COALESCE(?, badge),
             stock_status = COALESCE(?, stock_status),
+            stock_count = COALESCE(?, stock_count),
             short_description = COALESCE(?, short_description),
             specs_json = COALESCE(?, specs_json),
             images_json = COALESCE(?, images_json)
@@ -444,6 +466,7 @@ export async function PATCH(req: NextRequest) {
             imageUrl || (resolvedImages && resolvedImages.length > 0 ? resolvedImages[0] : null),
             badge !== undefined ? badge : null,
             stockStatus || null,
+            stockCount !== undefined ? Number(stockCount) : null,
             shortDescription || null,
             specsJson ? (typeof specsJson === "string" ? specsJson : JSON.stringify(specsJson)) : null,
             resolvedImages ? JSON.stringify(resolvedImages) : null,

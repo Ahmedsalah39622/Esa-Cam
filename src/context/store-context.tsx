@@ -423,6 +423,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     images_json?: string | object | null;
     badge?: string | null;
     stock_status?: Product["stockStatus"];
+    stock_count?: number | string | null;
+    stockCount?: number | string | null;
     rating?: number | string;
     reviews_count?: number | string;
     short_description?: string | null;
@@ -466,7 +468,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             image: mainImg,
             images,
             badge: row.badge || undefined,
-            stockStatus: row.stock_status || "in-stock",
+            stockStatus: (row.stock_status as Product["stockStatus"]) || (Number(row.stock_count ?? row.stockCount ?? 5) === 0 ? "out-of-stock" : "in-stock"),
+            stockCount: row.stock_count !== undefined && row.stock_count !== null ? Number(row.stock_count) : (row.stockCount !== undefined && row.stockCount !== null ? Number(row.stockCount) : 5),
             rating: Number(row.rating || 5.0),
             reviewsCount: Number(row.reviews_count || 0),
             shortDescription: row.short_description || "Professional cinema gear.",
@@ -865,6 +868,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           images: product.images || (product.image ? [product.image] : []),
           badge: product.badge,
           stockStatus: product.stockStatus || "in-stock",
+          stockCount: product.stockCount ?? 5,
           shortDescription: product.shortDescription,
           specsJson: product.specs,
         }),
@@ -908,6 +912,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             images: target.images || (target.image ? [target.image] : []),
             badge: target.badge,
             stockStatus: target.stockStatus || "in-stock",
+            stockCount: target.stockCount ?? 5,
             shortDescription: target.shortDescription,
             specsJson: target.specs,
           }),
