@@ -150,27 +150,8 @@ async function ensureProductsTable() {
   }
 }
 
-let dbCache: { data: ProductItem[]; timestamp: number } | null = null;
-const DB_CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache
-
 export async function GET() {
   try {
-    if (dbCache && Date.now() - dbCache.timestamp < DB_CACHE_TTL) {
-      return NextResponse.json(
-        {
-          success: true,
-          source: "database_cache",
-          count: dbCache.data.length,
-          data: dbCache.data,
-        },
-        {
-          headers: {
-            "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300",
-          },
-        }
-      );
-    }
-
     const pool = getDbPool();
     if (pool) {
       await ensureProductsTable();
@@ -206,13 +187,11 @@ export async function GET() {
           const currentCount = r.stock_count !== undefined && r.stock_count !== null ? Number(r.stock_count) : 5;
           r.stock_count = currentCount;
           r.stockCount = currentCount;
-          if (currentCount === 0 && (!r.stock_status || r.stock_status === "in-stock")) {
+          if (currentCount === 0) {
             r.stock_status = "out-of-stock";
           }
           return r;
         });
-
-        dbCache = { data: healedRows, timestamp: Date.now() };
 
         return NextResponse.json(
           {
@@ -223,19 +202,28 @@ export async function GET() {
           },
           {
             headers: {
-              "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300",
+              "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+              "Pragma": "no-cache",
+              "Expires": "0",
             },
           }
         );
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      source: "memory_cache",
-      count: memoryProducts.length,
-      data: memoryProducts,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        source: "memory_cache",
+        count: memoryProducts.length,
+        data: memoryProducts.map((p) => ({ ...p, stockCount: p.stock_count })),
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        },
+      }
+    );
   } catch (error) {
     console.error("Error fetching products:", error);
     return NextResponse.json({
@@ -284,8 +272,8 @@ export async function POST(req: NextRequest) {
       imageUrl ||
       image ||
       "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1000&q=80";
-    const cleanStockStatus = stockStatus || stock_status || "in-stock";
-    const cleanStockCount = stockCount !== undefined ? Number(stockCount) : (stock_count !== undefined ? Number(stock_count) : 5);
+    const cleanStockCount = stockCount !== undefined ? Number(stockCount) : (stock_count !== undefined ? Number(stock_count) : (stockStatus === "out-of-stock" ? 0 : 5));
+    const cleanStockStatus = cleanStockCount === 0 ? "out-of-stock" : (stockStatus || stock_status || "in-stock");
     const cleanShortDesc =
       shortDescription ||
       short_description ||
@@ -318,7 +306,6 @@ export async function POST(req: NextRequest) {
     };
 
     // Invalidate DB memory cache
-    dbCache = null;
 
     // Update in-memory cache and persist to disk
     memoryProducts = [newProdItem, ...memoryProducts.filter((p) => p.id !== productId)];
@@ -410,6 +397,13 @@ export async function PATCH(req: NextRequest) {
       ? (() => { try { return JSON.parse(imagesJson); } catch { return undefined; } })()
       : undefined;
 
+    const finalCount = stockCount !== undefined 
+      ? Number(stockCount) 
+      : (stockStatus === "out-of-stock" ? 0 : undefined);
+    const finalStatus = finalCount === 0 
+      ? "out-of-stock" 
+      : (stockStatus !== undefined ? stockStatus : undefined);
+
     // Update in-memory cache
     memoryProducts = memoryProducts.map((p) => {
       if (p.id === id) {
@@ -422,8 +416,8 @@ export async function PATCH(req: NextRequest) {
           ...(category !== undefined && { category: String(category) }),
           ...(imageUrl !== undefined && { image_url: imageUrl }),
           ...(badge !== undefined && { badge: badge || null }),
-          ...(stockStatus !== undefined && { stock_status: stockStatus }),
-          ...(stockCount !== undefined && { stock_count: Number(stockCount) }),
+          ...(finalStatus !== undefined && { stock_status: finalStatus }),
+          ...(finalCount !== undefined && { stock_count: finalCount }),
           ...(shortDescription !== undefined && { short_description: shortDescription }),
           ...(specsJson !== undefined && { specs_json: typeof specsJson === "string" ? specsJson : JSON.stringify(specsJson) }),
           ...(resolvedImages !== undefined && {
@@ -436,7 +430,6 @@ export async function PATCH(req: NextRequest) {
       return p;
     });
 
-    dbCache = null;
     saveProductsToDisk(memoryProducts);
 
     const pool = getDbPool();
@@ -466,8 +459,8 @@ export async function PATCH(req: NextRequest) {
             category || null,
             imageUrl || (resolvedImages && resolvedImages.length > 0 ? resolvedImages[0] : null),
             badge !== undefined ? badge : null,
-            stockStatus || null,
-            stockCount !== undefined ? Number(stockCount) : null,
+            finalStatus !== undefined ? finalStatus : null,
+            finalCount !== undefined ? finalCount : null,
             shortDescription || null,
             specsJson ? (typeof specsJson === "string" ? specsJson : JSON.stringify(specsJson)) : null,
             resolvedImages ? JSON.stringify(resolvedImages) : null,
@@ -495,7 +488,6 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ success: false, message: "Product ID is required" }, { status: 400 });
     }
 
-    dbCache = null;
     memoryProducts = memoryProducts.filter((p) => p.id !== id);
     saveProductsToDisk(memoryProducts);
 

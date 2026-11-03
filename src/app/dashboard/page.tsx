@@ -1472,40 +1472,27 @@ export default function DashboardPage() {
   };
 
   const handleStockUpdate = async (productId: string, delta: number) => {
-    let updatedCount = 0;
-    let updatedStatus = "in-stock";
+    const existing = inventory.find((p) => p.id === productId);
+    const current = existing ? (existing.stockCount ?? 5) : 5;
+    const updatedCount = Math.max(0, current + delta);
+    const updatedStatus = updatedCount === 0 ? "out-of-stock" : updatedCount <= 2 ? "low-stock" : "in-stock";
+
     setInventory((prev) =>
-      prev.map((p) => {
-        if (p.id === productId) {
-          const current = p.stockCount ?? 5;
-          const updated = Math.max(0, current + delta);
-          updatedCount = updated;
-          updatedStatus = updated === 0 ? "out-of-stock" : updated <= 2 ? "low-stock" : "in-stock";
-          return {
-            ...p,
-            stockCount: updated,
-            stockStatus: updatedStatus as "in-stock" | "low-stock" | "pre-order",
-          };
-        }
-        return p;
-      })
+      prev.map((p) =>
+        p.id === productId
+          ? {
+              ...p,
+              stockCount: updatedCount,
+              stockStatus: updatedStatus as Product["stockStatus"],
+            }
+          : p
+      )
     );
 
-    // Persist stock change to database
-    try {
-      await fetch("/api/products", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: productId,
-          stockCount: updatedCount,
-          stockStatus: updatedStatus,
-        }),
-      });
-      toast.success("Stock level saved to database");
-    } catch {
-      toast.info("Stock level updated locally");
-    }
+    await updateProduct(productId, {
+      stockCount: updatedCount,
+      stockStatus: updatedStatus as Product["stockStatus"],
+    });
   };
 
   const handleExportCSV = () => {

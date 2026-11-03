@@ -468,8 +468,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             image: mainImg,
             images,
             badge: row.badge || undefined,
-            stockStatus: (row.stock_status as Product["stockStatus"]) || (Number(row.stock_count ?? row.stockCount ?? 5) === 0 ? "out-of-stock" : "in-stock"),
             stockCount: row.stock_count !== undefined && row.stock_count !== null ? Number(row.stock_count) : (row.stockCount !== undefined && row.stockCount !== null ? Number(row.stockCount) : 5),
+            stockStatus: (Number(row.stock_count ?? row.stockCount ?? 5) === 0 ? "out-of-stock" : ((row.stock_status as Product["stockStatus"]) || "in-stock")),
             rating: Number(row.rating || 5.0),
             reviewsCount: Number(row.reviews_count || 0),
             shortDescription: row.short_description || "Professional cinema gear.",
@@ -883,47 +883,52 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateProduct = async (id: string, updatedFields: Partial<Product>) => {
-    let targetProduct: Product | undefined;
+    let resolvedTarget: Product | null = null;
     setProducts((prev) => {
       const updated = prev.map((p) => {
         if (p.id === id) {
-          targetProduct = { ...p, ...updatedFields };
-          return targetProduct;
+          const merged = { ...p, ...updatedFields };
+          if (merged.stockCount === 0) {
+            merged.stockStatus = "out-of-stock";
+          }
+          resolvedTarget = merged;
+          return merged;
         }
         return p;
       });
       return updated;
     });
 
-    if (targetProduct) {
-      const target: Product = targetProduct;
-      try {
-        const res = await fetch("/api/products", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            id: target.id,
-            name: target.name,
-            brand: target.brand,
-            price: target.price,
-            originalPrice: target.originalPrice,
-            category: target.category,
-            imageUrl: target.image,
-            images: target.images || (target.image ? [target.image] : []),
-            badge: target.badge,
-            stockStatus: target.stockStatus || "in-stock",
-            stockCount: target.stockCount ?? 5,
-            shortDescription: target.shortDescription,
-            specsJson: target.specs,
-          }),
-        });
-        const data = await res.json();
-        if (data.success) {
-          toast.success(`Product "${target.name}" updated in database!`);
-        }
-      } catch {
-        toast.info(`Product "${target.name}" updated.`);
+    const target: Partial<Product> & { id: string; imageUrl?: string } = resolvedTarget || { id, ...updatedFields };
+    const finalCount = target.stockCount !== undefined ? Number(target.stockCount) : undefined;
+    const finalStatus = finalCount === 0 ? "out-of-stock" : (target.stockStatus || undefined);
+
+    try {
+      const res = await fetch("/api/products", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: target.id,
+          name: target.name,
+          brand: target.brand,
+          price: target.price,
+          originalPrice: target.originalPrice,
+          category: target.category,
+          imageUrl: target.image || target.imageUrl,
+          images: target.images,
+          badge: target.badge,
+          stockStatus: finalStatus,
+          stockCount: finalCount,
+          shortDescription: target.shortDescription,
+          specsJson: target.specs,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`Product "${target.name || id}" updated in database!`);
       }
+    } catch {
+      toast.info(`Product "${target.name || id}" updated locally.`);
     }
   };
 
