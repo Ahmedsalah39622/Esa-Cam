@@ -150,7 +150,7 @@ function CheckoutContent() {
     const kashierOrderId = searchParams.get("kashier_order_id") || searchParams.get("merchantOrderId");
     const kashierStatus = searchParams.get("paymentStatus") || searchParams.get("status");
 
-    // Kashier return flow
+    
     if ((gateway === "kashier" || kashierStatus) && kashierOrderId) {
       if (verifiedSessionRef.current === `kashier-${kashierOrderId}`) return;
       verifiedSessionRef.current = `kashier-${kashierOrderId}`;
