@@ -57,6 +57,11 @@ import {
   KeyRound,
   Pencil,
   Copy,
+  Percent,
+  TrendingDown,
+  Layers,
+  Loader2,
+  PackageSearch,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -209,6 +214,7 @@ export default function DashboardPage() {
     deleteProduct,
     formatPrice,
     currency,
+    refreshProducts,
     brands,
     addBrand,
     deleteBrand,
@@ -458,6 +464,26 @@ export default function DashboardPage() {
   const [inventoryPage, setInventoryPage] = useState(1);
   const INVENTORY_PAGE_SIZE = 50;
 
+  // ==========================================
+  // BULK & INLINE PRICING MANAGEMENT
+  // ==========================================
+  const [isBulkPriceModalOpen, setIsBulkPriceModalOpen] = useState(false);
+  const [bulkScope, setBulkScope] = useState<"all" | "filtered" | "category" | "brand" | "single">("all");
+  const [bulkCategory, setBulkCategory] = useState("cameras");
+  const [bulkBrand, setBulkBrand] = useState("");
+  const [bulkProductSearch, setBulkProductSearch] = useState("");
+  const [bulkSelectedProductId, setBulkSelectedProductId] = useState<string | null>(null);
+  const [bulkAdjustmentType, setBulkAdjustmentType] = useState<"percentage" | "fixed">("percentage");
+  const [bulkDirection, setBulkDirection] = useState<"increase" | "decrease">("increase");
+  const [bulkValue, setBulkValue] = useState<number>(5);
+  const [isBulkUpdating, setIsBulkUpdating] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number; percent: number }>({ current: 0, total: 0, percent: 0 });
+
+  // Single Product Quick Inline Edit State
+  const [inlineEditId, setInlineEditId] = useState<string | null>(null);
+  const [inlineEditPrice, setInlineEditPrice] = useState<string>("");
+  const [isInlineSaving, setIsInlineSaving] = useState(false);
+
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   useEffect(() => {
@@ -501,6 +527,149 @@ export default function DashboardPage() {
     const start = (inventoryPage - 1) * INVENTORY_PAGE_SIZE;
     return filteredInventory.slice(start, start + INVENTORY_PAGE_SIZE);
   }, [filteredInventory, inventoryPage]);
+
+  // Target products for bulk price adjustment
+  const bulkTargetProducts = useMemo(() => {
+    if (bulkScope === "all") return inventory;
+    if (bulkScope === "filtered") return filteredInventory;
+    if (bulkScope === "category") return inventory.filter((p) => p.category === bulkCategory);
+    if (bulkScope === "brand") return inventory.filter((p) => p.brand === (bulkBrand || inventoryBrands[0] || ""));
+    if (bulkScope === "single") {
+      const found = inventory.find((p) => p.id === bulkSelectedProductId);
+      return found ? [found] : [];
+    }
+    return inventory;
+  }, [bulkScope, inventory, filteredInventory, bulkCategory, bulkBrand, inventoryBrands, bulkSelectedProductId]);
+
+  const bulkSearchedProducts = useMemo(() => {
+    if (bulkScope !== "single") return [];
+    const query = bulkProductSearch.trim().toLowerCase();
+    if (!query) {
+      return inventory.slice(0, 8);
+    }
+    const terms = query.split(/\s+/).filter(Boolean);
+    return inventory
+      .filter((p) => {
+        const text = `${p.name} ${p.brand} ${p.id} ${p.category}`.toLowerCase();
+        return terms.every((t) => text.includes(t));
+      })
+      .slice(0, 10);
+  }, [bulkScope, inventory, bulkProductSearch]);
+
+  const calculateNewPriceUSD = (currentUSD: number) => {
+    const rate = CURRENCIES[currency]?.rate || 50.5;
+    if (bulkAdjustmentType === "percentage") {
+      const factor = 1 + (bulkDirection === "increase" ? bulkValue : -bulkValue) / 100;
+      return Math.max(0.1, Number((currentUSD * factor).toFixed(2)));
+    } else {
+      // fixed amount in active displayed currency (e.g. EGP)
+      const fixedUSD = Number(bulkValue) / rate;
+      return Math.max(0.1, Number((bulkDirection === "increase" ? currentUSD + fixedUSD : currentUSD - fixedUSD).toFixed(2)));
+    }
+  };
+
+  const handleStartInlineEdit = (item: Product) => {
+    const rate = CURRENCIES[currency]?.rate || 50.5;
+    const displayVal = Math.round(item.price * rate);
+    setInlineEditId(item.id);
+    setInlineEditPrice(String(displayVal));
+  };
+
+  const handleSaveInlinePrice = async (itemId: string) => {
+    const rate = CURRENCIES[currency]?.rate || 50.5;
+    const parsed = parseFloat(inlineEditPrice);
+    if (isNaN(parsed) || parsed <= 0) {
+      toast.error("Please enter a valid price greater than 0");
+      return;
+    }
+    setIsInlineSaving(true);
+    const baseUSD = Number((parsed / rate).toFixed(2));
+    try {
+      await updateProduct(itemId, { price: baseUSD });
+      setInventory((prev) =>
+        prev.map((p) => (p.id === itemId ? { ...p, price: baseUSD } : p))
+      );
+      setInlineEditId(null);
+      toast.success("Price updated directly in database!");
+    } catch {
+      toast.error("Failed to update price in database");
+    } finally {
+      setIsInlineSaving(false);
+    }
+  };
+
+  const handleExecuteBulkPriceUpdate = async () => {
+    if (bulkTargetProducts.length === 0) {
+      toast.error("No products selected for price update");
+      return;
+    }
+    if (Number(bulkValue) <= 0) {
+      toast.error("Please enter an adjustment value greater than 0");
+      return;
+    }
+
+    setIsBulkUpdating(true);
+    setBulkProgress({ current: 0, total: bulkTargetProducts.length, percent: 0 });
+
+    try {
+      const allCalculated = bulkTargetProducts.map((p) => {
+        const newP = calculateNewPriceUSD(p.price);
+        const newOrig = p.originalPrice ? calculateNewPriceUSD(p.originalPrice) : undefined;
+        return { id: p.id, price: newP, originalPrice: newOrig };
+      });
+
+      const calculatedMap = new Map(allCalculated.map((it) => [it.id, it.price]));
+      const CHUNK_SIZE = 100;
+
+      for (let i = 0; i < allCalculated.length; i += CHUNK_SIZE) {
+        const chunk = allCalculated.slice(i, i + CHUNK_SIZE);
+        const isLastChunk = i + CHUNK_SIZE >= allCalculated.length;
+
+        const res = await fetch("/api/products/bulk-price", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            items: chunk,
+            isLastChunk,
+            allUpdatedItems: isLastChunk ? allCalculated : undefined,
+          }),
+        });
+
+        if (!res.ok) {
+          throw new Error("Batch update error");
+        }
+
+        const processed = Math.min(i + CHUNK_SIZE, allCalculated.length);
+        setBulkProgress({
+          current: processed,
+          total: allCalculated.length,
+          percent: Math.round((processed / allCalculated.length) * 100),
+        });
+
+        // Update local inventory state chunk by chunk so user sees it in real-time
+        setInventory((prev) =>
+          prev.map((p) => {
+            const updatedPrice = calculatedMap.get(p.id);
+            return updatedPrice !== undefined ? { ...p, price: updatedPrice } : p;
+          })
+        );
+      }
+
+      if (refreshProducts) {
+        await refreshProducts();
+      }
+
+      toast.success(`Successfully updated ${allCalculated.length} product prices in the database!`);
+      setTimeout(() => {
+        setIsBulkPriceModalOpen(false);
+        setIsBulkUpdating(false);
+      }, 700);
+    } catch (err) {
+      console.error("Bulk price update error:", err);
+      toast.error("Error updating prices. Partial updates have been saved.");
+      setIsBulkUpdating(false);
+    }
+  };
 
   const [selectedBarcodeProduct, setSelectedBarcodeProduct] = useState<Product | null>(null);
   const [selectedQuoteStudio, setSelectedQuoteStudio] = useState<StudioClient | null>(null);
@@ -5648,7 +5817,17 @@ export default function DashboardPage() {
                   <p className="text-xs text-muted-foreground font-mono">Manage pricing, stock counts, and barcode labels</p>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <Button
+                    onClick={() => {
+                      setIsBulkPriceModalOpen(true);
+                      setBulkProgress({ current: 0, total: 0, percent: 0 });
+                    }}
+                    className="rounded-xl text-xs font-bold h-10 cursor-pointer bg-gradient-to-r from-amber-500 to-amber-600 text-black hover:opacity-95 shadow-xs flex items-center gap-1.5"
+                  >
+                    <Percent className="w-4 h-4" />
+                    <span>تعديل الأسعار جماعياً (Bulk Pricing)</span>
+                  </Button>
                   <Button
                     onClick={handleExportCSV}
                     variant="outline"
@@ -5716,6 +5895,7 @@ export default function DashboardPage() {
                       <option value="all">All Departments ({inventory.length})</option>
                       <option value="cameras">Cameras</option>
                       <option value="lenses">Lenses</option>
+                      <option value="filters">Filters</option>
                       <option value="accessories">Accessories</option>
                       <option value="audio">Audio & Video</option>
                       <option value="dental">Dental Equipments</option>
@@ -5827,8 +6007,58 @@ export default function DashboardPage() {
                           <td className="py-3.5 pr-4 font-mono uppercase text-muted-foreground whitespace-nowrap">
                             {item.category}
                           </td>
-                          <td className="py-3.5 pr-4 font-mono font-bold text-foreground whitespace-nowrap">
-                            {formatPrice(item.price)}
+                          <td className="py-2.5 pr-4 font-mono font-bold whitespace-nowrap">
+                            {inlineEditId === item.id ? (
+                              <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                                <div className="relative">
+                                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground font-mono pointer-events-none">
+                                    {CURRENCIES[currency]?.symbol || "E£"}
+                                  </span>
+                                  <input
+                                    type="number"
+                                    value={inlineEditPrice}
+                                    onChange={(e) => setInlineEditPrice(e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") handleSaveInlinePrice(item.id);
+                                      if (e.key === "Escape") setInlineEditId(null);
+                                    }}
+                                    disabled={isInlineSaving}
+                                    autoFocus
+                                    className="w-28 pl-7 pr-2 py-1 text-xs font-mono font-bold bg-background border-2 border-primary rounded-lg focus:outline-hidden text-foreground shadow-xs"
+                                  />
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleSaveInlinePrice(item.id)}
+                                  disabled={isInlineSaving}
+                                  className="p-1.5 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/30 rounded-lg cursor-pointer transition disabled:opacity-50"
+                                  title="حفظ السعر في قاعدة البيانات (Enter)"
+                                >
+                                  {isInlineSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setInlineEditId(null)}
+                                  disabled={isInlineSaving}
+                                  className="p-1.5 bg-secondary text-muted-foreground hover:text-foreground rounded-lg cursor-pointer transition"
+                                  title="إلغاء (Esc)"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2 group">
+                                <span className="text-foreground">{formatPrice(item.price)}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleStartInlineEdit(item)}
+                                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-primary/10 rounded-md text-muted-foreground hover:text-primary transition-all cursor-pointer"
+                                  title="تعديل السعر السريع لهذا المنتج"
+                                >
+                                  <Pencil className="w-3 h-3" />
+                                </button>
+                              </div>
+                            )}
                           </td>
                           <td className="py-3.5 pr-4 font-mono text-muted-foreground whitespace-nowrap">
                             {item.mount || item.resolution || "Universal"}
@@ -6672,6 +6902,7 @@ export default function DashboardPage() {
                   >
                     <option value="cameras">Cameras</option>
                     <option value="lenses">Lenses</option>
+                    <option value="filters">Filters</option>
                     <option value="accessories">Accessories</option>
                     <option value="audio">Audio & Video</option>
                     <option value="dental">Dental Equipments</option>
@@ -7010,6 +7241,7 @@ export default function DashboardPage() {
                   >
                     <option value="cameras">Cameras</option>
                     <option value="lenses">Lenses</option>
+                    <option value="filters">Filters</option>
                     <option value="accessories">Accessories</option>
                     <option value="audio">Audio & Video</option>
                     <option value="dental">Dental Equipments</option>
@@ -7307,6 +7539,527 @@ export default function DashboardPage() {
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: BULK PRICE ADJUSTER */}
+      {isBulkPriceModalOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
+          <div
+            className="fixed inset-0 bg-black/75 backdrop-blur-xs transition-opacity"
+            onClick={() => {
+              if (!isBulkUpdating) setIsBulkPriceModalOpen(false);
+            }}
+          />
+          <div className="relative bg-card border border-border rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl space-y-6 z-10 animate-in fade-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between border-b border-border pb-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500">
+                    <Percent className="w-5 h-5" />
+                  </div>
+                  <h3 className="font-bold text-lg text-foreground">
+                    تعديل وتحديث الأسعار جماعياً (Bulk Price Engine)
+                  </h3>
+                </div>
+                <p className="text-xs text-muted-foreground font-mono">
+                  زيادة أو خفض أسعار المنتجات بنسبة مئوية أو مبلغ ثابت وحفظها مباشرة في قاعدة البيانات الحية
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={isBulkUpdating}
+                onClick={() => setIsBulkPriceModalOpen(false)}
+                className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-secondary transition disabled:opacity-50 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Scope Selection */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5 text-primary" />
+                <span>1. تحديد نطاق المنتجات المستهدفة:</span>
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                <button
+                  type="button"
+                  disabled={isBulkUpdating}
+                  onClick={() => setBulkScope("all")}
+                  className={`p-2.5 rounded-xl border text-xs font-semibold text-center transition cursor-pointer flex flex-col items-center gap-1 ${
+                    bulkScope === "all"
+                      ? "border-primary bg-primary/10 text-primary font-bold"
+                      : "border-border bg-secondary/20 hover:bg-secondary/40 text-muted-foreground"
+                  }`}
+                >
+                  <Globe className="w-4 h-4" />
+                  <span>كل المتجر</span>
+                  <span className="text-[10px] font-mono opacity-80">({inventory.length})</span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isBulkUpdating}
+                  onClick={() => setBulkScope("filtered")}
+                  className={`p-2.5 rounded-xl border text-xs font-semibold text-center transition cursor-pointer flex flex-col items-center gap-1 ${
+                    bulkScope === "filtered"
+                      ? "border-primary bg-primary/10 text-primary font-bold"
+                      : "border-border bg-secondary/20 hover:bg-secondary/40 text-muted-foreground"
+                  }`}
+                >
+                  <Search className="w-4 h-4" />
+                  <span>نتائج الفلتر</span>
+                  <span className="text-[10px] font-mono opacity-80">({filteredInventory.length})</span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isBulkUpdating}
+                  onClick={() => setBulkScope("category")}
+                  className={`p-2.5 rounded-xl border text-xs font-semibold text-center transition cursor-pointer flex flex-col items-center gap-1 ${
+                    bulkScope === "category"
+                      ? "border-primary bg-primary/10 text-primary font-bold"
+                      : "border-border bg-secondary/20 hover:bg-secondary/40 text-muted-foreground"
+                  }`}
+                >
+                  <Tag className="w-4 h-4" />
+                  <span>قسم محدد</span>
+                  <span className="text-[10px] font-mono opacity-80">
+                    ({inventory.filter((p) => p.category === bulkCategory).length})
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isBulkUpdating}
+                  onClick={() => setBulkScope("brand")}
+                  className={`p-2.5 rounded-xl border text-xs font-semibold text-center transition cursor-pointer flex flex-col items-center gap-1 ${
+                    bulkScope === "brand"
+                      ? "border-primary bg-primary/10 text-primary font-bold"
+                      : "border-border bg-secondary/20 hover:bg-secondary/40 text-muted-foreground"
+                  }`}
+                >
+                  <Award className="w-4 h-4" />
+                  <span>براند محدد</span>
+                  <span className="text-[10px] font-mono opacity-80">
+                    ({inventory.filter((p) => p.brand === (bulkBrand || inventoryBrands[0] || "")).length})
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isBulkUpdating}
+                  onClick={() => setBulkScope("single")}
+                  className={`p-2.5 rounded-xl border text-xs font-semibold text-center transition cursor-pointer flex flex-col items-center gap-1 col-span-2 sm:col-span-1 ${
+                    bulkScope === "single"
+                      ? "border-primary bg-primary/10 text-primary font-bold"
+                      : "border-border bg-secondary/20 hover:bg-secondary/40 text-muted-foreground"
+                  }`}
+                >
+                  <PackageSearch className="w-4 h-4" />
+                  <span>منتج معين</span>
+                  <span className="text-[10px] font-mono opacity-80">
+                    ({bulkSelectedProductId ? 1 : 0})
+                  </span>
+                </button>
+              </div>
+
+              {/* Scope Detail Dropdowns / Single Product Search */}
+              {bulkScope === "single" && (
+                <div className="pt-2 space-y-2">
+                  {bulkSelectedProductId && inventory.find((p) => p.id === bulkSelectedProductId) ? (
+                    (() => {
+                      const sel = inventory.find((p) => p.id === bulkSelectedProductId)!;
+                      return (
+                        <div className="p-3 rounded-xl border border-primary/40 bg-primary/5 flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-12 h-12 rounded-lg bg-card border border-border overflow-hidden shrink-0 relative flex items-center justify-center">
+                              {sel.image ? (
+                                <img src={sel.image} alt={sel.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <PackageSearch className="w-5 h-5 text-muted-foreground" />
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-foreground truncate">{sel.name}</span>
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0 uppercase">
+                                  {sel.brand}
+                                </Badge>
+                              </div>
+                              <p className="text-[11px] text-muted-foreground font-mono mt-0.5">
+                                السعر الحالي: <span className="font-bold text-foreground">{formatPrice(sel.price)}</span> • الكود: {sel.id}
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            disabled={isBulkUpdating}
+                            onClick={() => {
+                              setBulkSelectedProductId(null);
+                              setBulkProductSearch("");
+                            }}
+                            className="text-xs text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 shrink-0 cursor-pointer"
+                          >
+                            تغيير المنتج
+                          </Button>
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="relative">
+                        <Search className="w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <input
+                          type="text"
+                          value={bulkProductSearch}
+                          disabled={isBulkUpdating}
+                          onChange={(e) => setBulkProductSearch(e.target.value)}
+                          placeholder="ابحث عن المنتج بالاسم، الموديل، أو الكود..."
+                          className="w-full pr-10 pl-3.5 py-2.5 rounded-xl border border-border bg-card text-xs text-foreground placeholder:text-muted-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                          autoFocus
+                        />
+                      </div>
+
+                      {/* Search Results Dropdown List */}
+                      <div className="max-h-56 overflow-y-auto space-y-1 rounded-xl border border-border bg-card p-1.5 custom-scrollbar">
+                        {bulkSearchedProducts.length === 0 ? (
+                          <div className="py-6 text-center text-xs text-muted-foreground">
+                            لم يتم العثور على أي منتج مطابق للبحث
+                          </div>
+                        ) : (
+                          bulkSearchedProducts.map((prod) => (
+                            <button
+                              key={prod.id}
+                              type="button"
+                              onClick={() => setBulkSelectedProductId(prod.id)}
+                              className="w-full p-2 rounded-lg hover:bg-secondary/60 text-right transition cursor-pointer flex items-center justify-between gap-3 text-xs group"
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="w-9 h-9 rounded-md bg-secondary/40 border border-border overflow-hidden shrink-0 flex items-center justify-center">
+                                  {prod.image ? (
+                                    <img src={prod.image} alt={prod.name} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <PackageSearch className="w-4 h-4 text-muted-foreground" />
+                                  )}
+                                </div>
+                                <div className="min-w-0 text-right">
+                                  <p className="font-semibold text-foreground truncate group-hover:text-primary transition-colors text-xs">
+                                    {prod.name}
+                                  </p>
+                                  <p className="text-[10px] text-muted-foreground">
+                                    {prod.brand} • {prod.category}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="text-left shrink-0 font-mono font-bold text-xs text-foreground">
+                                {formatPrice(prod.price)}
+                              </div>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Scope Detail Dropdowns */}
+              {bulkScope === "category" && (
+                <div className="pt-1.5">
+                  <select
+                    value={bulkCategory}
+                    disabled={isBulkUpdating}
+                    onChange={(e) => setBulkCategory(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-card text-xs font-semibold text-foreground focus:outline-hidden"
+                  >
+                    <option value="cameras">Cameras ({inventory.filter((p) => p.category === "cameras").length})</option>
+                    <option value="lenses">Lenses ({inventory.filter((p) => p.category === "lenses").length})</option>
+                    <option value="filters">Filters ({inventory.filter((p) => p.category === "filters").length})</option>
+                    <option value="accessories">Accessories ({inventory.filter((p) => p.category === "accessories").length})</option>
+                    <option value="audio">Audio & Video ({inventory.filter((p) => p.category === "audio").length})</option>
+                    <option value="lighting">Lighting Equipment ({inventory.filter((p) => p.category === "lighting").length})</option>
+                    <option value="gimbals">Stabilizers & Gimbals ({inventory.filter((p) => p.category === "gimbals").length})</option>
+                    <option value="bags">Bags & Straps ({inventory.filter((p) => p.category === "bags").length})</option>
+                    <option value="flashes">Flashes ({inventory.filter((p) => p.category === "flashes").length})</option>
+                    <option value="memory-cards">Memory Cards ({inventory.filter((p) => p.category === "memory-cards").length})</option>
+                    <option value="tripods">Tripods ({inventory.filter((p) => p.category === "tripods").length})</option>
+                    <option value="dental">Dental Equipments ({inventory.filter((p) => p.category === "dental").length})</option>
+                    <option value="pre-owned">Used / Pre-Owned ({inventory.filter((p) => p.category === "pre-owned").length})</option>
+                  </select>
+                </div>
+              )}
+
+              {bulkScope === "brand" && (
+                <div className="pt-1.5">
+                  <select
+                    value={bulkBrand || inventoryBrands[0] || ""}
+                    disabled={isBulkUpdating}
+                    onChange={(e) => setBulkBrand(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-card text-xs font-semibold text-foreground focus:outline-hidden"
+                  >
+                    {inventoryBrands.map((b) => (
+                      <option key={b} value={b}>
+                        {b} ({inventory.filter((p) => p.brand === b).length} منتج)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+
+            {/* Adjustment Type & Direction */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-foreground">نوع التعديل:</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    disabled={isBulkUpdating}
+                    onClick={() => setBulkAdjustmentType("percentage")}
+                    className={`py-2 px-3 rounded-xl border text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                      bulkAdjustmentType === "percentage"
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border bg-secondary/20 hover:bg-secondary/40 text-muted-foreground"
+                    }`}
+                  >
+                    <Percent className="w-3.5 h-3.5" />
+                    <span>نسبة مئوية (%)</span>
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isBulkUpdating}
+                    onClick={() => setBulkAdjustmentType("fixed")}
+                    className={`py-2 px-3 rounded-xl border text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                      bulkAdjustmentType === "fixed"
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border bg-secondary/20 hover:bg-secondary/40 text-muted-foreground"
+                    }`}
+                  >
+                    <DollarSign className="w-3.5 h-3.5" />
+                    <span>مبلغ مالي ثابت</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-foreground">الاتجاه (زيادة أو خفض):</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    disabled={isBulkUpdating}
+                    onClick={() => setBulkDirection("increase")}
+                    className={`py-2 px-3 rounded-xl border text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                      bulkDirection === "increase"
+                        ? "border-emerald-500 bg-emerald-500/10 text-emerald-500 font-bold"
+                        : "border-border bg-secondary/20 hover:bg-secondary/40 text-muted-foreground"
+                    }`}
+                  >
+                    <TrendingUp className="w-3.5 h-3.5" />
+                    <span>زيادة في السعر (+)</span>
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isBulkUpdating}
+                    onClick={() => setBulkDirection("decrease")}
+                    className={`py-2 px-3 rounded-xl border text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                      bulkDirection === "decrease"
+                        ? "border-rose-500 bg-rose-500/10 text-rose-500 font-bold"
+                        : "border-border bg-secondary/20 hover:bg-secondary/40 text-muted-foreground"
+                    }`}
+                  >
+                    <TrendingDown className="w-3.5 h-3.5" />
+                    <span>تخفيض في السعر (-)</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Value Input & Presets */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-foreground">
+                  قيمة التعديل {bulkAdjustmentType === "percentage" ? "(نسبة %)" : `(${CURRENCIES[currency]?.symbol || "E£"})`}:
+                </label>
+                <span className="text-[11px] font-mono text-muted-foreground">
+                  {bulkDirection === "increase" ? "+" : "-"}
+                  {bulkValue}
+                  {bulkAdjustmentType === "percentage" ? "%" : ` ${CURRENCIES[currency]?.symbol || "E£"}`}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="relative flex-1">
+                  <input
+                    type="number"
+                    min="0.1"
+                    step={bulkAdjustmentType === "percentage" ? "0.5" : "10"}
+                    value={bulkValue}
+                    disabled={isBulkUpdating}
+                    onChange={(e) => setBulkValue(Math.max(0.1, Number(e.target.value)))}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground font-mono text-sm font-bold focus:outline-hidden focus:ring-1 focus:ring-primary"
+                    placeholder="Enter value..."
+                  />
+                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-mono font-bold text-muted-foreground pointer-events-none">
+                    {bulkAdjustmentType === "percentage" ? "%" : (CURRENCIES[currency]?.symbol || "E£")}
+                  </span>
+                </div>
+
+                {/* Quick Presets */}
+                <div className="flex flex-wrap gap-1.5">
+                  {bulkAdjustmentType === "percentage" ? (
+                    [2, 5, 10, 15, 20].map((pct) => (
+                      <button
+                        key={pct}
+                        type="button"
+                        disabled={isBulkUpdating}
+                        onClick={() => setBulkValue(pct)}
+                        className={`px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold border transition cursor-pointer ${
+                          bulkValue === pct
+                            ? "border-primary bg-primary text-black"
+                            : "border-border bg-secondary/30 hover:bg-secondary text-foreground"
+                        }`}
+                      >
+                        {bulkDirection === "increase" ? "+" : "-"}{pct}%
+                      </button>
+                    ))
+                  ) : (
+                    [100, 500, 1000, 2500, 5000].map((amt) => (
+                      <button
+                        key={amt}
+                        type="button"
+                        disabled={isBulkUpdating}
+                        onClick={() => setBulkValue(amt)}
+                        className={`px-2.5 py-1.5 rounded-lg text-xs font-mono font-bold border transition cursor-pointer ${
+                          bulkValue === amt
+                            ? "border-primary bg-primary text-black"
+                            : "border-border bg-secondary/30 hover:bg-secondary text-foreground"
+                        }`}
+                      >
+                        {bulkDirection === "increase" ? "+" : "-"}{amt}
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Target Products & Live Preview */}
+            <div className="bg-secondary/20 border border-border p-4 rounded-2xl space-y-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-foreground flex items-center gap-1.5">
+                  <Check className="w-4 h-4 text-emerald-500" />
+                  <span>المنتجات المشمولة في هذا التعديل:</span>
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full bg-primary/20 text-primary font-mono font-bold text-xs">
+                  {bulkTargetProducts.length} منتج
+                </span>
+              </div>
+
+              {/* Sample Before/After Preview */}
+              {bulkTargetProducts.length > 0 && (
+                <div className="space-y-1.5 pt-1 border-t border-border/40">
+                  <span className="text-[11px] font-mono text-muted-foreground block">
+                    معاينة عينات قبل وبعد التعديل:
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono">
+                    {bulkTargetProducts.slice(0, 4).map((p) => {
+                      const newP = calculateNewPriceUSD(p.price);
+                      return (
+                        <div
+                          key={p.id}
+                          className="p-2.5 rounded-xl bg-card border border-border/60 flex items-center justify-between gap-2"
+                        >
+                          <div className="truncate">
+                            <p className="font-bold text-foreground truncate text-[11px]">{p.name}</p>
+                            <p className="text-[10px] text-muted-foreground">{p.brand}</p>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <span className="text-muted-foreground line-through text-[10px]">
+                              {formatPrice(p.price)}
+                            </span>
+                            <div className={`font-bold text-xs ${bulkDirection === "increase" ? "text-emerald-500" : "text-rose-500"}`}>
+                              {formatPrice(newP)}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Live Progress Bar (while updating) */}
+            {isBulkUpdating && (
+              <div className="space-y-2 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 animate-in fade-in duration-200">
+                <div className="flex items-center justify-between text-xs font-mono font-bold">
+                  <span className="text-amber-500 flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>جاري تحديث الأسعار في قاعدة البيانات الحية...</span>
+                  </span>
+                  <span className="text-foreground">
+                    {bulkProgress.current} / {bulkProgress.total} ({bulkProgress.percent}%)
+                  </span>
+                </div>
+                <div className="w-full h-3 bg-secondary rounded-full overflow-hidden border border-border">
+                  <div
+                    className="h-full bg-gradient-to-r from-amber-500 via-primary to-emerald-500 transition-all duration-200 rounded-full"
+                    style={{ width: `${bulkProgress.percent}%` }}
+                  />
+                </div>
+                <p className="text-[10px] text-muted-foreground font-mono text-center">
+                  يتم حفظ التعديلات الآن في جدول products على السيرفر الحي... يرجى الانتظار
+                </p>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-border">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isBulkUpdating}
+                onClick={() => setIsBulkPriceModalOpen(false)}
+                className="rounded-xl text-xs cursor-pointer"
+              >
+                إلغاء (Cancel)
+              </Button>
+
+              <Button
+                type="button"
+                disabled={isBulkUpdating || bulkTargetProducts.length === 0}
+                onClick={handleExecuteBulkPriceUpdate}
+                className="rounded-xl text-xs font-bold px-6 cursor-pointer bg-gradient-to-r from-amber-500 to-amber-600 text-black hover:opacity-95 shadow-md flex items-center gap-2"
+              >
+                {isBulkUpdating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>جاري التعديل ({bulkProgress.percent}%)...</span>
+                  </>
+                ) : bulkTargetProducts.length === 0 ? (
+                  <>
+                    <AlertCircle className="w-4 h-4" />
+                    <span>يرجى اختيار منتج أولاً للبدء</span>
+                  </>
+                ) : bulkScope === "single" ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    <span>تأكيد وتطبيق التعديل على هذا المنتج</span>
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4" />
+                    <span>تأكيد وتطبيق التعديل على {bulkTargetProducts.length} منتج</span>
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       )}

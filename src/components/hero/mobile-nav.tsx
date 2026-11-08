@@ -52,6 +52,17 @@ export function MobileNav() {
         { label: "Sigma Art & Cine Lenses", href: "/store?cat=lenses&brand=Sigma" },
       ],
     },
+    {
+      label: "Filters",
+      href: "/store?cat=filters",
+      cat: "filters",
+      subcategories: [
+        { label: "CPL Filters (Polarizer)", href: "/store?cat=filters&q=CPL" },
+        { label: "Variable ND Filters", href: "/store?cat=filters&q=ND" },
+        { label: "Black Mist & Diffusion", href: "/store?cat=filters&q=Mist" },
+        { label: "UV & Protection Filters", href: "/store?cat=filters&q=UV" },
+      ],
+    },
     { label: "Accessories", href: "/store?cat=accessories", cat: "accessories" },
     {
       label: "Audio & Video",

@@ -107,6 +107,7 @@ function StoreContent() {
     { id: "all" as const, label: "All Equipment", count: products.length },
     { id: "cameras" as const, label: "Cameras", count: products.filter((p) => p.category === "cameras").length },
     { id: "lenses" as const, label: "Lenses", count: products.filter((p) => p.category === "lenses").length },
+    { id: "filters" as const, label: "Filters", count: products.filter((p) => p.category === "filters").length },
     { id: "accessories" as const, label: "Accessories", count: products.filter((p) => p.category === "accessories").length },
     { id: "audio" as const, label: "Audio & Video", count: products.filter((p) => p.category === "audio").length },
     { id: "dental" as const, label: "Dental Equipments", count: products.filter((p) => p.category === "dental").length },

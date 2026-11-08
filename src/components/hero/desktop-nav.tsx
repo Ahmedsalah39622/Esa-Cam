@@ -71,6 +71,7 @@ export function DesktopNav() {
     { label: "Home", href: "/" },
     { label: "Cameras", href: "/store?cat=cameras", cat: "cameras" },
     { label: "Lenses", href: "/store?cat=lenses", cat: "lenses" },
+    { label: "Filters", href: "/store?cat=filters", cat: "filters" },
     { label: "Accessories", href: "/store?cat=accessories", cat: "accessories" },
     { label: "Audio & Video", href: "/store?cat=audio", cat: "audio" },
     { label: "Dental Equipments", href: "/store?cat=dental", cat: "dental" },
