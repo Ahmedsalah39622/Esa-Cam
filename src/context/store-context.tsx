@@ -601,6 +601,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addToCart = (product: Product, quantity = 1, mount?: string) => {
+    if (product.stockStatus === "out-of-stock" || (product.stockCount !== undefined && product.stockCount <= 0)) {
+      toast.error("This product is currently out of stock");
+      return;
+    }
     setCart((prev) => {
       const existing = prev.find((item) => item.product.id === product.id);
       if (existing) {

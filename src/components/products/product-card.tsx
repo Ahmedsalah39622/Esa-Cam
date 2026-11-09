@@ -144,22 +144,36 @@ export function ProductCard({ product }: { product: Product }) {
               )}
             </div>
 
-            {/* Stock indicator */}
-            <span className="text-[9px] sm:text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-medium">
-              {product.stockStatus === "in-stock"
-                ? "In Stock"
-                : "Pre-Order"}
-            </span>
+            {/* Stock indicator (Matching user design: In stock vs Out of stock) */}
+            {product.stockStatus === "out-of-stock" || (product.stockCount !== undefined && product.stockCount <= 0) ? (
+              <span className="text-[10px] sm:text-xs font-bold text-red-600 dark:text-red-400">
+                Out of stock
+              </span>
+            ) : (
+              <span className="text-[10px] sm:text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span>In stock</span>
+              </span>
+            )}
           </div>
 
           {/* Add to Cart Button */}
-          <Button
-            onClick={() => addToCart(product)}
-            className="w-full h-8 sm:h-9 rounded-xl font-semibold text-[11px] sm:text-xs flex items-center justify-center gap-1.5 cursor-pointer"
-          >
-            <ShoppingCart className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-            <span>Add to Cart</span>
-          </Button>
+          {product.stockStatus === "out-of-stock" || (product.stockCount !== undefined && product.stockCount <= 0) ? (
+            <Button
+              disabled
+              className="w-full h-8 sm:h-9 rounded-xl font-semibold text-[11px] sm:text-xs flex items-center justify-center gap-1.5 bg-muted text-muted-foreground border border-border/60 cursor-not-allowed shadow-none"
+            >
+              <span>Out of stock</span>
+            </Button>
+          ) : (
+            <Button
+              onClick={() => addToCart(product)}
+              className="w-full h-8 sm:h-9 rounded-xl font-semibold text-[11px] sm:text-xs flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <ShoppingCart className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              <span>Add to Cart</span>
+            </Button>
+          )}
         </div>
       </div>
     </div>

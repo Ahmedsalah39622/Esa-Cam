@@ -834,19 +834,34 @@ function StoreContent() {
                               {formatPrice(product.originalPrice)}
                             </span>
                           )}
-                          <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 block font-semibold mt-0.5">
-                            {product.stockStatus === "in-stock" ? "✓ In Stock" : "Pre-Order"}
-                          </span>
+                          {product.stockStatus === "out-of-stock" || (product.stockCount !== undefined && product.stockCount <= 0) ? (
+                            <span className="text-[10px] font-sans text-red-600 dark:text-red-400 block font-bold mt-0.5">
+                              Out of stock
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-sans text-emerald-600 dark:text-emerald-400 block font-semibold mt-0.5">
+                              ✓ In stock
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex items-center gap-2 w-full">
-                          <Button
-                            onClick={() => addToCart(product)}
-                            className="flex-1 h-9 rounded-xl text-xs font-bold gap-1.5 cursor-pointer"
-                          >
-                            <ShoppingCart className="w-3.5 h-3.5" />
-                            <span>Add</span>
-                          </Button>
+                          {product.stockStatus === "out-of-stock" || (product.stockCount !== undefined && product.stockCount <= 0) ? (
+                            <Button
+                              disabled
+                              className="flex-1 h-9 rounded-xl text-xs font-semibold gap-1.5 bg-muted text-muted-foreground border border-border/60 cursor-not-allowed shadow-none"
+                            >
+                              <span>Out of stock</span>
+                            </Button>
+                          ) : (
+                            <Button
+                              onClick={() => addToCart(product)}
+                              className="flex-1 h-9 rounded-xl text-xs font-bold gap-1.5 cursor-pointer"
+                            >
+                              <ShoppingCart className="w-3.5 h-3.5" />
+                              <span>Add</span>
+                            </Button>
+                          )}
                           <Link
                             href={`/store/${product.id}`}
                             className="h-9 px-2.5 rounded-xl text-xs cursor-pointer inline-flex items-center justify-center border border-input bg-background shadow-xs hover:bg-accent hover:text-accent-foreground"

@@ -132,12 +132,15 @@ export default function ProductDetailPage() {
   }
 
   const isWished = isInWishlist(product.id);
+  const isOutOfStock = product.stockStatus === "out-of-stock" || (product.stockCount !== undefined && product.stockCount <= 0);
 
   const handleAddToCart = () => {
+    if (isOutOfStock) return;
     addToCart(product, quantity);
   };
 
   const handleBuyNow = () => {
+    if (isOutOfStock) return;
     addToCart(product, quantity);
     router.push("/cart");
   };
@@ -493,8 +496,8 @@ export default function ProductDetailPage() {
                 </div>
               )}
 
-              {/* Price */}
-              <div className="flex items-baseline gap-3 font-mono">
+              {/* Price & Stock Status Row */}
+              <div className="flex flex-wrap items-center gap-3 font-mono">
                 <span className="text-3xl sm:text-4xl font-black text-foreground">
                   {formatPrice(product.price)}
                 </span>
@@ -503,34 +506,19 @@ export default function ProductDetailPage() {
                     {formatPrice(product.originalPrice)}
                   </span>
                 )}
-              </div>
 
-              {/* Stock Status */}
-              <div className="flex items-center gap-2 text-sm">
-                <span
-                  className={`w-2.5 h-2.5 rounded-full ${
-                    product.stockStatus === "in-stock"
-                      ? "bg-emerald-500 animate-pulse"
-                      : product.stockStatus === "low-stock"
-                      ? "bg-amber-500 animate-pulse"
-                      : "bg-blue-500"
-                  }`}
-                />
-                <span
-                  className={`font-medium ${
-                    product.stockStatus === "in-stock"
-                      ? "text-emerald-600 dark:text-emerald-400"
-                      : product.stockStatus === "low-stock"
-                      ? "text-amber-600 dark:text-amber-400"
-                      : "text-blue-600 dark:text-blue-400"
-                  }`}
-                >
-                  {product.stockStatus === "in-stock"
-                    ? `In Stock (${product.stockCount || 5} units available)`
-                    : product.stockStatus === "low-stock"
-                    ? "Low Stock — Only 2 Left"
-                    : "Available on Pre-Order"}
-                </span>
+                {/* Stock Status Badge (Exact design matching Image 1 & 2 without stock count numbers) */}
+                {isOutOfStock ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl border border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400 font-bold text-xs sm:text-sm font-sans">
+                    <span className="w-2 h-2 rounded-full bg-red-500" />
+                    <span>Out of stock</span>
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-xs sm:text-sm font-sans">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    <span>In stock</span>
+                  </span>
+                )}
               </div>
 
               {/* Specs / Features / In The Box Tabs */}
@@ -608,34 +596,51 @@ export default function ProductDetailPage() {
             <div className="mt-8 pt-6 border-t border-border space-y-3">
               <div className="flex items-center gap-3">
                 {/* Quantity Selector */}
-                <div className="flex items-center border border-border bg-card rounded-xl h-11 px-2">
-                  <button
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="p-1.5 hover:text-muted-foreground cursor-pointer"
-                    title="Decrease"
-                  >
-                    <Minus className="w-4 h-4" />
-                  </button>
-                  <span className="font-mono text-sm font-black px-4 min-w-[36px] text-center">
-                    {quantity}
-                  </span>
-                  <button
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="p-1.5 hover:text-muted-foreground cursor-pointer"
-                    title="Increase"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
+                {isOutOfStock ? (
+                  <div className="flex items-center border border-border/40 bg-muted/30 rounded-xl h-11 px-3 opacity-50 cursor-not-allowed">
+                    <span className="font-mono text-xs text-muted-foreground select-none">
+                      - 0 +
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center border border-border bg-card rounded-xl h-11 px-2">
+                    <button
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      className="p-1.5 hover:text-muted-foreground cursor-pointer"
+                      title="Decrease"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <span className="font-mono text-sm font-black px-4 min-w-[36px] text-center">
+                      {quantity}
+                    </span>
+                    <button
+                      onClick={() => setQuantity(quantity + 1)}
+                      className="p-1.5 hover:text-muted-foreground cursor-pointer"
+                      title="Increase"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
 
                 {/* Add to Cart */}
-                <Button
-                  onClick={handleAddToCart}
-                  className="flex-1 h-11 rounded-xl font-bold text-sm gap-2 cursor-pointer"
-                >
-                  <ShoppingCart className="w-4 h-4" />
-                  Add to Cart
-                </Button>
+                {isOutOfStock ? (
+                  <Button
+                    disabled
+                    className="flex-1 h-11 rounded-xl font-bold text-sm bg-muted text-muted-foreground border border-border/60 cursor-not-allowed shadow-none"
+                  >
+                    Out of stock
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleAddToCart}
+                    className="flex-1 h-11 rounded-xl font-bold text-sm gap-2 cursor-pointer"
+                  >
+                    <ShoppingCart className="w-4 h-4" />
+                    Add to Cart
+                  </Button>
+                )}
 
                 {/* Wishlist Button */}
                 <button
@@ -665,10 +670,15 @@ export default function ProductDetailPage() {
               {/* Buy Now */}
               <Button
                 onClick={handleBuyNow}
+                disabled={isOutOfStock}
                 variant="outline"
-                className="w-full h-12 rounded-xl font-black text-sm uppercase tracking-widest cursor-pointer border-2 border-foreground hover:bg-foreground hover:text-background transition-all"
+                className={`w-full h-12 rounded-xl font-black text-sm uppercase tracking-widest transition-all ${
+                  isOutOfStock
+                    ? "opacity-50 border-border text-muted-foreground cursor-not-allowed pointer-events-none"
+                    : "cursor-pointer border-2 border-foreground hover:bg-foreground hover:text-background"
+                }`}
               >
-                BUY NOW • PRO DISPATCH
+                {isOutOfStock ? "Out of stock" : "BUY NOW • PRO DISPATCH"}
               </Button>
             </div>
           </div>
