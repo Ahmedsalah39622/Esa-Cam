@@ -135,17 +135,28 @@ function StoreContent() {
       return product.category === category.id;
     });
 
-    const brandCounts = new Map<string, number>();
+    const brandCounts = new Map<string, { name: string; count: number }>();
     categoryProducts.forEach((product) => {
-      if (product.brand) {
-        brandCounts.set(product.brand, (brandCounts.get(product.brand) ?? 0) + 1);
+      if (product.brand && product.brand.trim()) {
+        const trimmed = product.brand.trim();
+        const low = trimmed.toLowerCase();
+        const existing = brandCounts.get(low);
+        if (existing) {
+          existing.count += 1;
+          // Prefer Title Case or canonical name (e.g. "Fujifilm" over "FUJIFILM", "RED" over "Red")
+          if (trimmed === "Fujifilm" || trimmed === "RED") {
+            existing.name = trimmed;
+          }
+        } else {
+          brandCounts.set(low, { name: trimmed, count: 1 });
+        }
       }
     });
 
-    const brands = Array.from(brandCounts, ([brand, count]) => ({
-      name: brand,
-      search: brand,
-      logo: managedBrandLogos.get(brand.trim().toLowerCase()),
+    const brands = Array.from(brandCounts.values(), ({ name, count }) => ({
+      name,
+      search: name,
+      logo: managedBrandLogos.get(name.trim().toLowerCase()),
       count,
     })).sort((first, second) => first.name.localeCompare(second.name));
 

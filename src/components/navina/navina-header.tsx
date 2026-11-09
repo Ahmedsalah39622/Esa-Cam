@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useDeferredValue } from "react";
+import React, { useState, useRef, useEffect, useDeferredValue, useMemo } from "react";
 import Link from "next/link";
 import { useStore } from "@/context/store-context";
 import { useAuth } from "@/context/auth-context";
@@ -132,11 +132,30 @@ const NAV_DEPARTMENTS: NavDepartment[] = [
       { label: "Matte Boxes & Carbon Rods", href: "/store?q=Matte", count: 15, hasArrow: true },
     ],
   },
+  {
+    id: "filters",
+    name: "Filters",
+    href: "/store?cat=filters",
+    description: "CPL, Variable ND, Black Mist, UV & Cinema Filters",
+    viewAllText: "View All Filters (139 Items) →",
+    icon: Layers,
+    items: [
+      { label: "Variable ND Filters", href: "/store?cat=filters&q=ND", count: 36 },
+      { label: "Circular Polarizer (CPL)", href: "/store?cat=filters&q=CPL", count: 28 },
+      { label: "Black Mist & Diffusion", href: "/store?cat=filters&q=Mist", count: 22 },
+      { label: "UV & Protection Filters", href: "/store?cat=filters&q=UV", count: 18 },
+      { label: "K&F Concept Optics", href: "/store?cat=filters&brand=K%26F+Concept", count: 34 },
+      { label: "NiSi Cinema Filters", href: "/store?cat=filters&brand=NiSi", count: 12 },
+      { label: "Freewell Magnetic Filters", href: "/store?cat=filters&brand=Freewell", count: 15 },
+      { label: "Step Rings & Adapters", href: "/store?cat=filters&q=Ring", count: 8, hasArrow: true },
+    ],
+  },
 ];
 
 const ALL_13_CATEGORIES = [
   { label: "Cameras", href: "/store?cat=cameras", count: 226 },
   { label: "Lenses & Accessories", href: "/store?cat=lenses", count: 392 },
+  { label: "Filters", href: "/store?cat=filters", count: 139 },
   { label: "Printers & Instax Cameras", href: "/store?q=Instax", count: 21 },
   { label: "Professional Video", href: "/store?q=Cinema", count: 187 },
   { label: "Batteries & Power", href: "/store?q=Battery", count: 295 },
@@ -198,9 +217,20 @@ export function NavinaHeader() {
         label: product.name,
         href: `/store/${product.id}`,
       }));
-  const menuBrands = [...new Set((menuProducts.length ? menuProducts : products).map((product) => product.brand))]
-    .filter(Boolean)
-    .slice(0, 8);
+  const menuBrands = useMemo(() => {
+    const list = menuProducts.length ? menuProducts : products;
+    const map = new Map<string, string>();
+    list.forEach((p) => {
+      const b = (p.brand || "").trim();
+      if (b) {
+        const low = b.toLowerCase();
+        if (!map.has(low) || b === "Fujifilm" || b === "RED") {
+          map.set(low, b);
+        }
+      }
+    });
+    return Array.from(map.values()).slice(0, 8);
+  }, [menuProducts, products]);
   const searchResults = deferredSearchQuery
     ? products
         .filter((product) =>

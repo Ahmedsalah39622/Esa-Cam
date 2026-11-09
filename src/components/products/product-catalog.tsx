@@ -32,8 +32,17 @@ export function ProductCatalog() {
   ];
 
   const availableBrands = useMemo(() => {
-    const brandsSet = new Set(PRODUCTS.map((p) => p.brand));
-    return ["all", ...Array.from(brandsSet)];
+    const map = new Map<string, string>();
+    PRODUCTS.forEach((p) => {
+      const b = (p.brand || "").trim();
+      if (b) {
+        const low = b.toLowerCase();
+        if (!map.has(low) || b === "Fujifilm" || b === "RED") {
+          map.set(low, b);
+        }
+      }
+    });
+    return ["all", ...Array.from(map.values()).sort((a, b) => a.localeCompare(b))];
   }, []);
 
   const filteredProducts = useMemo(() => {
@@ -43,7 +52,7 @@ export function ProductCatalog() {
         return false;
       }
       // Brand filter
-      if (filterBrand !== "all" && p.brand !== filterBrand) {
+      if (filterBrand !== "all" && p.brand.toLowerCase() !== filterBrand.toLowerCase()) {
         return false;
       }
       // Search term filter

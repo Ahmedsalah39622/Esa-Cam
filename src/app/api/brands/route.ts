@@ -3,7 +3,6 @@ import { query, getDbPool } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-
 interface BrandRow {
   id: string;
   name: string;
@@ -22,7 +21,7 @@ export async function GET() {
     }
 
     const rows = await query<BrandRow>(
-      "SELECT * FROM brands ORDER BY created_at ASC"
+      "SELECT * FROM brands ORDER BY name ASC"
     );
 
     return NextResponse.json({ success: true, source: "database", data: rows });
@@ -37,34 +36,53 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { name, logoText, logoImage, subTitle, isActive } = body;
 
-    if (!name) {
+    const trimmedName = typeof name === "string" ? name.trim() : "";
+    if (!trimmedName) {
       return NextResponse.json(
         { success: false, message: "Brand name is required" },
         { status: 400 }
       );
     }
 
-    const brandId = `brand_${Date.now()}`;
-
     const pool = getDbPool();
     if (pool) {
+      const existing = await query<BrandRow>(
+        "SELECT id, name FROM brands WHERE LOWER(name) = LOWER(?) LIMIT 1",
+        [trimmedName]
+      );
+
+      if (existing.length > 0) {
+        return NextResponse.json({
+          success: true,
+          data: { id: existing[0].id, name: existing[0].name },
+          message: "Brand already exists in database",
+        });
+      }
+
+      const brandId = `brand_${Date.now()}`;
       await query(
         "INSERT INTO brands (id, name, logo_text, logo_image, sub_title, is_active) VALUES (?, ?, ?, ?, ?, ?)",
         [
           brandId,
-          name,
-          logoText || name.toUpperCase(),
+          trimmedName,
+          logoText || trimmedName.toUpperCase(),
           logoImage || null,
           subTitle || null,
           isActive !== false ? 1 : 0,
         ]
       );
+
+      return NextResponse.json({
+        success: true,
+        data: { id: brandId, name: trimmedName },
+        message: "Brand saved successfully",
+      });
     }
 
     return NextResponse.json({
       success: true,
-      data: { id: brandId, name },
-      message: "Brand saved successfully",
+      data: { id: `brand_${Date.now()}`, name: trimmedName },
+      message: "Brand saved in memory fallback",
     });
   } catch (error) {
     console.error("Error saving brand:", error);

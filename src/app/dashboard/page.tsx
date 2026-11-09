@@ -493,7 +493,17 @@ export default function DashboardPage() {
   }, [products]);
 
   const inventoryBrands = useMemo(() => {
-    return Array.from(new Set(inventory.map((p) => p.brand))).filter(Boolean).sort();
+    const map = new Map<string, string>();
+    inventory.forEach((p) => {
+      const b = (p.brand || "").trim();
+      if (b) {
+        const low = b.toLowerCase();
+        if (!map.has(low) || b === "Fujifilm" || b === "RED") {
+          map.set(low, b);
+        }
+      }
+    });
+    return Array.from(map.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
   }, [inventory]);
 
   const filteredInventory = useMemo(() => {
@@ -805,6 +815,82 @@ export default function DashboardPage() {
     } else {
       toast.error("Failed to process image file", { id: "edit-img-opt" });
     }
+  };
+
+  const [isAddingNewBrandForNewProduct, setIsAddingNewBrandForNewProduct] = useState(false);
+  const [customBrandNameForNewProduct, setCustomBrandNameForNewProduct] = useState("");
+  const [isAddingNewBrandForEditProduct, setIsAddingNewBrandForEditProduct] = useState(false);
+  const [customBrandNameForEditProduct, setCustomBrandNameForEditProduct] = useState("");
+
+  const allAvailableBrands = useMemo(() => {
+    const map = new Map<string, string>();
+    inventory.forEach((p) => {
+      const b = (p.brand || "").trim();
+      if (b) {
+        const low = b.toLowerCase();
+        if (!map.has(low) || b === "Fujifilm" || b === "RED") {
+          map.set(low, b);
+        }
+      }
+    });
+    brands.forEach((b) => {
+      const name = (b.name || "").trim();
+      if (name) {
+        const low = name.toLowerCase();
+        if (!map.has(low) || name === "Fujifilm" || name === "RED") {
+          map.set(low, name);
+        }
+      }
+    });
+    if (newProduct?.brand && newProduct.brand.trim()) {
+      const low = newProduct.brand.trim().toLowerCase();
+      if (!map.has(low)) map.set(low, newProduct.brand.trim());
+    }
+    if (editProduct?.brand && editProduct.brand.trim()) {
+      const low = editProduct.brand.trim().toLowerCase();
+      if (!map.has(low)) map.set(low, editProduct.brand.trim());
+    }
+    return Array.from(map.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+  }, [inventory, brands, newProduct?.brand, editProduct?.brand]);
+
+  const handleCreateBrandForNewProduct = () => {
+    const trimmed = customBrandNameForNewProduct.trim();
+    if (!trimmed) {
+      toast.error("Please enter a brand name");
+      return;
+    }
+    addBrand({
+      name: trimmed,
+      logoText: trimmed.toUpperCase(),
+      isActive: true,
+      textColor: "#FFFFFF",
+      bgColor: "#18181B",
+      borderColor: "#3F3F46",
+      accentColor: "#FFE600",
+    });
+    setNewProduct((prev) => ({ ...prev, brand: trimmed }));
+    setCustomBrandNameForNewProduct("");
+    setIsAddingNewBrandForNewProduct(false);
+  };
+
+  const handleCreateBrandForEditProduct = () => {
+    const trimmed = customBrandNameForEditProduct.trim();
+    if (!trimmed) {
+      toast.error("Please enter a brand name");
+      return;
+    }
+    addBrand({
+      name: trimmed,
+      logoText: trimmed.toUpperCase(),
+      isActive: true,
+      textColor: "#FFFFFF",
+      bgColor: "#18181B",
+      borderColor: "#3F3F46",
+      accentColor: "#FFE600",
+    });
+    setEditProduct((prev) => (prev ? { ...prev, brand: trimmed } : prev));
+    setCustomBrandNameForEditProduct("");
+    setIsAddingNewBrandForEditProduct(false);
   };
 
   const openEditProduct = (item: Product) => {
@@ -6873,25 +6959,66 @@ export default function DashboardPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-semibold text-muted-foreground block mb-1">Brand *</label>
-                  <select
-                    value={newProduct.brand}
-                    onChange={(e) => setNewProduct({ ...newProduct, brand: e.target.value })}
-                    className="w-full px-3 py-2.5 rounded-xl border border-border bg-secondary/30 text-foreground"
-                  >
-                    <option value="Sony">Sony</option>
-                    <option value="Canon">Canon</option>
-                    <option value="Nikon">Nikon</option>
-                    <option value="Tamron">Tamron</option>
-                    <option value="Profoto">Profoto</option>
-                    <option value="RED">RED Digital</option>
-                    <option value="Blackmagic Design">Blackmagic</option>
-                    <option value="DJI">DJI</option>
-                    <option value="Aputure">Aputure</option>
-                    <option value="RØDE">RØDE</option>
-                    <option value="Fujifilm">Fujifilm</option>
-                    <option value="SmallRig">SmallRig</option>
-                  </select>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="font-semibold text-muted-foreground block text-xs">
+                      Brand / الماركة *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingNewBrandForNewProduct((prev) => !prev)}
+                      className="text-[11px] font-bold text-amber-500 hover:text-amber-400 flex items-center gap-1 cursor-pointer transition-colors"
+                    >
+                      {isAddingNewBrandForNewProduct ? "✕ إلغاء" : "+ إضافة براند جديد"}
+                    </button>
+                  </div>
+
+                  {isAddingNewBrandForNewProduct ? (
+                    <div className="flex items-center gap-1.5 p-1.5 rounded-xl border border-amber-500/50 bg-amber-500/10">
+                      <input
+                        type="text"
+                        autoFocus
+                        value={customBrandNameForNewProduct}
+                        onChange={(e) => setCustomBrandNameForNewProduct(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleCreateBrandForNewProduct();
+                          }
+                        }}
+                        placeholder="اسم الماركة الجديدة (مثال: Leica, K&F)..."
+                        className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-border bg-card text-foreground focus:outline-hidden focus:ring-1 focus:ring-amber-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleCreateBrandForNewProduct}
+                        className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-black font-bold text-xs shrink-0 cursor-pointer transition-colors"
+                      >
+                        حفظ
+                      </button>
+                    </div>
+                  ) : (
+                    <select
+                      value={newProduct.brand}
+                      onChange={(e) => {
+                        if (e.target.value === "__ADD_NEW__") {
+                          setIsAddingNewBrandForNewProduct(true);
+                        } else {
+                          setNewProduct({ ...newProduct, brand: e.target.value });
+                        }
+                      }}
+                      className="w-full px-3 py-2.5 rounded-xl border border-border bg-secondary/30 text-foreground text-sm font-medium focus:ring-1 focus:ring-primary focus:outline-hidden"
+                    >
+                      <option value="__ADD_NEW__" className="font-bold text-amber-500 bg-amber-500/10">
+                        ✨ + إضافة ماركة جديدة... (+ Add New Brand)
+                      </option>
+                      <option disabled>──────────────</option>
+                      {allAvailableBrands.map((b) => (
+                        <option key={b} value={b}>
+                          {b}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
                 <div>
                   <label className="font-semibold text-muted-foreground block mb-1">Department *</label>
@@ -7212,25 +7339,66 @@ export default function DashboardPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-semibold text-muted-foreground block mb-1">Brand *</label>
-                  <select
-                    value={editProduct.brand}
-                    onChange={(e) => setEditProduct({ ...editProduct, brand: e.target.value })}
-                    className="w-full px-3 py-2.5 rounded-xl border border-border bg-secondary/30 text-foreground"
-                  >
-                    <option value="Sony">Sony</option>
-                    <option value="Canon">Canon</option>
-                    <option value="Nikon">Nikon</option>
-                    <option value="Tamron">Tamron</option>
-                    <option value="Profoto">Profoto</option>
-                    <option value="RED">RED Digital</option>
-                    <option value="Blackmagic Design">Blackmagic</option>
-                    <option value="DJI">DJI</option>
-                    <option value="Aputure">Aputure</option>
-                    <option value="RØDE">RØDE</option>
-                    <option value="Fujifilm">Fujifilm</option>
-                    <option value="SmallRig">SmallRig</option>
-                  </select>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="font-semibold text-muted-foreground block text-xs">
+                      Brand / الماركة *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setIsAddingNewBrandForEditProduct((prev) => !prev)}
+                      className="text-[11px] font-bold text-amber-500 hover:text-amber-400 flex items-center gap-1 cursor-pointer transition-colors"
+                    >
+                      {isAddingNewBrandForEditProduct ? "✕ إلغاء" : "+ إضافة براند جديد"}
+                    </button>
+                  </div>
+
+                  {isAddingNewBrandForEditProduct ? (
+                    <div className="flex items-center gap-1.5 p-1.5 rounded-xl border border-amber-500/50 bg-amber-500/10">
+                      <input
+                        type="text"
+                        autoFocus
+                        value={customBrandNameForEditProduct}
+                        onChange={(e) => setCustomBrandNameForEditProduct(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleCreateBrandForEditProduct();
+                          }
+                        }}
+                        placeholder="اسم الماركة الجديدة (مثال: Leica, K&F)..."
+                        className="flex-1 px-2.5 py-1.5 text-xs rounded-lg border border-border bg-card text-foreground focus:outline-hidden focus:ring-1 focus:ring-amber-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleCreateBrandForEditProduct}
+                        className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-black font-bold text-xs shrink-0 cursor-pointer transition-colors"
+                      >
+                        حفظ
+                      </button>
+                    </div>
+                  ) : (
+                    <select
+                      value={editProduct.brand}
+                      onChange={(e) => {
+                        if (e.target.value === "__ADD_NEW__") {
+                          setIsAddingNewBrandForEditProduct(true);
+                        } else {
+                          setEditProduct({ ...editProduct, brand: e.target.value });
+                        }
+                      }}
+                      className="w-full px-3 py-2.5 rounded-xl border border-border bg-secondary/30 text-foreground text-sm font-medium focus:ring-1 focus:ring-primary focus:outline-hidden"
+                    >
+                      <option value="__ADD_NEW__" className="font-bold text-amber-500 bg-amber-500/10">
+                        ✨ + إضافة ماركة جديدة... (+ Add New Brand)
+                      </option>
+                      <option disabled>──────────────</option>
+                      {allAvailableBrands.map((b) => (
+                        <option key={b} value={b}>
+                          {b}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
                 <div>
                   <label className="font-semibold text-muted-foreground block mb-1">Department *</label>

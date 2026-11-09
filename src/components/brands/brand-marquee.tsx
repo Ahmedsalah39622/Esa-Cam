@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import useEmblaCarousel from "embla-carousel-react";
 
@@ -51,7 +51,18 @@ export function BrandMarquee({
   const isPointerDown = useRef(false);
   const lastInteractionAt = useRef(0);
   const logoByBrand = (brand: Brand) => BRAND_LOGOS[brand.search.trim().toLowerCase()] || brand.logo;
-  const visibleBrands = brands.filter((brand) => Boolean(logoByBrand(brand)));
+  const visibleBrands = useMemo(() => {
+    const seen = new Set<string>();
+    const unique: Brand[] = [];
+    for (const brand of brands) {
+      const key = brand.search.trim().toLowerCase();
+      if (!seen.has(key) && Boolean(logoByBrand(brand))) {
+        seen.add(key);
+        unique.push(brand);
+      }
+    }
+    return unique;
+  }, [brands]);
 
   useEffect(() => {
     if (!animated || !emblaApi || visibleBrands.length < 2) return;

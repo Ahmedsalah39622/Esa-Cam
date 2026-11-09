@@ -548,6 +548,51 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         console.warn("Could not load shipping settings from API:", err);
       });
 
+    // Fetch latest brands from database API in background
+    fetch("/api/brands")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.data) && data.data.length > 0) {
+          const dbBrands: BrandItem[] = data.data.map(
+            (r: {
+              id: string;
+              name: string;
+              sub?: string;
+              sub_title?: string;
+              logoText?: string;
+              logo_text?: string;
+              logoImage?: string;
+              logo_image?: string;
+              isActive?: boolean | number;
+              is_active?: boolean | number;
+              textColor?: string;
+              bgColor?: string;
+              borderColor?: string;
+              accentColor?: string;
+            }) => ({
+              id: r.id,
+              name: r.name,
+              sub: r.sub || r.sub_title || undefined,
+              logoText: r.logoText || r.logo_text || r.name.toUpperCase(),
+              logoImage: r.logoImage || r.logo_image || undefined,
+              isActive: r.isActive !== undefined ? Boolean(r.isActive) : (r.is_active !== undefined ? Boolean(r.is_active) : true),
+              textColor: r.textColor || "#FFFFFF",
+              bgColor: r.bgColor || "#18181B",
+              borderColor: r.borderColor || "#3F3F46",
+              accentColor: r.accentColor || "#FFE600",
+            })
+          );
+          setBrands((prev) => {
+            const existingNames = new Set(prev.map((b) => b.name.toLowerCase()));
+            const newOnes = dbBrands.filter((b) => !existingNames.has(b.name.toLowerCase()));
+            return [...prev, ...newOnes];
+          });
+        }
+      })
+      .catch((err) => {
+        console.warn("Could not load brands from DB:", err);
+      });
+
     // Fetch latest content from database API in background
     fetch("/api/content")
       .then((res) => res.json())
@@ -744,12 +789,37 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // Brand Management Handlers
   const addBrand = (brandData: Omit<BrandItem, "id">) => {
+    const trimmedName = brandData.name.trim();
+    if (!trimmedName) return;
+
     const newBrand: BrandItem = {
       ...brandData,
+      name: trimmedName,
       id: `brand-${Date.now()}`,
     };
-    setBrands((prev) => [newBrand, ...prev]);
-    toast.success(`Brand "${newBrand.name}" added to Brand Bar!`);
+    setBrands((prev) => {
+      if (prev.some((b) => b.name.toLowerCase() === trimmedName.toLowerCase())) {
+        return prev;
+      }
+      return [newBrand, ...prev];
+    });
+
+    // Save to database
+    fetch("/api/brands", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: trimmedName,
+        logoText: brandData.logoText || trimmedName.toUpperCase(),
+        logoImage: brandData.logoImage || null,
+        subTitle: brandData.sub || null,
+        isActive: brandData.isActive !== false,
+      }),
+    }).catch((err) => {
+      console.warn("Could not persist brand to DB:", err);
+    });
+
+    toast.success(`Brand "${newBrand.name}" saved successfully!`);
   };
 
   const updateBrand = (id: string, updatedFields: Partial<BrandItem>) => {
