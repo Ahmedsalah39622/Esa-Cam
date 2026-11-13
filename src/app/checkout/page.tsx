@@ -847,15 +847,15 @@ function CheckoutContent() {
                           ))
                       ) : (
                         <>
-                          <option value="Greater Cairo (Bab El-Louq & Downtown)">القاهرة الكبرى (باب اللوق ووسط البلد) • {formatPrice(0.99)} (خلال 24 ساعة)</option>
-                          <option value="Giza & 6th of October">الجيزة و 6 أكتوبر • {formatPrice(0.99)} (خلال 24-48 ساعة)</option>
-                          <option value="Alexandria">الإسكندرية • {formatPrice(1.98)} (1-2 يوم عمل)</option>
-                          <option value="Mansoura & Delta Governorates">المنصورة ومحافظات الدلتا • {formatPrice(1.98)} (2-3 أيام عمل)</option>
-                          <option value="Tanta & Gharbia">طنطا والغربية • {formatPrice(1.98)} (2-3 أيام عمل)</option>
-                          <option value="Suez, Port Said & Ismailia">مدن القناة (السويس، بورسعيد، الإسماعيلية) • {formatPrice(2.97)} (2-3 أيام عمل)</option>
-                          <option value="Hurghada & Red Sea">الغردقة والبحر الأحمر • {formatPrice(3.96)} (2-4 أيام عمل)</option>
-                          <option value="Sharm El-Sheikh & Sinai">شرم الشيخ وجنوب سيناء • {formatPrice(3.96)} (3-4 أيام عمل)</option>
-                          <option value="Assiut & Upper Egypt">أسيوط ومحافظات الصعيد • {formatPrice(4.95)} (2-4 أيام عمل)</option>
+                          <option value="Greater Cairo (Bab El-Louq & Downtown)">القاهرة الكبرى (باب اللوق ووسط البلد) • {formatPrice(50)} (خلال 24 ساعة)</option>
+                          <option value="Giza & 6th of October">الجيزة و 6 أكتوبر • {formatPrice(50)} (خلال 24-48 ساعة)</option>
+                          <option value="Alexandria">الإسكندرية • {formatPrice(100)} (1-2 يوم عمل)</option>
+                          <option value="Mansoura & Delta Governorates">المنصورة ومحافظات الدلتا • {formatPrice(100)} (2-3 أيام عمل)</option>
+                          <option value="Tanta & Gharbia">طنطا والغربية • {formatPrice(100)} (2-3 أيام عمل)</option>
+                          <option value="Suez, Port Said & Ismailia">مدن القناة (السويس، بورسعيد، الإسماعيلية) • {formatPrice(150)} (2-3 أيام عمل)</option>
+                          <option value="Hurghada & Red Sea">الغردقة والبحر الأحمر • {formatPrice(200)} (2-4 أيام عمل)</option>
+                          <option value="Sharm El-Sheikh & Sinai">شرم الشيخ وجنوب سيناء • {formatPrice(200)} (3-4 أيام عمل)</option>
+                          <option value="Assiut & Upper Egypt">أسيوط ومحافظات الصعيد • {formatPrice(250)} (2-4 أيام عمل)</option>
                         </>
                       )}
                     </select>
