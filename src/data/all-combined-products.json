@@ -117923,5 +117923,158 @@
       "Official Warranty Card",
       "Documentation"
     ]
+  },
+  {
+    "id": "icam-66995",
+    "name": "Hollyland LARK A2 Wireless Microphone System (Mini Duo Version – Space Gray)",
+    "brand": "Hollyland",
+    "category": "audio",
+    "price": 1950,
+    "rating": 0,
+    "reviewsCount": 0,
+    "image": "https://icamstore.net/wp-content/uploads/2026/09/Hollyland-LARK-A2-Wireless-Microphone-System-Mini-Duo-Version-1024x1024.png",
+    "images": [
+      "https://icamstore.net/wp-content/uploads/2026/09/Hollyland-LARK-A2-Wireless-Microphone-System-Mini-Duo-Version-1024x1024.png"
+    ],
+    "stockStatus": "in-stock",
+    "stockCount": 5,
+    "shortDescription": "",
+    "specs": [],
+    "features": [],
+    "inTheBox": []
+  },
+  {
+    "id": "icam-66998",
+    "name": "Hollyland LARK A2 Wireless Microphone System (Solo Version – Space Gray)",
+    "brand": "Hollyland",
+    "category": "audio",
+    "price": 1450,
+    "rating": 0,
+    "reviewsCount": 0,
+    "image": "https://icamstore.net/wp-content/uploads/2026/09/Hollyland-LARK-A2-Wireless-Microphone-System-Solo-Version-1024x1024.png",
+    "images": [
+      "https://icamstore.net/wp-content/uploads/2026/09/Hollyland-LARK-A2-Wireless-Microphone-System-Solo-Version-1024x1024.png"
+    ],
+    "stockStatus": "in-stock",
+    "stockCount": 5,
+    "shortDescription": "",
+    "specs": [],
+    "features": [],
+    "inTheBox": []
+  },
+  {
+    "id": "icam-67268",
+    "name": "Hollyland LARK M3 Combo 2TX&2RX (Space Gray)",
+    "brand": "Hollyland",
+    "category": "audio",
+    "price": 6000,
+    "rating": 0,
+    "reviewsCount": 0,
+    "image": "https://icamstore.net/wp-content/uploads/2026/09/6303-Combo_2TX_2RX-001-1024x1024.webp",
+    "images": [
+      "https://icamstore.net/wp-content/uploads/2026/09/6303-Combo_2TX_2RX-001-1024x1024.webp"
+    ],
+    "stockStatus": "in-stock",
+    "stockCount": 5,
+    "shortDescription": "",
+    "specs": [],
+    "features": [],
+    "inTheBox": []
+  },
+  {
+    "id": "icam-55319",
+    "name": "Hollyland MELO P1 Solo Wireless Handheld Microphone System (Space Gray)",
+    "brand": "Hollyland",
+    "category": "audio",
+    "price": null,
+    "rating": 5,
+    "reviewsCount": 0,
+    "image": "https://icamstore.net/wp-content/uploads/2026/05/1783500361_1977892.jpg",
+    "images": [
+      "https://icamstore.net/wp-content/uploads/2026/05/1783500361_1977892.jpg"
+    ],
+    "stockStatus": "out-of-stock",
+    "stockCount": 0,
+    "shortDescription": "Professional studio & audio equipment.",
+    "specs": [
+      {
+        "label": "Brand",
+        "value": "Hollyland"
+      }
+    ],
+    "features": [
+      "Official Distributor Warranty",
+      "Factory Sealed & Calibrated",
+      "Includes VIP Fragile Express Delivery"
+    ],
+    "inTheBox": [
+      "Main Unit",
+      "Official Warranty Card",
+      "Documentation"
+    ]
+  },
+  {
+    "id": "icam-67297",
+    "name": "Hollyland LARK M3 Combo 2TX&4RX (Space Gray)",
+    "brand": "Hollyland",
+    "category": "audio",
+    "price": null,
+    "rating": 5,
+    "reviewsCount": 0,
+    "image": "https://icamstore.net/wp-content/uploads/2026/09/6303-Combo_2TX_4RX-001-1024x1024.webp",
+    "images": [
+      "https://icamstore.net/wp-content/uploads/2026/09/6303-Combo_2TX_4RX-001-1024x1024.webp"
+    ],
+    "stockStatus": "out-of-stock",
+    "stockCount": 0,
+    "shortDescription": "Professional studio & audio equipment.",
+    "specs": [
+      {
+        "label": "Brand",
+        "value": "Hollyland"
+      }
+    ],
+    "features": [
+      "Official Distributor Warranty",
+      "Factory Sealed & Calibrated",
+      "Includes VIP Fragile Express Delivery"
+    ],
+    "inTheBox": [
+      "Main Unit",
+      "Official Warranty Card",
+      "Documentation"
+    ]
+  },
+  {
+    "id": "icam-32879",
+    "name": "BOYA BY-K3 Desktop Microphone",
+    "brand": "Boya",
+    "category": "audio",
+    "price": null,
+    "rating": 5,
+    "reviewsCount": 0,
+    "image": "https://icamstore.net/wp-content/uploads/2025/06/20241217172956278.webp",
+    "images": [
+      "https://icamstore.net/wp-content/uploads/2025/06/20241217172956278.webp"
+    ],
+    "stockStatus": "out-of-stock",
+    "stockCount": 0,
+    "shortDescription": "Professional studio & audio equipment.",
+    "specs": [
+      {
+        "label": "Brand",
+        "value": "Boya"
+      }
+    ],
+    "features": [
+      "Official Distributor Warranty",
+      "Factory Sealed & Calibrated",
+      "Includes VIP Fragile Express Delivery"
+    ],
+    "inTheBox": [
+      "Main Unit",
+      "Official Warranty Card",
+      "Documentation"
+    ]
   }
 ]

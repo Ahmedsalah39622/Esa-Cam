@@ -24,11 +24,11 @@ interface CurrencyRate {
 }
 
 export const CURRENCIES: Record<Currency, CurrencyRate> = {
-  USD: { symbol: "$", rate: 1, prefix: true },
-  EGP: { symbol: "E£", rate: 50.5, prefix: true },
-  SAR: { symbol: "SAR ", rate: 3.75, prefix: true },
-  AED: { symbol: "AED ", rate: 3.67, prefix: true },
-  EUR: { symbol: "€", rate: 0.92, prefix: true },
+  USD: { symbol: "$", rate: 1 / 50, prefix: true },
+  EGP: { symbol: "E£", rate: 1, prefix: true },
+  SAR: { symbol: "SAR ", rate: 3.75 / 50, prefix: true },
+  AED: { symbol: "AED ", rate: 3.67 / 50, prefix: true },
+  EUR: { symbol: "€", rate: 0.92 / 50, prefix: true },
 };
 
 export interface CartItem {
