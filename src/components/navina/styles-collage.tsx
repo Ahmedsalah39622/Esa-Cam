@@ -5,11 +5,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useStore } from "@/context/store-context";
 import { Star, ArrowRight } from "lucide-react";
-import { PRODUCTS } from "@/data/products";
 
 export function StylesCollage() {
-  const { formatPrice, homepageContent } = useStore();
-  const primeLensKit = PRODUCTS.find((p) => p.id === "sony-24-70-gm2") || PRODUCTS[0];
+  const { formatPrice, homepageContent, products } = useStore();
+  const primeLensKit = products.find((p) => p.id === "sony-24-70-gm2") || products[0];
 
   const collage = homepageContent?.stylesCollage || {
     badge: "AUTHENTIC VISUAL CRAFT",
@@ -29,6 +28,8 @@ export function StylesCollage() {
     ctaText: "Explore Full Optics Range",
     ctaLink: "/store",
   };
+
+  if (!primeLensKit) return null;
 
   return (
     <section className="w-full bg-[#FFFFFF] text-[#000000] px-6 sm:px-10 lg:px-12 pt-16 sm:pt-24 pb-8 sm:pb-12 select-none">
@@ -125,4 +126,3 @@ export function StylesCollage() {
     </section>
   );
 }
-

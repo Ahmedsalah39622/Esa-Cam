@@ -303,8 +303,8 @@ export default function ProductDetailPage() {
                     src={activeImage}
                     alt={`${product.name} - view ${selectedImageIndex + 1}`}
                     fill
-                    unoptimized
                     priority
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 600px"
                     className="object-contain p-6 sm:p-10 transition-transform duration-200 ease-out"
                     style={{
                       transform: `translate(${dragOffsetX + pan.x}px, ${pan.y}px) scale(${zoomLevel})`,

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { PRODUCTS, ProductCategory } from "@/data/products";
+import { ProductCategory } from "@/data/products";
 import { ProductCard } from "@/components/products/product-card";
 import { useStore } from "@/context/store-context";
 import {
@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 export function ProductCatalog() {
-  const { selectedCategory, setSelectedCategory } = useStore();
+  const { selectedCategory, setSelectedCategory, products } = useStore();
   const [activeSort, setActiveSort] = useState<"featured" | "price-asc" | "price-desc" | "rating">("featured");
   const [filterBrand, setFilterBrand] = useState<string>("all");
   const [localSearch, setLocalSearch] = useState<string>("");
@@ -33,7 +33,7 @@ export function ProductCatalog() {
 
   const availableBrands = useMemo(() => {
     const map = new Map<string, string>();
-    PRODUCTS.forEach((p) => {
+    products.forEach((p) => {
       const b = (p.brand || "").trim();
       if (b) {
         const low = b.toLowerCase();
@@ -43,10 +43,10 @@ export function ProductCatalog() {
       }
     });
     return ["all", ...Array.from(map.values()).sort((a, b) => a.localeCompare(b))];
-  }, []);
+  }, [products]);
 
   const filteredProducts = useMemo(() => {
-    return PRODUCTS.filter((p) => {
+    return products.filter((p) => {
       // Category filter
       if (selectedCategory !== "all" && p.category !== selectedCategory) {
         return false;
@@ -73,7 +73,7 @@ export function ProductCatalog() {
       if (!a.isBestSeller && b.isBestSeller) return 1;
       return 0;
     });
-  }, [selectedCategory, filterBrand, localSearch, activeSort]);
+  }, [products, selectedCategory, filterBrand, localSearch, activeSort]);
 
   return (
     <section id="catalog" className="w-full py-16 md:py-24 bg-secondary/10 border-b border-border">

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { PRODUCTS, Product } from "@/data/products";
+import { Product } from "@/data/products";
 import { useStore } from "@/context/store-context";
 import {
   Camera,
@@ -18,13 +18,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 export function RigBuilder() {
-  const { rigItems, setRigItem, addRigToCart, formatPrice } = useStore();
+  const { rigItems, setRigItem, addRigToCart, formatPrice, products } = useStore();
 
-  const cameraOptions = PRODUCTS.filter((p) => p.category === "cameras");
-  const lensOptions = PRODUCTS.filter((p) => p.category === "lenses");
-  const gimbalOptions = PRODUCTS.filter((p) => p.category === "gimbals" || p.category === "accessories");
-  const audioOptions = PRODUCTS.filter((p) => p.category === "audio");
-  const powerOptions = PRODUCTS.filter((p) => p.id === "smallrig-vb99-vmount" || p.id === "sony-cfexpress-160gb" || p.id === "smallrig-fx3-cage-kit");
+  const cameraOptions = products.filter((p) => p.category === "cameras");
+  const lensOptions = products.filter((p) => p.category === "lenses");
+  const gimbalOptions = products.filter((p) => p.category === "gimbals" || p.category === "accessories");
+  const audioOptions = products.filter((p) => p.category === "audio");
+  const powerOptions = products.filter((p) => p.id === "smallrig-vb99-vmount" || p.id === "sony-cfexpress-160gb" || p.id === "smallrig-fx3-cage-kit");
 
   const selectedList = Object.values(rigItems).filter(
     (item): item is Product => item !== null

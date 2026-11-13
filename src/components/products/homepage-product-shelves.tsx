@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { motion } from "motion/react";
-import { Product, PRODUCTS } from "@/data/products";
+import { Product } from "@/data/products";
 import { useStore } from "@/context/store-context";
 import { ProductCard } from "@/components/products/product-card";
 
@@ -90,12 +90,11 @@ export function HomepageOffersSection() {
 
 export function HomepageProductShelves() {
   const { products: storeProducts } = useStore();
-  const products = storeProducts.length ? storeProducts : PRODUCTS;
-  const bestSellers = [...products]
+  const bestSellers = [...storeProducts]
     .sort((a, b) => Number(b.isBestSeller) - Number(a.isBestSeller) || b.reviewsCount - a.reviewsCount)
     .slice(0, 6);
-  const cameras = products.filter((product) => product.category === "cameras").slice(0, 6);
-  const lenses = products.filter((product) => product.category === "lenses").slice(0, 6);
+  const cameras = storeProducts.filter((product) => product.category === "cameras").slice(0, 6);
+  const lenses = storeProducts.filter((product) => product.category === "lenses").slice(0, 6);
 
   return (
     <>

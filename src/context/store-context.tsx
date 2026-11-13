@@ -484,19 +484,29 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         })
         : [];
 
-      const offersResponse = await fetch("/api/offers");
-      const offersResult = await offersResponse.json();
-      const offers = offersResponse.ok && offersResult.success && Array.isArray(offersResult.data)
-        ? offersResult.data as Product[]
-        : [];
       setProducts((currentProducts) => {
         const productsById = new Map<string, Product>();
         (serverMapped.length > 0 ? serverMapped : currentProducts).forEach((product) => {
           productsById.set(product.id, product);
         });
-        offers.forEach((offer) => productsById.set(offer.id, offer));
         return Array.from(productsById.values());
       });
+
+      fetch("/api/offers")
+        .then(async (response) => {
+          if (!response.ok) throw new Error(`Offers request failed: ${response.status}`);
+          return response.json();
+        })
+        .then((offersResult) => {
+          if (offersResult.success && Array.isArray(offersResult.data)) {
+            setProducts((currentProducts) => {
+              const productsById = new Map(currentProducts.map((product) => [product.id, product]));
+              (offersResult.data as Product[]).forEach((offer) => productsById.set(offer.id, offer));
+              return Array.from(productsById.values());
+            });
+          }
+        })
+        .catch((err: unknown) => console.warn("Could not fetch offers:", err));
     } catch (err) {
       console.warn("Could not fetch products from API:", err);
     }
@@ -1031,6 +1041,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const resetProducts = async () => {
     setProducts(PRODUCTS);
+    await fetchProducts();
     toast.success("Products catalog restored to factory defaults");
   };
 

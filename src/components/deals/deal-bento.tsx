@@ -1,24 +1,23 @@
 "use client";
 
 import React from "react";
-import { PRODUCTS } from "@/data/products";
 import { useStore } from "@/context/store-context";
 import { ArrowRight, Flame, RefreshCw, ShoppingCart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 export function DealBento() {
-  const { formatPrice, addToCart, setIsCartOpen, homepageContent } = useStore();
+  const { formatPrice, addToCart, setIsCartOpen, homepageContent, products } = useStore();
   const hotline = homepageContent?.footer?.hotline || "+20 1092298665";
 
-  const fx3 = PRODUCTS.find((p) => p.id === "esa-637" || p.id === "sony-fx3");
-  const fujiUsed = PRODUCTS.find((p) => p.id === "fujifilm-x-t5-used");
+  const fx3 = products.find((p) => p.id === "esa-637" || p.id === "sony-fx3");
+  const fujiUsed = products.find((p) => p.id === "fujifilm-x-t5-used");
 
   const handleAddIndieBundle = () => {
     if (fx3) addToCart(fx3);
-    const lens = PRODUCTS.find((p) => p.id === "sony-24-70-gm2");
+    const lens = products.find((p) => p.id === "sony-24-70-gm2");
     if (lens) addToCart(lens);
-    const gimbal = PRODUCTS.find((p) => p.id === "dji-rs4-pro");
+    const gimbal = products.find((p) => p.id === "dji-rs4-pro");
     if (gimbal) addToCart(gimbal);
     setIsCartOpen(true);
   };
