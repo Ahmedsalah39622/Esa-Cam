@@ -789,7 +789,6 @@ function StoreContent() {
                           src={getProductImage(product.image, product.category)}
                           alt={product.name}
                           fill
-                          sizes="(max-width: 640px) 100vw, 160px"
                           className="object-cover group-hover/img:scale-105 transition-transform"
                         />
                         {product.badge && (

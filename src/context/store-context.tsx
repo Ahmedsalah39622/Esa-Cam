@@ -24,11 +24,11 @@ interface CurrencyRate {
 }
 
 export const CURRENCIES: Record<Currency, CurrencyRate> = {
-  USD: { symbol: "$", rate: 1 / 50, prefix: true },
-  EGP: { symbol: "E£", rate: 1, prefix: true },
-  SAR: { symbol: "SAR ", rate: 3.75 / 50, prefix: true },
-  AED: { symbol: "AED ", rate: 3.67 / 50, prefix: true },
-  EUR: { symbol: "€", rate: 0.92 / 50, prefix: true },
+  USD: { symbol: "$", rate: 1, prefix: true },
+  EGP: { symbol: "E£", rate: 50.5, prefix: true },
+  SAR: { symbol: "SAR ", rate: 3.75, prefix: true },
+  AED: { symbol: "AED ", rate: 3.67, prefix: true },
+  EUR: { symbol: "€", rate: 0.92, prefix: true },
 };
 
 export interface CartItem {
@@ -484,29 +484,19 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         })
         : [];
 
+      const offersResponse = await fetch("/api/offers");
+      const offersResult = await offersResponse.json();
+      const offers = offersResponse.ok && offersResult.success && Array.isArray(offersResult.data)
+        ? offersResult.data as Product[]
+        : [];
       setProducts((currentProducts) => {
         const productsById = new Map<string, Product>();
         (serverMapped.length > 0 ? serverMapped : currentProducts).forEach((product) => {
           productsById.set(product.id, product);
         });
+        offers.forEach((offer) => productsById.set(offer.id, offer));
         return Array.from(productsById.values());
       });
-
-      fetch("/api/offers")
-        .then(async (response) => {
-          if (!response.ok) throw new Error(`Offers request failed: ${response.status}`);
-          return response.json();
-        })
-        .then((offersResult) => {
-          if (offersResult.success && Array.isArray(offersResult.data)) {
-            setProducts((currentProducts) => {
-              const productsById = new Map(currentProducts.map((product) => [product.id, product]));
-              (offersResult.data as Product[]).forEach((offer) => productsById.set(offer.id, offer));
-              return Array.from(productsById.values());
-            });
-          }
-        })
-        .catch((err: unknown) => console.warn("Could not fetch offers:", err));
     } catch (err) {
       console.warn("Could not fetch products from API:", err);
     }
@@ -1041,7 +1031,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const resetProducts = async () => {
     setProducts(PRODUCTS);
-    await fetchProducts();
     toast.success("Products catalog restored to factory defaults");
   };
 

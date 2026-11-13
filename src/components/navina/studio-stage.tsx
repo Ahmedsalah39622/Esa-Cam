@@ -10,6 +10,7 @@ import {
   Aperture,
   Zap,
 } from "lucide-react";
+import { PRODUCTS } from "@/data/products";
 import { toast } from "sonner";
 
 interface GearItemInfo {
@@ -38,7 +39,7 @@ interface SceneProject {
 }
 
 export function StudioStage() {
-  const { addToCart, formatPrice, homepageContent, products } = useStore();
+  const { addToCart, formatPrice, homepageContent } = useStore();
 
   const customStage = homepageContent?.studioStage;
 
@@ -218,7 +219,7 @@ export function StudioStage() {
 
   // Calculate total price of all gear in the scene
   const totalScenePrice = project.gearUsed.reduce((sum, item) => {
-    const prod = products.find((p) => p.id === item.productId);
+    const prod = PRODUCTS.find((p) => p.id === item.productId);
     return sum + (prod ? prod.price : 0);
   }, 0);
 
@@ -226,7 +227,7 @@ export function StudioStage() {
   const handleBuySceneSetup = () => {
     let addedCount = 0;
     project.gearUsed.forEach((item) => {
-      const prod = products.find((p) => p.id === item.productId);
+      const prod = PRODUCTS.find((p) => p.id === item.productId);
       if (prod) {
         addToCart(prod, 1);
         addedCount++;
@@ -370,7 +371,7 @@ export function StudioStage() {
               {/* Gear Items List with Clear Typography and Thumbnails */}
               <div className="space-y-2.5">
                 {project.gearUsed.map((gear, i) => {
-                  const prod = products.find((p) => p.id === gear.productId);
+                  const prod = PRODUCTS.find((p) => p.id === gear.productId);
                   return (
                     <div
                       key={i}

@@ -74,6 +74,7 @@ export function HeroShowcase() {
                           alt={slideLabel}
                           fill
                           priority={index === 0}
+                          unoptimized
                           sizes="100vw"
                           onError={(event) => { event.currentTarget.style.visibility = "hidden"; }}
                           className="object-cover sm:hidden"
@@ -84,6 +85,7 @@ export function HeroShowcase() {
                           alt={slideLabel}
                           fill
                           priority={index === 0}
+                          unoptimized
                           sizes="100vw"
                           onError={(event) => { event.currentTarget.style.visibility = "hidden"; }}
                           className="bg-white object-contain sm:hidden"
@@ -94,6 +96,7 @@ export function HeroShowcase() {
                         alt={slideLabel}
                         fill
                         priority={index === 0}
+                        unoptimized
                         sizes="(max-width: 640px) 100vw, 1200px"
                         onError={(event) => { event.currentTarget.style.visibility = "hidden"; }}
                         className="hidden scale-[1.30] object-cover sm:block"

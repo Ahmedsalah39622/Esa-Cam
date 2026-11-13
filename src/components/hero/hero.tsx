@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { HERO_HIGHLIGHTS } from "@/data/products";
+import { HERO_HIGHLIGHTS, PRODUCTS } from "@/data/products";
 import { useStore } from "@/context/store-context";
 import {
   ShieldCheck,
@@ -19,11 +19,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 export function Hero() {
-  const { formatPrice, addToCart, products } = useStore();
+  const { formatPrice, addToCart } = useStore();
   const [activeHighlightIndex, setActiveHighlightIndex] = useState(0);
 
   const currentHero = HERO_HIGHLIGHTS[activeHighlightIndex];
-  const matchedProduct = products.find((p) => p.id === currentHero.id);
+  const matchedProduct = PRODUCTS.find((p) => p.id === currentHero.id);
 
   return (
     <section className="relative w-full overflow-hidden pt-8 pb-16 md:pt-14 md:pb-24 border-b border-border bg-radial-[at_50%_0%] from-secondary/40 via-background to-background">

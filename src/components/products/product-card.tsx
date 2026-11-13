@@ -41,7 +41,6 @@ export function ProductCard({ product }: { product: Product }) {
             src={imgSrc}
             alt={product.name}
             fill
-            sizes="(max-width: 640px) 46vw, (max-width: 1024px) 30vw, (max-width: 1280px) 22vw, 380px"
             onError={() => setImgSrc(fallbackImage)}
             className="object-cover transition-transform duration-500 group-hover:scale-105"
           />

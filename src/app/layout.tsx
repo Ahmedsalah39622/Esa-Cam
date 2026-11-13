@@ -5,6 +5,7 @@ import { AuthProvider } from "@/context/auth-context";
 import { QuickViewModal } from "@/components/common/quick-view-modal";
 import { CartDrawer } from "@/components/common/cart-drawer";
 import { SmoothScrollProvider } from "@/components/common/smooth-scroll-provider";
+import { SitePreloader } from "@/components/common/site-preloader";
 import { CookieConsent } from "@/components/common/cookie-consent";
 import "./globals.css";
 
@@ -29,6 +30,7 @@ export default function RootLayout({
         <AuthProvider>
           <StoreProvider>
             <SmoothScrollProvider>
+              <SitePreloader />
               {children}
               <CookieConsent />
               <CartDrawer />

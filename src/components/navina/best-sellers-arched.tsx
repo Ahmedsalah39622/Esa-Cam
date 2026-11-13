@@ -111,7 +111,7 @@ export function BestSellersArched() {
                   src={product.image || "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=800&q=80"}
                   alt={product.name}
                   fill
-                  sizes="(max-width: 640px) 46vw, (max-width: 1024px) 280px, 320px"
+                  unoptimized
                   onError={(e) => {
                     const target = e.currentTarget as HTMLImageElement;
                     target.src = "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=800&q=80";

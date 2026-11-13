@@ -1,3 +1,5 @@
+import rawProducts from "./all-combined-products.json";
+
 export type ProductCategory = 
   | "all"
   | "cameras"
@@ -171,108 +173,6 @@ export const CATEGORIES_LIST = [
   },
 ];
 
-function createFallbackProduct(
-  id: string,
-  name: string,
-  brand: string,
-  category: ProductCategory,
-  price: number,
-  image: string,
-  shortDescription: string,
-  stockCount = 5
-): Product {
-  return {
-    id,
-    name,
-    brand,
-    category,
-    price,
-    rating: 5,
-    reviewsCount: 0,
-    image,
-    stockStatus: "in-stock",
-    stockCount,
-    shortDescription,
-    specs: [],
-    features: [],
-    inTheBox: [],
-  };
-}
-
-export const PRODUCTS: Product[] = [
-  createFallbackProduct(
-    "icam-60007",
-    "DJI Osmo Pocket 4P Vlog Combo",
-    "DJI",
-    "cameras",
-    47500,
-    "https://icamstore.net/wp-content/uploads/2026/07/ChatGPT-Image-Jul-12-2026-06_34_00-PM.png",
-    "1-inch sensor, dual-lens zoom, and 4K video with 3-axis stabilization."
-  ),
-  createFallbackProduct(
-    "icam-64645",
-    "Samyang AF 14-24mm F2.8",
-    "Samyang",
-    "lenses",
-    50000,
-    "https://icamstore.net/wp-content/uploads/2026/08/AF-14-24mm-F2.8-FE-Front_Hood-1747739091-scaled.jpg",
-    "A lightweight 14-24mm constant f/2.8 zoom lens."
-  ),
-  createFallbackProduct(
-    "icam-65239",
-    "Vagner Pro VB-10 Carrying Bag",
-    "VAGNER PRO",
-    "accessories",
-    600,
-    "https://icamstore.net/wp-content/uploads/2026/09/Vagner-Pro-VB-10-.jpeg",
-    "A durable carrying bag for photography equipment."
-  ),
-  createFallbackProduct(
-    "icam-61946",
-    "BOYA CastMic S60 USB & XLR Microphone",
-    "Boya",
-    "audio",
-    4250,
-    "https://icamstore.net/wp-content/uploads/2026/08/Boya-S60-Castmic-.png",
-    "A USB and XLR dynamic microphone with customizable RGB lighting."
-  ),
-  createFallbackProduct(
-    "icam-62579",
-    "amaran Halo 60x Bi-Color LED Monolight",
-    "Amaran",
-    "lighting",
-    5500,
-    "https://icamstore.net/wp-content/uploads/2026/08/1772624732_1954191.jpg",
-    "A compact bi-color LED light for creator and studio setups."
-  ),
-  createFallbackProduct(
-    "icam-61407",
-    "DJI Osmo Mobile 8P Smartphone Gimbal",
-    "DJI",
-    "gimbals",
-    9250,
-    "https://icamstore.net/wp-content/uploads/2026/07/DJI-OSMO-8P.avif",
-    "A 3-axis smartphone gimbal with subject tracking and built-in tripod."
-  ),
-  createFallbackProduct(
-    "esa-2826",
-    "Sony a6500 (Pre-Owned)",
-    "Sony",
-    "pre-owned",
-    475.25,
-    "https://icamstore.net/wp-content/uploads/2024/07/1573051814_1333265.jpg",
-    "Inspected and certified pre-owned professional equipment.",
-    1
-  ),
-  createFallbackProduct(
-    "icam-70889",
-    "K&F CONCEPT Camera Sling Bag (Black)",
-    "K&F Concept",
-    "bags",
-    2000,
-    "https://icamstore.net/wp-content/uploads/2026/11/KF13.168V2-1-140x140-1.jpg",
-    "A lightweight sling bag for carrying camera equipment."
-  ),
-];
+export const PRODUCTS: Product[] = rawProducts as unknown as Product[];
 
 export const OFFERS: Product[] = [];
