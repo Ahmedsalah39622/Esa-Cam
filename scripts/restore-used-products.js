@@ -61,39 +61,7 @@ async function main() {
     productMap.set(item.id, item);
   }
 
-  // Define Fujifilm X-T5 Used
-  const fujiItem = {
-    id: 'fujifilm-x-t5-used',
-    name: 'Fujifilm X-T5 Mirrorless Body (Pre-Owned Grade A+)',
-    brand: 'Fujifilm',
-    category: 'pre-owned',
-    price: 1449,
-    originalPrice: 1699,
-    rating: 4.8,
-    reviewsCount: 42,
-    image: usedImageMap['fujifilm-x-t5-used'],
-    images: [usedImageMap['fujifilm-x-t5-used']],
-    badge: 'Certified 90-Pt Tested',
-    isSale: true,
-    isBestSeller: true,
-    stockStatus: 'low-stock',
-    stockCount: 1,
-    shortDescription: '40.2MP X-Trans CMOS 5 HR sensor, 5-axis 7.0-stop IBIS, classic analog dials. Only 1,420 shutter actuations with 1-year ESA warranty.',
-    specs: [
-      { label: 'Shutter Count', value: '1,420 Actuations (Grade A+ Mint)' },
-      { label: 'Sensor', value: '40.2MP APS-C X-Trans CMOS 5 HR' },
-      { label: 'Stabilization', value: '7-Stop In-Body Image Stabilization' },
-      { label: 'Video', value: '6.2K 30p, 4K 60p 10-bit 4:2:2' },
-      { label: 'Condition', value: 'Pristine Mint 9+/10' }
-    ],
-    features: [
-      'Official Distributor Warranty',
-      'Factory Sealed & Calibrated',
-      'Includes VIP Fragile Express Delivery'
-    ],
-    inTheBox: ['Main Unit', 'Official Warranty Card', 'Documentation']
-  };
-  productMap.set(fujiItem.id, fujiItem);
+
 
   // Merge the 474 ESA products
   for (const esa of historicalEsa) {
