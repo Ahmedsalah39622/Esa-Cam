@@ -152,6 +152,39 @@ async function ensureProductsTable() {
 
 export async function GET() {
   try {
+    // تحميل أحدث المنتجات من ملف الـ JSON المحدث
+    const freshProducts = loadInitialProducts();
+    // إرسال payload خفيف وسريع للمتجر لتسريع التحميل والتصفح
+    const lightProducts = freshProducts.map((p) => ({
+      id: p.id,
+      name: p.name,
+      brand: p.brand,
+      price: p.price,
+      original_price: p.original_price,
+      category: p.category,
+      image_url: p.image_url,
+      badge: p.badge,
+      stock_status: p.stock_status,
+      stock_count: p.stock_count,
+      rating: p.rating,
+      reviews_count: p.reviews_count,
+    }));
+
+    return NextResponse.json(
+      {
+        success: true,
+        source: "json",
+        count: lightProducts.length,
+        data: lightProducts,
+      },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+        },
+      }
+    );
+    // ────────────────────────────────────────────────────────────────────────
+
     const pool = getDbPool();
     if (pool) {
       await ensureProductsTable();
