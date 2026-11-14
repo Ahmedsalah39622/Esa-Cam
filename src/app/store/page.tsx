@@ -248,8 +248,14 @@ function StoreContent() {
         return true;
       })
       .sort((a, b) => {
-        if (sortBy === "price-asc") return a.price - b.price;
-        if (sortBy === "price-desc") return b.price - a.price;
+        // ✅ دايماً in-stock قبل out-of-stock
+        const aOOS = a.stockStatus === "out-of-stock" || a.price === null || a.price === 0 ? 1 : 0;
+        const bOOS = b.stockStatus === "out-of-stock" || b.price === null || b.price === 0 ? 1 : 0;
+        if (aOOS !== bOOS) return aOOS - bOOS;
+
+        // بعدين بالـ sort المختار
+        if (sortBy === "price-asc") return (a.price || 0) - (b.price || 0);
+        if (sortBy === "price-desc") return (b.price || 0) - (a.price || 0);
         if (sortBy === "rating") return b.rating - a.rating;
         if (sortBy === "reviews") return b.reviewsCount - a.reviewsCount;
         if (a.isBestSeller && !b.isBestSeller) return -1;

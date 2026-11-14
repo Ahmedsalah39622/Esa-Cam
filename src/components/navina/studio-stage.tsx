@@ -52,7 +52,7 @@ export function StudioStage() {
       director: customStage?.directorName || "Tariq Al-Sayed (Head DP)",
       image:
         customStage?.image ||
-        "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1600&q=85",
+        "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=900&q=70",
       formatBadge: customStage?.formatBadge || "8K 60P N-RAW",
       technicalMetadata: {
         resolution: customStage?.resolution || "8.3K Full-Frame",
@@ -96,7 +96,7 @@ export function StudioStage() {
       client: "Cairo Independent Film Festival",
       director: "Karim El-Shazly (Director)",
       image:
-        "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=1600&q=85",
+        "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=900&q=70",
       formatBadge: "15+ STOPS DYNAMIC RANGE",
       technicalMetadata: {
         resolution: "4K DCI All-Intra",
@@ -139,7 +139,7 @@ export function StudioStage() {
       client: "Universal Music & Vogue Visuals",
       director: "Nourhan Medhat (Creative DP)",
       image:
-        "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1600&q=85",
+        "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=900&q=70",
       formatBadge: "ULTRA 120FPS SLOW-MO",
       technicalMetadata: {
         resolution: "6K Full-Frame Open Gate",
@@ -176,7 +176,7 @@ export function StudioStage() {
       client: "National Geographic & Wild Heritage",
       director: "Youssef Mansour (Wildlife DP)",
       image:
-        "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?auto=format&fit=crop&w=1600&q=85",
+        "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?auto=format&fit=crop&w=900&q=70",
       formatBadge: "WEATHER-SEALED 40MP RAW",
       technicalMetadata: {
         resolution: "6.2K Open Gate RAW",

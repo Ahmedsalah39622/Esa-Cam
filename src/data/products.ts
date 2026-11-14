@@ -55,7 +55,7 @@ export const HERO_HIGHLIGHTS = [
     name: "Sony FX3 Cinema Line",
     subtitle: "Full-Frame 4K/120p Compact Cine Body",
     price: 3899,
-    image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=1000&q=80",
+    image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=600&q=75",
     tag: "Flagship Choice",
     specs: [
       "12.1MP Full-Frame BSI",
@@ -69,7 +69,7 @@ export const HERO_HIGHLIGHTS = [
     name: "Canon EOS R5 C",
     subtitle: "8K60 RAW Internal Cine System",
     price: 4299,
-    image: "https://images.unsplash.com/photo-1502982720700-bfff97f2ecac?auto=format&fit=crop&w=1000&q=80",
+    image: "https://images.unsplash.com/photo-1502982720700-bfff97f2ecac?auto=format&fit=crop&w=600&q=75",
     tag: "8K Monster",
     specs: [
       "45MP Full-Frame Dual Pixel",
@@ -83,7 +83,7 @@ export const HERO_HIGHLIGHTS = [
     name: "RED V-Raptor 8K",
     subtitle: "Multi-Format VV & 6K S35 Sensor",
     price: 5995,
-    image: "https://images.unsplash.com/photo-1512790182412-b19e6d62bc39?auto=format&fit=crop&w=1000&q=80",
+    image: "https://images.unsplash.com/photo-1512790182412-b19e6d62bc39?auto=format&fit=crop&w=600&q=75",
     tag: "Hollywood Standard",
     specs: [
       "35.4MP VistaVision",

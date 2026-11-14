@@ -13,7 +13,7 @@ export function EditorialBanner() {
     description:
       "Build your setup with trusted cameras, lenses, lighting and sound, with expert help when you need it.",
     image:
-      "https://images.unsplash.com/photo-1533563906091-fdfdffc3e3c4?auto=format&fit=crop&w=1200&q=85",
+      "https://images.unsplash.com/photo-1533563906091-fdfdffc3e3c4?auto=format&fit=crop&w=800&q=70",
     tags: ["Cameras", "Lenses", "Audio", "Lighting"],
     ctaText: "Explore the store",
     ctaLink: "/store",

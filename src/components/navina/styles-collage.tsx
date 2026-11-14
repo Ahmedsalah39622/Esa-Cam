@@ -17,9 +17,9 @@ export function StylesCollage() {
     description:
       "From high-octane automotive commercials to intimate narrative dramas, explore the lenses and lighting setups trusted by Egypt's top cinematographers and production houses.",
     primaryImage:
-      "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=1200&q=85",
+      "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=800&q=70",
     secondaryImage:
-      "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=1000&q=85",
+      "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&w=700&q=70",
     lensName: "Sony FE 24-70mm f/2.8 GM II",
     lensRating: "5.0",
     lensReviews: "215 Reviews",
