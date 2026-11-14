@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query, getDbPool, ensureOrderPaymentStatusColumn } from "@/lib/db";
-import { generateEpicReceiptHtml, sendOrderReceiptEmail } from "@/lib/email";
 import { verifyEasyKashCallbackSignature, verifyEasyKashHmac } from "@/lib/easykash";
+import { confirmEasyKashOrder } from "@/lib/easykash-order";
 
 export const dynamic = "force-dynamic";
 
@@ -91,72 +91,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true, status: order.status, duplicate: true });
     }
 
-    await query("UPDATE orders SET status = 'confirmed', payment_status = 'paid' WHERE id = ?", [order.id]);
-
-    let items = [];
-    try {
-      items = typeof order.items_json === "string" ? JSON.parse(order.items_json) : order.items_json || [];
-    } catch {}
-
-    try {
-      await sendOrderReceiptEmail({
-        orderNumber: order.order_number,
-        customerName: order.customer_name,
-        customerEmail: order.customer_email || "",
-        shippingAddress: order.shipping_address,
-        city: order.city,
-        paymentMethod: "EasyKash Online Payment",
-        totalAmount: Number(order.total_amount),
-        items,
-      });
-    } catch (err) {
-      console.error("EasyKash webhook email error:", err);
-    }
-
-    const webhookUrl = process.env.ORDER_WEBHOOK_URL || process.env.VIASOCKET_WEBHOOK_URL;
-    if (webhookUrl) {
-      try {
-        const receiptHtml = generateEpicReceiptHtml({
-          orderNumber: order.order_number,
-          customerName: order.customer_name,
-          customerEmail: order.customer_email || "",
-          shippingAddress: order.shipping_address,
-          city: order.city,
-          paymentMethod: "EasyKash Online Payment",
-          totalAmount: Number(order.total_amount),
-          items,
-        });
-
-        await fetch(webhookUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            event: "order.paid",
-            paymentGateway: "easykash",
-            paymentStatus: "paid",
-            transactionId: txnId || null,
-            to: order.customer_email || process.env.ADMIN_EMAIL || "",
-            subject: `ESA CAM Paid Order Confirmation #${order.order_number}`,
-            orderNumber: order.order_number,
-            orderId: order.id,
-            customerName: order.customer_name,
-            customerEmail: order.customer_email || "",
-            customerPhone: order.customer_phone,
-            city: order.city,
-            shippingAddress: order.shipping_address,
-            paymentMethod: "EasyKash Online Payment",
-            totalAmount: Number(order.total_amount),
-            currency: "EGP",
-            items,
-            receiptHtml,
-          }),
-        });
-      } catch (whErr) {
-        console.error("EasyKash webhook trigger error:", whErr);
-      }
-    }
-
-    return NextResponse.json({ success: true, status: "confirmed" });
+    const confirmed = await confirmEasyKashOrder(order, txnId);
+    return NextResponse.json({
+      success: true,
+      status: confirmed ? "confirmed" : order.status,
+      ...(!confirmed ? { duplicate: true } : {}),
+    });
   } catch (error: unknown) {
     console.error("EasyKash webhook error:", error);
     const message = error instanceof Error ? error.message : "EasyKash webhook error";

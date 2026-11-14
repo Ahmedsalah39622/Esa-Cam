@@ -121,6 +121,41 @@ export async function createEasyKashIntention({
 }
 
 /**
+ * Retrieves the authoritative payment status for a Direct Payment reference.
+ */
+export async function inquireEasyKashPayment(customerReference: string): Promise<{
+  status?: string;
+  easykashRef?: string;
+}> {
+  const apiKey = process.env.EASYKASH_API_KEY;
+
+  if (!apiKey) {
+    throw new Error("EasyKash API Key (EASYKASH_API_KEY) is missing in environment.");
+  }
+
+  const response = await fetch("https://back.easykash.net/api/cash-api/inquire", {
+    method: "POST",
+    headers: {
+      authorization: apiKey,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ customerReference }),
+    cache: "no-store",
+  });
+
+  const data: unknown = await response.json();
+  if (!response.ok || !data || typeof data !== "object") {
+    throw new Error("Failed to inquire about EasyKash payment.");
+  }
+
+  const result = data as { status?: unknown; easykashRef?: unknown };
+  return {
+    status: typeof result.status === "string" ? result.status : undefined,
+    easykashRef: typeof result.easykashRef === "string" ? result.easykashRef : undefined,
+  };
+}
+
+/**
  * Validates EasyKash Callback HMAC signature when the gateway includes one.
  */
 export function verifyEasyKashHmac(

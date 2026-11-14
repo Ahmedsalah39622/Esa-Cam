@@ -110,7 +110,7 @@ function CheckoutContent() {
 
           for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
             const response = await fetch(
-              `/api/checkout/easykash/verify?order_id=${encodeURIComponent(easykashOrderId)}`,
+              `/api/checkout/easykash/verify?order_id=${encodeURIComponent(easykashOrderId)}${attempt === 0 && !returnedAsFailed ? "&inquire=1" : ""}`,
               { cache: "no-store" },
             );
             result = await response.json();
@@ -328,6 +328,50 @@ function CheckoutContent() {
     toast.info("تم إلغاء كود الخصم");
   };
 
+  const handleCheckEasyKashPayment = async () => {
+    if (!paymentIssue?.orderNumber) return;
+
+    setIsVerifyingStripe(true);
+    try {
+      const response = await fetch(
+        `/api/checkout/easykash/verify?order_id=${encodeURIComponent(paymentIssue.orderNumber)}&inquire=1`,
+        { cache: "no-store" },
+      );
+      const result: {
+        success?: boolean;
+        paid?: boolean;
+        failed?: boolean;
+        order?: PlacedOrderInfo;
+        message?: string;
+      } = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Could not check the EasyKash payment status.");
+      }
+
+      if (result.paid && result.order) {
+        setPlacedOrderData(result.order);
+        setIsSubmitted(true);
+        setPaymentIssue(null);
+        clearCart();
+        window.history.replaceState({}, "", window.location.pathname);
+        toast.success("Payment Received & Confirmed!", {
+          id: `easykash-success-${result.order.order_number}`,
+          description: `Order #${result.order.order_number} has been verified and confirmed via EasyKash.`,
+        });
+      } else if (result.failed) {
+        setPaymentIssue({ kind: "failed", orderNumber: paymentIssue.orderNumber });
+      } else {
+        toast.info("EasyKash is still processing this payment. Please check again shortly.");
+      }
+    } catch (error) {
+      console.error("EasyKash payment recheck error:", error);
+      toast.error(error instanceof Error ? error.message : "Could not check the EasyKash payment status.");
+    } finally {
+      setIsVerifyingStripe(false);
+    }
+  };
+
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.firstName || !formData.phone || !formData.email || !formData.address) {
@@ -503,8 +547,19 @@ function CheckoutContent() {
 
             {!isPaymentFailed && (
               <p className="text-xs leading-relaxed text-muted-foreground">
-                If you were charged, please follow up with EasyKash using this order reference before retrying.
+                If you were charged, check this order reference before retrying so you are not charged twice.
               </p>
+            )}
+
+            {!isPaymentFailed && paymentIssue.orderNumber && (
+              <Button
+                variant="outline"
+                onClick={handleCheckEasyKashPayment}
+                className="h-11 w-full gap-2"
+              >
+                <Loader2 aria-hidden="true" className="h-4 w-4" />
+                Check payment status
+              </Button>
             )}
 
             <div className="grid gap-3 sm:grid-cols-2">
