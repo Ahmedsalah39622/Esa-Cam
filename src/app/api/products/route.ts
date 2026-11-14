@@ -78,8 +78,6 @@ function loadInitialProducts(): ProductItem[] {
 // In-memory cache synced across serverless requests
 // يتحمل مرة واحدة عند بداية الـ server ومش بيتحمل تاني
 let memoryProducts: ProductItem[] = loadInitialProducts();
-// timestamp للـ cache عشان نعرف امتى اتعمل آخر refresh
-let memoryCacheTime: number = Date.now();
 
 function saveProductsToDisk(productsList: ProductItem[]) {
   try {
