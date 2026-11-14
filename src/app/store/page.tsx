@@ -36,6 +36,7 @@ import { getProductImage } from "@/lib/product-image";
 function StoreContent() {
   const {
     products,
+    isLoadingProducts,
     brands: managedBrands,
     formatPrice,
     addToCart,
@@ -749,7 +750,22 @@ function StoreContent() {
             <div ref={gridTopRef} className="scroll-mt-28" />
 
             {/* Product Grid / List Render */}
-            {filteredProducts.length === 0 ? (
+            {isLoadingProducts ? (
+              /* Skeleton Cards while loading */
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-2.5 sm:gap-4 md:gap-6">
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <div key={i} className="rounded-2xl border border-border bg-card overflow-hidden animate-pulse">
+                    <div className="aspect-square w-full bg-secondary/60" />
+                    <div className="p-3 space-y-2">
+                      <div className="h-3 bg-secondary rounded w-1/3" />
+                      <div className="h-4 bg-secondary rounded w-4/5" />
+                      <div className="h-3 bg-secondary rounded w-2/3" />
+                      <div className="h-8 bg-secondary rounded-xl mt-3" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : filteredProducts.length === 0 ? (
               <div className="py-24 text-center bg-card rounded-3xl border border-border p-8 flex flex-col items-center justify-center space-y-4">
                 <div className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center text-muted-foreground">
                   <Package className="w-7 h-7" />

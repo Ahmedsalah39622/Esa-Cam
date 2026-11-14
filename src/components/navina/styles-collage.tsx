@@ -41,6 +41,7 @@ export function StylesCollage() {
               src={collage.primaryImage}
               alt="Cinematographer on Set"
               fill
+              loading="lazy"
               className="object-cover object-center"
             />
           </div>
@@ -51,6 +52,7 @@ export function StylesCollage() {
               src={collage.secondaryImage}
               alt="Director at Console"
               fill
+              loading="lazy"
               className="object-cover object-center"
             />
           </div>
@@ -66,6 +68,7 @@ export function StylesCollage() {
                 src={collage.lensImage}
                 alt={collage.lensName}
                 fill
+                loading="lazy"
                 className="object-contain p-1"
               />
             </Link>

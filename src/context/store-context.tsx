@@ -345,6 +345,7 @@ interface StoreContextType {
   addRigToCart: () => void;
   // Products management
   products: Product[];
+  isLoadingProducts: boolean;
   addProduct: (product: Product) => Promise<void>;
   updateProduct: (id: string, product: Partial<Product>) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
@@ -379,7 +380,8 @@ interface StoreContextType {
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const [products, setProducts] = useState<Product[]>(PRODUCTS);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [currency, setCurrency] = useState<Currency>("EGP");
@@ -403,11 +405,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     audio: Product | null;
     power: Product | null;
   }>({
-    camera: PRODUCTS.find((p) => p.id === "esa-637" || p.id === "sony-fx3") || null,
-    lens: PRODUCTS.find((p) => p.id === "sony-24-70-gm2") || null,
-    gimbal: PRODUCTS.find((p) => p.id === "dji-rs4-pro") || null,
-    audio: PRODUCTS.find((p) => p.id === "dji-mic-2-kit") || null,
-    power: PRODUCTS.find((p) => p.id === "smallrig-vb99-vmount") || null,
+    camera: null,
+    lens: null,
+    gimbal: null,
+    audio: null,
+    power: null,
   });
 
   interface DbProductRow {
@@ -497,14 +499,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         offers.forEach((offer) => productsById.set(offer.id, offer));
         return Array.from(productsById.values());
       });
+      setIsLoadingProducts(false);
     } catch (err) {
       console.warn("Could not fetch products from API:", err);
+      setIsLoadingProducts(false);
     }
   }, []);
 
   // Load products, cart, wishlist, brands, & homepage content on client
   useEffect(() => {
-    setProducts(PRODUCTS);
+    // لا نعمل setProducts(PRODUCTS) هنا لأن PRODUCTS [] فاضي
     fetchProducts();
 
     try {
@@ -1119,6 +1123,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     <StoreContext.Provider
       value={{
         products,
+        isLoadingProducts,
         addProduct,
         updateProduct,
         deleteProduct,

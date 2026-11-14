@@ -76,7 +76,10 @@ function loadInitialProducts(): ProductItem[] {
 }
 
 // In-memory cache synced across serverless requests
+// يتحمل مرة واحدة عند بداية الـ server ومش بيتحمل تاني
 let memoryProducts: ProductItem[] = loadInitialProducts();
+// timestamp للـ cache عشان نعرف امتى اتعمل آخر refresh
+let memoryCacheTime: number = Date.now();
 
 function saveProductsToDisk(productsList: ProductItem[]) {
   try {
@@ -152,10 +155,9 @@ async function ensureProductsTable() {
 
 export async function GET() {
   try {
-    // تحميل أحدث المنتجات من ملف الـ JSON المحدث
-    const freshProducts = loadInitialProducts();
-    // إرسال payload خفيف وسريع للمتجر لتسريع التحميل والتصفح
-    const lightProducts = freshProducts.map((p) => ({
+    // ✅ استخدام الـ in-memory cache مباشرةً — مش بنقرأ من disk في كل request
+    // memoryProducts اتحمل مرة واحدة لما الـ server اشتغل
+    const lightProducts = memoryProducts.map((p) => ({
       id: p.id,
       name: p.name,
       brand: p.brand,
@@ -173,7 +175,7 @@ export async function GET() {
     return NextResponse.json(
       {
         success: true,
-        source: "json",
+        source: "memory_cache",
         count: lightProducts.length,
         data: lightProducts,
       },
@@ -183,87 +185,26 @@ export async function GET() {
         },
       }
     );
-    // ────────────────────────────────────────────────────────────────────────
-
-    const pool = getDbPool();
-    if (pool) {
-      await ensureProductsTable();
-      const rows = await query<ProductItem>(
-        "SELECT * FROM products ORDER BY created_at DESC LIMIT 3000"
-      );
-
-      if (rows && rows.length > 0) {
-        const memoryMap = new Map(memoryProducts.map((p) => [p.id, p.image_url]));
-        const healedRows = rows.map((r) => {
-          if (
-            !r.image_url ||
-            r.image_url.includes("esacamstore.com/wp-content/uploads") ||
-            r.image_url.includes("img_")
-          ) {
-            const memoryImage = memoryMap.get(r.id);
-            if (memoryImage && !memoryImage.includes("esacamstore.com")) {
-              r.image_url = memoryImage;
-            } else {
-              r.image_url = "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=800&q=80";
-            }
-          }
-          if (r.images_json) {
-            try {
-              r.images = typeof r.images_json === "string" ? JSON.parse(r.images_json) : r.images_json;
-            } catch {
-              r.images = [r.image_url];
-            }
-          } else {
-            const memoryItem = memoryProducts.find((p) => p.id === r.id);
-            r.images = memoryItem?.images || [r.image_url];
-          }
-          const currentCount = r.stock_count !== undefined && r.stock_count !== null ? Number(r.stock_count) : 5;
-          r.stock_count = currentCount;
-          r.stockCount = currentCount;
-          if (currentCount === 0) {
-            r.stock_status = "out-of-stock";
-          }
-          return r;
-        });
-
-        return NextResponse.json(
-          {
-            success: true,
-            source: "database",
-            count: healedRows.length,
-            data: healedRows,
-          },
-          {
-            headers: {
-              "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-              "Pragma": "no-cache",
-              "Expires": "0",
-            },
-          }
-        );
-      }
-    }
-
-    return NextResponse.json(
-      {
-        success: true,
-        source: "memory_cache",
-        count: memoryProducts.length,
-        data: memoryProducts.map((p) => ({ ...p, stockCount: p.stock_count })),
-      },
-      {
-        headers: {
-          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-        },
-      }
-    );
   } catch (error) {
     console.error("Error fetching products:", error);
     return NextResponse.json({
       success: true,
       source: "memory_fallback",
       count: memoryProducts.length,
-      data: memoryProducts,
+      data: memoryProducts.map((p) => ({
+        id: p.id,
+        name: p.name,
+        brand: p.brand,
+        price: p.price,
+        original_price: p.original_price,
+        category: p.category,
+        image_url: p.image_url,
+        badge: p.badge,
+        stock_status: p.stock_status,
+        stock_count: p.stock_count,
+        rating: p.rating,
+        reviews_count: p.reviews_count,
+      })),
     });
   }
 }

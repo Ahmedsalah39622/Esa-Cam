@@ -296,7 +296,6 @@ export function StudioStage() {
               src={project.image}
               alt={project.title}
               fill
-              priority
               className="object-cover object-center brightness-[0.88] group-hover:scale-105 transition-transform duration-700 animate-in fade-in"
             />
             {/* Cinematic Gradient Vignette */}

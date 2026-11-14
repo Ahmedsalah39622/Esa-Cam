@@ -1,4 +1,5 @@
-import rawProducts from "./all-combined-products.json";
+// ✅ لا نستورد الـ JSON هنا عشان متدخلش في الـ bundle (4MB)
+// البيانات بتيجي من API /api/products في الـ runtime
 
 export type ProductCategory = 
   | "all"
@@ -173,6 +174,7 @@ export const CATEGORIES_LIST = [
   },
 ];
 
-export const PRODUCTS: Product[] = rawProducts as unknown as Product[];
+// Initial state فارغ — المنتجات بتتحمل من API بعدين
+export const PRODUCTS: Product[] = [];
 
 export const OFFERS: Product[] = [];
